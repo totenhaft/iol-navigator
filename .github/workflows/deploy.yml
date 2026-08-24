@@ -1,0 +1,67 @@
+name: 빌드 · 테스트 · 배포
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: 빌드와 테스트
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 의존성 설치
+        run: npm install
+
+      - name: 테스트용 브라우저 설치
+        run: npx playwright install --with-deps chromium
+
+      # Pages 가 아직 꺼져 있으면 여기서 자동으로 켭니다 (enablement: true).
+      # 덕분에 저장소 Settings 에서 손으로 켤 필요가 없습니다.
+      - name: Pages 설정
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: 빌드
+        run: npm run build
+
+      - name: 테스트
+        run: node test/run.mjs
+
+      - name: Pages 아티팩트 업로드
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: GitHub Pages 배포
+    # 테스트가 통과해야만 배포됩니다. 임상 도구이므로 이 순서를 바꾸지 마세요.
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

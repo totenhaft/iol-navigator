@@ -1,0 +1,33 @@
+MIT License
+
+Copyright (c) 2026 Youngjae
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+추가 고지 / ADDITIONAL NOTICE
+
+이 소프트웨어는 임상 의사결정을 돕기 위한 참고 도구이며 의료기기가 아닙니다.
+진단이나 처방을 하지 않으며, 의료진의 진찰과 판단을 대체하지 않습니다.
+환자 진료에 사용하는 모든 판단의 책임은 해당 의료진에게 있습니다.
+
+This software is a reference aid for clinical decision support. It is not a
+medical device, does not diagnose or prescribe, and does not replace
+examination and judgement by a qualified clinician.

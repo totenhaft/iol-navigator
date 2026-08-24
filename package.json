@@ -1,0 +1,16 @@
+{
+  "name": "iol-navigator",
+  "version": "1.0.1",
+  "description": "근거 기반 백내장 인공수정체(IOL) 선택 보조 도구 — 임상 의사결정 보조, 의료기기 아님",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "npm run build && node test/run.mjs",
+    "start": "node build.mjs && node -e \"console.log('index.html 을 브라우저로 여세요:', new URL('index.html', 'file://' + process.cwd() + '/').href)\""
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  },
+  "license": "MIT"
+}

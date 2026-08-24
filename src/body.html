@@ -1,0 +1,93 @@
+<a class="sr" href="#results">결과로 건너뛰기</a>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="1.4" opacity=".28"/>
+        <path d="M2.6 16C6 10.4 10.7 7.6 16 7.6S26 10.4 29.4 16C26 21.6 21.3 24.4 16 24.4S6 21.6 2.6 16Z" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/>
+        <circle cx="16" cy="16" r="4.6" fill="var(--accent)"/>
+        <circle cx="16" cy="16" r="8.2" stroke="var(--accent)" stroke-width="1" opacity=".55"/>
+      </svg>
+      <div style="min-width:0">
+        <div class="brand-t" data-i18n="brandTitle">IOL 내비게이터</div>
+        <div class="brand-s" data-i18n="brandSub">인공수정체 선택 보조</div>
+      </div>
+    </div>
+
+    <div class="seg" role="group" aria-label="입력 모드">
+      <button type="button" id="modePatient" aria-pressed="true" data-i18n="modePatient">환자 설문</button>
+      <button type="button" id="modePro" aria-pressed="false" data-i18n="modePro">전문가 정밀</button>
+    </div>
+    <div class="seg" role="group" aria-label="언어 / Language">
+      <button type="button" id="langKo" aria-pressed="true">한국어</button>
+      <button type="button" id="langEn" aria-pressed="false">EN</button>
+    </div>
+    <button type="button" class="iconbtn" id="themeBtn" aria-label="테마 전환" title="테마 전환">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="disclaimer">
+  <div class="wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+    <p data-i18n="disclaimer"></p>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="shell">
+
+    <!-- ============ INPUT RAIL ============ -->
+    <form class="rail" id="form" autocomplete="off">
+      <div id="formSections"></div>
+      <div class="actions" id="actions">
+        <button type="button" class="btn primary" id="runBtn" data-i18n="runBtn">결과 보기</button>
+        <button type="button" class="btn ghost" id="resetBtn" data-i18n="resetBtn">초기화</button>
+        <span class="autohint" id="autoHint" hidden data-i18n="autoHint"></span>
+      </div>
+    </form>
+
+    <!-- ============ RESULTS ============ -->
+    <div class="results" id="results">
+      <div class="empty" id="emptyState">
+        <h3 data-i18n="emptyTitle">아직 결과가 없습니다</h3>
+        <p data-i18n="emptyBody">왼쪽에서 항목을 채운 뒤 <b>결과 보기</b>를 누르세요. 값을 비워 두면 그 항목은 판정에서 제외되고, 대신 ‘확인할 추가 검사’에 표시됩니다.</p>
+      </div>
+      <div id="resultBody" hidden></div>
+
+      <!-- reference / glossary always visible -->
+      <section class="card" id="taxonomyCard">
+        <div class="card-h">
+          <h3 data-i18n="taxTitle">용어 체계</h3>
+          <span class="tag t-neutral" data-i18n="taxTag">ISO 11979-7 · ESCRS</span>
+        </div>
+        <div class="tblwrap">
+          <table class="gloss" id="taxTable"></table>
+        </div>
+      </section>
+
+      <section class="card" id="refCard">
+        <div class="card-h"><h3 data-i18n="refTitle">근거 문헌</h3></div>
+        <div class="reflist" id="refList"></div>
+        <div style="padding:14px 18px;border-top:1px solid var(--line)">
+          <p class="hint" data-i18n="gradeLegend"></p>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</main>
+
+<section class="card" id="testcard" hidden style="max-width:var(--maxw);margin:0 auto 40px;">
+  <div class="card-h"><h3>Self-test</h3></div>
+  <div id="testout"></div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <p data-i18n="footer1"></p>
+    <p data-i18n="footer2"></p>
+  </div>
+</footer>
