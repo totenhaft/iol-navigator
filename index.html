@@ -118,7 +118,7 @@ body{
   background:var(--bg);
   color:var(--ink);
   font-family:var(--sans);
-  font-size:15px;
+  font-size:15.5px;
   line-height:1.62;
   font-weight:400;
   -webkit-font-smoothing:antialiased;
@@ -172,7 +172,7 @@ a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
 .disclaimer b{color:var(--ink);font-weight:600}
 
 /* ---------- layout ---------- */
-.shell{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:26px;padding:22px 0 60px;align-items:start}
+.shell{display:grid;grid-template-columns:minmax(0,460px) minmax(0,1fr);gap:26px;padding:22px 0 60px;align-items:start}
 @media (max-width:1000px){.shell{grid-template-columns:minmax(0,1fr);gap:18px}}
 /* 레일 = 고정 높이 컬럼. 실제 스크롤은 #formSections 가 담당하고
    액션바는 스크롤 영역 밖의 푸터라 어떤 스크롤 위치에서도 사라지지 않는다.
@@ -199,26 +199,28 @@ a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
 .card-b{padding:16px}
 
 /* ---------- accordion sections ---------- */
-details.sect{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden}
+/* flex:0 0 auto 가 없으면 flex 항목이 shrink 되어 카드가 눌리고
+   overflow:hidden 때문에 입력 필드가 잘려 나갑니다. 반드시 유지하세요. */
+details.sect{flex:0 0 auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden}
 details.sect>summary{
-  list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;gap:10px;
-  font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:-.01em;
+  list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:10px;
+  font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:-.01em;
 }
 details.sect>summary::-webkit-details-marker{display:none}
 details.sect>summary:hover{background:var(--surface-2)}
 .sect-num{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--faint);letter-spacing:.08em}
 .chev{margin-left:auto;color:var(--faint);transition:transform .18s}
 details[open]>summary .chev{transform:rotate(90deg)}
-.sect-b{padding:4px 16px 18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:15px}
+.sect-b{padding:6px 16px 20px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
 
 /* ---------- fields ---------- */
 .field{display:flex;flex-direction:column;gap:6px}
-.field>label,.field .flabel{font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
-.hint{font-size:11.5px;color:var(--faint);font-weight:400;line-height:1.45}
+.field>label,.field .flabel{font-size:13.5px;font-weight:600;color:var(--ink-2);display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.hint{font-size:12px;color:var(--faint);font-weight:400;line-height:1.45}
 .unit{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.04em}
 select,input[type="number"],input[type="text"]{
-  width:100%;padding:8px 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);
-  background:var(--surface);font-size:13.5px;
+  width:100%;padding:10px 12px;border:1px solid var(--line-strong);border-radius:var(--r-sm);
+  background:var(--surface);font-size:14.5px;min-height:44px;
 }
 select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px;color:var(--ink)}
 input[type="number"]{font-family:var(--mono);font-variant-numeric:tabular-nums}
@@ -227,16 +229,17 @@ input::placeholder{color:var(--faint)}
 @media (max-width:400px){.grid2{grid-template-columns:1fr}}
 
 .checks{display:flex;flex-direction:column;gap:8px}
-.chk{display:flex;gap:9px;align-items:flex-start;font-size:13px;cursor:pointer;line-height:1.45}
-.chk input{margin:2px 0 0;width:15px;height:15px;accent-color:var(--accent);flex:none}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer;line-height:1.5;padding:2px 0}
+.chk input{margin:3px 0 0;width:17px;height:17px;accent-color:var(--accent);flex:none}
 
 /* segmented scale control */
 .scale{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .scale label{position:relative;display:block}
 .scale input{position:absolute;opacity:0;width:0;height:0}
 .scale span{
-  display:block;text-align:center;padding:7px 2px;border:1px solid var(--line-strong);border-radius:var(--r-sm);
-  font-size:11.5px;line-height:1.3;color:var(--muted);cursor:pointer;background:var(--surface);
+  display:flex;align-items:center;justify-content:center;min-height:46px;
+  text-align:center;padding:8px 4px;border:1px solid var(--line-strong);border-radius:var(--r-sm);
+  font-size:12.5px;line-height:1.28;color:var(--muted);cursor:pointer;background:var(--surface);
   transition:background .13s,color .13s,border-color .13s;
 }
 .scale input:checked+span{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}

@@ -1,82 +1,78 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------
-# IOL 내비게이터 — GitHub 업로드 + 웹사이트 공개 (한 번만 실행)
+# IOL 내비게이터 — GitHub 업로드 (맥/리눅스에서 실행)
 #
 #   실행:  bash setup.sh
 #
-# 하는 일
-#   1. GitHub 로그인 확인 (안 돼 있으면 브라우저로 로그인)
-#   2. 저장소 iol-navigator 생성 (공개)
-#   3. 코드 업로드
-#   4. GitHub Pages 켜기 → 웹 주소 출력
+# 저장소가 이미 있으면 git 만으로 올립니다 (gh 설치 불필요).
+# 저장소가 없고 gh 가 설치돼 있으면 저장소도 만들어 줍니다.
 # ---------------------------------------------------------------
 set -euo pipefail
 
 REPO_NAME="iol-navigator"
 BRANCH="main"
 
-say()  { printf "\n\033[1;36m▶ %s\033[0m\n" "$1"; }
-ok()   { printf "  \033[32m✓\033[0m %s\n" "$1"; }
-die()  { printf "\n\033[1;31m✗ %s\033[0m\n\n" "$1" >&2; exit 1; }
+say() { printf "\n\033[1;36m▶ %s\033[0m\n" "$1"; }
+ok()  { printf "  \033[32m✓\033[0m %s\n" "$1"; }
+die() { printf "\n\033[1;31m✗ %s\033[0m\n\n" "$1" >&2; exit 1; }
 
 cd "$(dirname "$0")"
 
-# --- 1. 준비물 확인 -------------------------------------------------
 say "준비물 확인"
 command -v git >/dev/null || die "git 이 없습니다.  xcode-select --install  을 먼저 실행하세요."
 ok "git 있음"
 
-if ! command -v gh >/dev/null; then
-  cat <<'MSG'
+# --- 계정 이름 알아내기 -------------------------------------------
+USER_LOGIN="${GITHUB_USER:-}"
+if [ -z "$USER_LOGIN" ] && command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
+  USER_LOGIN=$(gh api user --jq .login 2>/dev/null || true)
+fi
+if [ -z "$USER_LOGIN" ]; then
+  read -r -p "  GitHub 계정 이름을 입력하세요: " USER_LOGIN
+fi
+[ -n "$USER_LOGIN" ] || die "계정 이름이 필요합니다."
+ok "계정: $USER_LOGIN"
 
-  GitHub CLI(gh)가 없습니다. 아래 중 하나로 설치하세요.
+REMOTE="https://github.com/$USER_LOGIN/$REPO_NAME.git"
 
-    brew install gh              # Homebrew 가 있으면 이게 가장 간단합니다
-    https://cli.github.com       # 없으면 이 주소에서 설치 파일을 받으세요
+# --- 저장소 존재 확인 ---------------------------------------------
+say "저장소 확인"
+if GIT_TERMINAL_PROMPT=0 git ls-remote "$REMOTE" >/dev/null 2>&1; then
+  ok "저장소가 있습니다: $USER_LOGIN/$REPO_NAME"
+elif command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
+  gh repo create "$USER_LOGIN/$REPO_NAME" --public \
+    --description "근거 기반 백내장 인공수정체(IOL) 선택 보조 도구 — 임상 의사결정 보조, 의료기기 아님" \
+    --disable-wiki
+  ok "저장소를 만들었습니다"
+else
+  cat <<MSG
 
-  설치한 뒤 이 스크립트를 다시 실행하세요:  bash setup.sh
+  저장소가 아직 없습니다. 브라우저에서 30초면 만들 수 있습니다.
+
+    https://github.com/new
+      Repository name : $REPO_NAME
+      공개 범위        : Public
+      README / .gitignore / license  →  모두 체크 해제
+
+  만든 뒤 이 스크립트를 다시 실행하세요:  bash setup.sh
 
 MSG
   exit 1
 fi
-ok "gh 있음"
 
-# --- 2. 로그인 ------------------------------------------------------
-say "GitHub 로그인 확인"
-if ! gh auth status >/dev/null 2>&1; then
-  echo "  로그인이 필요합니다. 브라우저가 열립니다."
-  echo "  (질문이 나오면: GitHub.com → HTTPS → Y → Login with a web browser)"
-  gh auth login
-fi
-USER_LOGIN=$(gh api user --jq .login)
-ok "로그인됨: $USER_LOGIN"
-
-# --- 3. 저장소 만들기 ----------------------------------------------
-say "저장소 준비"
-if gh repo view "$USER_LOGIN/$REPO_NAME" >/dev/null 2>&1; then
-  ok "이미 있는 저장소를 사용합니다: $USER_LOGIN/$REPO_NAME"
-else
-  gh repo create "$USER_LOGIN/$REPO_NAME" \
-    --public \
-    --description "근거 기반 백내장 인공수정체(IOL) 선택 보조 도구 — 임상 의사결정 보조, 의료기기 아님" \
-    --disable-wiki
-  ok "만들었습니다: $USER_LOGIN/$REPO_NAME"
-fi
-
-# --- 4. 업로드 ------------------------------------------------------
-say "코드 업로드"
+# --- 커밋 ----------------------------------------------------------
+say "코드 준비"
 [ -d .git ] || { git init -q; ok "git 저장소 초기화"; }
-git symbolic-ref HEAD "refs/heads/$BRANCH" 2>/dev/null || true
+git symbolic-ref HEAD "refs/heads/$BRANCH" 2>/dev/null || git branch -M "$BRANCH" 2>/dev/null || true
 
-# README 안의 자리표시자를 실제 계정 이름으로 바꿉니다
 if grep -q "YOUR-USERNAME" README.md 2>/dev/null; then
   sed -i.bak "s/YOUR-USERNAME/$USER_LOGIN/g" README.md && rm -f README.md.bak
   ok "README 주소를 $USER_LOGIN 으로 수정"
 fi
 
 git add -A
-if git diff --cached --quiet 2>/dev/null && git rev-parse HEAD >/dev/null 2>&1; then
-  ok "변경 사항 없음"
+if git rev-parse HEAD >/dev/null 2>&1 && git diff --cached --quiet; then
+  ok "이미 커밋되어 있습니다"
 else
   git commit -q -m "IOL 내비게이터 — 근거 기반 인공수정체 선택 보조 도구
 
@@ -87,23 +83,19 @@ else
   ok "커밋 완료"
 fi
 
-git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://github.com/$USER_LOGIN/$REPO_NAME.git"
-git push -u origin "$BRANCH" --force-with-lease 2>/dev/null || git push -u origin "$BRANCH"
-ok "업로드 완료"
+# --- 업로드 --------------------------------------------------------
+say "업로드"
+git remote get-url origin >/dev/null 2>&1 && git remote set-url origin "$REMOTE" || git remote add origin "$REMOTE"
 
-# --- 5. 웹사이트 켜기 ----------------------------------------------
-say "GitHub Pages 켜기"
-if gh api "repos/$USER_LOGIN/$REPO_NAME/pages" >/dev/null 2>&1; then
-  ok "이미 켜져 있습니다"
-else
-  if gh api --method POST "repos/$USER_LOGIN/$REPO_NAME/pages" -f build_type=workflow >/dev/null 2>&1; then
-    ok "켰습니다"
-  else
-    echo "  여기서는 못 켰지만, 워크플로가 실행되면서 스스로 켭니다."
-    echo "  1~3분 뒤에도 안 열리면 여기서 확인하세요:"
-    echo "    https://github.com/$USER_LOGIN/$REPO_NAME/settings/pages"
-  fi
-fi
+cat <<'MSG'
+  비밀번호를 물어보면 GitHub 계정 비밀번호가 아니라
+  발급받은 토큰(github_pat_... )을 붙여넣으세요.
+  Username 은 GitHub 계정 이름입니다.
+  (맥이라면 한 번만 입력하면 키체인에 저장되어 다음부터는 안 물어봅니다)
+
+MSG
+git push -u origin "$BRANCH"
+ok "업로드 완료"
 
 cat <<MSG
 
@@ -115,12 +107,11 @@ cat <<MSG
  진행상황 https://github.com/$USER_LOGIN/$REPO_NAME/actions
 
  웹사이트는 자동 빌드·테스트를 거쳐 1~3분 뒤에 열립니다.
- (테스트가 실패하면 배포되지 않습니다 — 의도된 동작입니다.)
+ GitHub Pages 는 워크플로가 스스로 켜므로 따로 설정할 필요가 없습니다.
 
  앞으로 코드를 고칠 때:
-   src/ 안의 파일을 고치고  →  npm run build  →  git add -A
+   src/ 안의 파일 수정  →  npm run build  →  git add -A
    →  git commit -m "설명"  →  git push
- 푸시하면 웹사이트가 자동으로 갱신됩니다.
 ────────────────────────────────────────────────────────────
 
 MSG

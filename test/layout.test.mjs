@@ -28,6 +28,56 @@ async function settleAtBottom(page) {
   }
 }
 
+
+/** 입력 섹션이 flex 로 찌그러지지 않았는지 확인합니다.
+ *  2026-08 회귀: #formSections 를 flex 컬럼으로 바꾸면서 flex-shrink 기본값(1) 때문에
+ *  섹션 카드가 눌리고 overflow:hidden 으로 입력 필드가 잘려 나갔습니다.
+ *  스크롤조차 생기지 않아 사용자가 값을 넣을 수 없었습니다. */
+async function checkFieldsUsable(page) {
+  return page.evaluate(() => {
+    const problems = [];
+    const inner = document.querySelector("#formSections");
+
+    // 1) 열린 섹션이 자기 내용만큼의 높이를 갖는지
+    for (const d of document.querySelectorAll("details.sect[open]")) {
+      const body = d.querySelector(".sect-b");
+      if (!body) continue;
+      const summary = d.querySelector("summary");
+      const needed = body.scrollHeight + summary.offsetHeight;
+      const actual = d.getBoundingClientRect().height;
+      if (actual < needed - 4) {
+        const title = summary.textContent.trim().slice(0, 20);
+        problems.push(`"${title}" 눌림 ${Math.round(actual)}<${Math.round(needed)}px`);
+      }
+    }
+
+    // 2) 내용이 넘치면 스크롤이 실제로 가능해야 함
+    if (inner.scrollHeight <= inner.clientHeight + 2) {
+      const controls = inner.querySelectorAll("select, input, .scale").length;
+      if (controls > 8 && inner.clientHeight < 2000) {
+        problems.push(`스크롤 없음 (컨트롤 ${controls}개가 ${inner.clientHeight}px 안에?)`);
+      }
+    }
+
+    // 3) 스크롤을 끝까지 내리면 마지막 컨트롤에 닿아야 함
+    inner.scrollTop = inner.scrollHeight;
+    const all = inner.querySelectorAll("select, input[type=number], .scale, .chk");
+    const last = all[all.length - 1];
+    if (last) {
+      const ib = inner.getBoundingClientRect(), lb = last.getBoundingClientRect();
+      if (lb.bottom > ib.bottom + 4 || lb.top < ib.top - 4) problems.push("마지막 입력 항목에 도달 불가");
+    }
+    inner.scrollTop = 0;
+
+    // 4) 클릭 대상이 너무 작지 않은지 (고령 사용자 배려)
+    const small = [...inner.querySelectorAll(".scale span, select, input[type=number]")]
+      .filter(e => e.getBoundingClientRect().height < 34).length;
+    if (small > 0) problems.push(`클릭 영역 34px 미만 ${small}개`);
+
+    return problems;
+  });
+}
+
 export default async function run() {
   const browser = await launch();
   let failures = 0;
@@ -83,6 +133,10 @@ export default async function run() {
         return f.bottom > a.top + 1;
       });
       if (overlap) bad.push("액션바가 푸터를 가림");
+
+      // 입력 필드가 실제로 쓸 수 있는 상태인지
+      const fieldProblems = await checkFieldsUsable(page);
+      bad.push(...fieldProblems);
       if (errors.length) bad.push(`JS 오류 ${errors.length}건`);
 
       const ok = bad.length === 0;
