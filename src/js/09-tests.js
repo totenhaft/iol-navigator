@@ -98,8 +98,39 @@ function runSelfTests(){
   r = G({cornealComa:0.35}); ok("코마 0.35 → 발동", fired(r,"coma_high"));
   r = G({cornealComa:0.25}); ok("코마 0.25 → 미발동", !fired(r,"coma_high"));
 
-  r = G({cylD:1.5, toricPlanned:false}); ok("난시 1.5D 교정계획 없음 → 발동", fired(r,"astig_uncorrected"));
-  r = G({cylD:1.5, toricPlanned:true});  ok("난시 1.5D 교정계획 있음 → 미발동", !fired(r,"astig_uncorrected"));
+  r = G({cylD:1.5, toricPlanned:false}); ok("의사 화면: 난시 1.5D 교정계획 없음 → 발동", fired(r,"astig_uncorrected"));
+  r = G({cylD:1.5, toricPlanned:true});  ok("의사 화면: 난시 1.5D 교정계획 있음 → 미발동", !fired(r,"astig_uncorrected"));
+
+  /* ── 난시는 렌즈 '종류'의 순위를 바꾸지 않는다 ──────────────────────
+     토릭은 별개의 축이라 단초점부터 다초점까지 어느 유형과도 함께 쓴다.
+     환자·상담 화면에는 토릭 계획을 입력할 칸이 없으므로, 비어 있는 것을
+     '토릭을 안 쓴다'로 읽어 프리미엄을 감점하면 안 된다. */
+  const astigOf = (v, mode) => evaluate(baseInput({
+      specIndep:"3", nearPriority:"2", interPriority:"2", costSensitivity:"0",
+      nightDriving:"1", dysphTolerance:"1", astigKnown:v}), mode);
+  const rankStr = rr => rr.viable.map(x => x.id).join(">");
+  ["patient","counselor"].forEach(mode => {
+    const none = astigOf("no", mode), lots = astigOf("lots", mode), some = astigOf("some", mode);
+    ok(`${mode === "patient" ? "환자" : "상담"} 화면: 난시 유무가 렌즈 종류 순위를 바꾸지 않는다`,
+       rankStr(none) === rankStr(lots) && rankStr(none) === rankStr(some),
+       rankStr(none) + "  vs  " + rankStr(lots));
+    ok(`${mode === "patient" ? "환자" : "상담"} 화면: 난시교정 계획 감점이 발동하지 않는다`,
+       !fired(lots, "astig_uncorrected"));
+    ok(`${mode === "patient" ? "환자" : "상담"} 화면: 대신 토릭 전제 권고가 뜬다`,
+       fired(lots, "astig_toric_axis"));
+    ok(`${mode === "patient" ? "환자" : "상담"} 화면: 난시가 있으면 토릭 병용으로 표시한다`,
+       lots.toricLikely === true && none.toricLikely === false);
+  });
+
+  /* 단초점이 어울리는 환자에서는 난시가 있어도 여전히 단초점이 1순위이고,
+     화면에는 '단초점 + 난시교정(토릭)' 으로 나타난다 */
+  const plainEye = v => evaluate(baseInput({
+      specIndep:"0", nearPriority:"0", interPriority:"1", costSensitivity:"1",
+      nightDriving:"1", dysphTolerance:"1", astigKnown:v}), "patient");
+  ok("탈안경 요구가 없으면 난시가 있어도 단초점이 1순위",
+     plainEye("lots").top.id === "mono" && plainEye("no").top.id === "mono",
+     plainEye("lots").top.id);
+  ok("그 경우 토릭 병용으로 표시된다", plainEye("lots").toricLikely === true);
   r = G({cylD:1.5}); ok("난시 1.5D → 토릭 적응증 권고", fired(r,"toric_indicated"));
   r = G({cylD:0.5}); ok("난시 0.5D → 토릭 권고 미발동", !fired(r,"toric_indicated"));
 
@@ -128,7 +159,7 @@ function runSelfTests(){
   /* --- 환자 모드 --- */
   r = evaluate(baseInput({astigKnown:"lots"}), "patient");
   ok("환자모드: ‘난시 많음’ → 난시 추정 + 추정 표시", r.d.cylD === 2.0 && r.d.astigEstimated === true);
-  ok("환자모드: 난시 교정계획 미상 → 난시 주의 발동", fired(r,"astig_uncorrected"));
+  ok("환자모드: 난시가 많다고 해도 프리미엄을 감점하지 않는다 (토릭은 별개 축)", !fired(r,"astig_uncorrected") && fired(r,"astig_toric_axis"));
   r = evaluate(baseInput({astigKnown:"unknown"}), "patient");
   ok("환자모드: 난시 모름 → 난시 규칙 미발동", !fired(r,"astig_uncorrected") && r.d.cylD === null);
 

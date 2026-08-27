@@ -265,8 +265,8 @@ const RULES = [
 {
   id:"astig_uncorrected", layer:"caution",
   targets:{trifocal:3, lentis:2.5, edof:2, enhMono:1.5, monoBlend:1},
-  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && d.toricPlanned !== true,
-  ko:{t:"각막난시 ≥ 0.75 D인데 난시교정 계획이 없음", why:"잔여 난시는 초점분할 렌즈의 이미 얇은 이미지 질 여유를 그대로 잠식합니다. 프리미엄 렌즈 술후 불만의 가장 흔하고 가장 교정 가능한 원인입니다. 각막난시 ≥1.0 D에서는 토릭이 보편적으로 권고되며, 술후 정규난시는 1.0 D 미만으로 유지하는 것이 목표입니다.", act:"토릭 IOL 또는 각막이완절개를 함께 계획하세요. 난시를 교정하지 않을 것이라면 프리미엄 렌즈 자체를 재고해야 합니다."},
+  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && d.toricPlanned !== true && d.toricPlanKnown,
+  ko:{t:"각막난시 ≥ 0.75 D인데 난시교정 계획이 없음 (집도의가 계획을 세우는 화면에서만 표시)", why:"잔여 난시는 초점분할 렌즈의 이미 얇은 이미지 질 여유를 그대로 잠식합니다. 프리미엄 렌즈 술후 불만의 가장 흔하고 가장 교정 가능한 원인입니다. 각막난시 ≥1.0 D에서는 토릭이 보편적으로 권고되며, 술후 정규난시는 1.0 D 미만으로 유지하는 것이 목표입니다.", act:"토릭 IOL 또는 각막이완절개를 함께 계획하세요. 난시를 교정하지 않을 것이라면 프리미엄 렌즈 자체를 재고해야 합니다."},
   en:{t:"Corneal astigmatism ≥ 0.75 D with no astigmatic correction planned", why:"Residual cylinder consumes the already-thin image-quality margin of a focus-splitting lens. It is the most common and most correctable cause of premium-IOL dissatisfaction. Toric IOLs are universally recommended at ≥1.0 D, and postoperative regular astigmatism should stay below 1.0 D.", act:"Plan a toric IOL or limbal relaxing incisions. If astigmatism will not be corrected, reconsider the premium lens itself."},
   refs:["R13","R8","R12"], grade:"C", tests:[T.TCA, T.TOPO]
 },
@@ -365,6 +365,13 @@ const RULES = [
   ko:{t:"굴절형 분절 이중초점을 쓴다면 양안 가입도와 주시안을 먼저 정하세요", why:"이 진료에서는 각막 고위수차가 큰 노안교정 희망 환자에게 굴절형 분절 이중초점(렌티스)을 쓰고, 가입도 +2.0 D와 +3.0 D를 눈에 따라 나누어 배정합니다. 두 눈의 가입도가 다르면 근거리 거리와 양안 융합이 달라지므로, 어느 눈에 어느 가입도를 넣을지는 수술 전에 정해져 있어야 합니다.", act:"주시안을 확인하고 환자의 주된 근업 거리(책·휴대폰·악보·컴퓨터)를 물어 가입도 배정을 먼저 결정하세요. 이 조합은 비교 임상시험이 아니라 임상 경험에 근거한 운용 방식임을 환자에게도 설명하세요."},
   en:{t:"If using a segmented refractive bifocal, decide the add powers and dominant eye first", why:"This practice uses a segmented refractive bifocal (LENTIS) for presbyopia-correction candidates with high corneal higher-order aberration, splitting +2.0 D and +3.0 D adds between the eyes. Different adds change the working distance and binocular fusion, so the assignment must be decided before surgery.", act:"Establish ocular dominance and the patient's main near working distance, then assign the adds. Explain that this arrangement rests on clinical experience rather than a comparative trial."},
   refs:["R19"], grade:"D", tests:[T.COUNSEL]
+},
+{
+  id:"astig_toric_axis", layer:"note", targets:[],
+  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && !d.toricPlanKnown,
+  ko:{t:"난시가 있으므로 토릭 병용을 전제로 봅니다", why:"토릭은 렌즈 종류와 별개의 축입니다. 단초점·프리미엄 단초점·연속초점·다초점 어느 쪽에도 함께 쓸 수 있으므로, 난시가 있다는 사실만으로 렌즈 종류의 순위가 바뀌지는 않습니다. 다만 난시를 교정하지 않은 채로는 어떤 렌즈를 넣어도 기대한 시력이 나오지 않으며, 초점을 나누는 렌즈일수록 잔여 난시의 타격이 큽니다.", act:"이 화면에서는 토릭 병용 여부를 정할 수 없으므로 '함께 쓴다'고 보고 순위를 매겼습니다. 실제 계획은 총 각막난시(후면 포함) 측정값을 보고 집도의가 정합니다. 토릭을 쓰지 않기로 하면 그때 프리미엄 선택지를 다시 검토해야 합니다."},
+  en:{t:"Astigmatism present — a toric option is assumed", why:"Toric is an axis separate from the lens category: it combines with a monofocal, an enhanced monofocal, an EDOF or a multifocal alike. So the presence of astigmatism alone does not reorder the lens categories. Left uncorrected, however, no lens will deliver the expected result, and focus-splitting designs suffer most from residual cylinder.", act:"This screen cannot set the toric plan, so the ranking assumes toric will be used. The surgeon decides from the measured total corneal astigmatism. If toric is not used, the premium options must be revisited."},
+  refs:["R13","R8"], grade:"C", tests:[T.TCA, T.TOPO]
 },
 {
   id:"toric_indicated", layer:"note", targets:[],

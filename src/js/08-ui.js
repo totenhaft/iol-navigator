@@ -245,13 +245,15 @@ function renderResults(res){
     host.appendChild(box);
   }
 
-  /* 1순위 */
+  /* 1순위 — 난시가 있으면 토릭 병용을 전제로 이름에 함께 적는다.
+     토릭은 렌즈 종류와 별개의 축이므로 순위는 바꾸지 않고 표기만 더한다. */
+  const toricOn = res.toricLikely || state.toric;
   const top = res.top;
   const topLens = top.lens;
   const v = el("section", {cls:"verdict"});
   const vt = el("div", {cls:"verdict-top"}, [
     el("div", {cls:"eyebrow", text:t.recTitle}),
-    el("h2", {cls:"verdict-name", text: tx(topLens)}),
+    el("h2", {cls:"verdict-name", text: tx(topLens) + (toricOn ? t.toricSuffix : "")}),
     el("div", {cls:"verdict-en", text: (state.lang === "ko" ? topLens.en : topLens.ko) + " · " + tx({ko:topLens.koSub, en:topLens.enSub})}),
     defocusStrip(topLens),
     el("p", {cls:"verdict-why", text: state.lang === "ko" ? topLens.koDesc : topLens.enDesc}),
@@ -310,7 +312,8 @@ function renderResults(res){
     el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:color-mix(in srgb,var(--accent-soft) 62%, var(--sunken))"}), el("span",{text:L().bandInter})]),
     el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:color-mix(in srgb,var(--accent-soft) 30%, var(--sunken))"}), el("span",{text:L().bandNear})]),
   ]);
-  host.appendChild(card(t.rankTitle, null, null, el("div", {}, [legend, rank])));
+  host.appendChild(card(t.rankTitle, null, null, el("div", {},
+    [ toricOn ? el("p", {cls:"hint", style:"padding:11px 18px 0", text:t.toricAssumed}) : null, legend, rank ])));
 
   /* 렌즈 유형 설명 — 환자·상담 화면에서 설명 자료로 씁니다 */
   if (state.role !== "doctor") host.appendChild(lensGuideCard());
@@ -953,7 +956,7 @@ function buildA5(res){
   root.appendChild(el("h4", {text: chosen ? (ko ? "함께 확인한 인공수정체" : "Lens type agreed with you")
                                           : (ko ? "상담에서 제안드린 유형" : "Type suggested at this consultation")}));
   const pick = el("div", {cls:"a5-pick"}, [
-    el("b", {text: tx(lens) + (state.toric ? (ko ? " + 난시교정(토릭)" : " + toric") : "")}),
+    el("b", {text: tx(lens) + ((res.toricLikely || state.toric) ? t.toricSuffix : "")}),
     el("p", {text: ko ? lens.koPlain : lens.enPlain}),
   ]);
   const bar = el("div", {cls:"a5-bar"});

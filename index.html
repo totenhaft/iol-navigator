@@ -1411,8 +1411,8 @@ const RULES = [
 {
   id:"astig_uncorrected", layer:"caution",
   targets:{trifocal:3, lentis:2.5, edof:2, enhMono:1.5, monoBlend:1},
-  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && d.toricPlanned !== true,
-  ko:{t:"각막난시 ≥ 0.75 D인데 난시교정 계획이 없음", why:"잔여 난시는 초점분할 렌즈의 이미 얇은 이미지 질 여유를 그대로 잠식합니다. 프리미엄 렌즈 술후 불만의 가장 흔하고 가장 교정 가능한 원인입니다. 각막난시 ≥1.0 D에서는 토릭이 보편적으로 권고되며, 술후 정규난시는 1.0 D 미만으로 유지하는 것이 목표입니다.", act:"토릭 IOL 또는 각막이완절개를 함께 계획하세요. 난시를 교정하지 않을 것이라면 프리미엄 렌즈 자체를 재고해야 합니다."},
+  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && d.toricPlanned !== true && d.toricPlanKnown,
+  ko:{t:"각막난시 ≥ 0.75 D인데 난시교정 계획이 없음 (집도의가 계획을 세우는 화면에서만 표시)", why:"잔여 난시는 초점분할 렌즈의 이미 얇은 이미지 질 여유를 그대로 잠식합니다. 프리미엄 렌즈 술후 불만의 가장 흔하고 가장 교정 가능한 원인입니다. 각막난시 ≥1.0 D에서는 토릭이 보편적으로 권고되며, 술후 정규난시는 1.0 D 미만으로 유지하는 것이 목표입니다.", act:"토릭 IOL 또는 각막이완절개를 함께 계획하세요. 난시를 교정하지 않을 것이라면 프리미엄 렌즈 자체를 재고해야 합니다."},
   en:{t:"Corneal astigmatism ≥ 0.75 D with no astigmatic correction planned", why:"Residual cylinder consumes the already-thin image-quality margin of a focus-splitting lens. It is the most common and most correctable cause of premium-IOL dissatisfaction. Toric IOLs are universally recommended at ≥1.0 D, and postoperative regular astigmatism should stay below 1.0 D.", act:"Plan a toric IOL or limbal relaxing incisions. If astigmatism will not be corrected, reconsider the premium lens itself."},
   refs:["R13","R8","R12"], grade:"C", tests:[T.TCA, T.TOPO]
 },
@@ -1513,6 +1513,13 @@ const RULES = [
   refs:["R19"], grade:"D", tests:[T.COUNSEL]
 },
 {
+  id:"astig_toric_axis", layer:"note", targets:[],
+  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && !d.toricPlanKnown,
+  ko:{t:"난시가 있으므로 토릭 병용을 전제로 봅니다", why:"토릭은 렌즈 종류와 별개의 축입니다. 단초점·프리미엄 단초점·연속초점·다초점 어느 쪽에도 함께 쓸 수 있으므로, 난시가 있다는 사실만으로 렌즈 종류의 순위가 바뀌지는 않습니다. 다만 난시를 교정하지 않은 채로는 어떤 렌즈를 넣어도 기대한 시력이 나오지 않으며, 초점을 나누는 렌즈일수록 잔여 난시의 타격이 큽니다.", act:"이 화면에서는 토릭 병용 여부를 정할 수 없으므로 '함께 쓴다'고 보고 순위를 매겼습니다. 실제 계획은 총 각막난시(후면 포함) 측정값을 보고 집도의가 정합니다. 토릭을 쓰지 않기로 하면 그때 프리미엄 선택지를 다시 검토해야 합니다."},
+  en:{t:"Astigmatism present — a toric option is assumed", why:"Toric is an axis separate from the lens category: it combines with a monofocal, an enhanced monofocal, an EDOF or a multifocal alike. So the presence of astigmatism alone does not reorder the lens categories. Left uncorrected, however, no lens will deliver the expected result, and focus-splitting designs suffer most from residual cylinder.", act:"This screen cannot set the toric plan, so the ranking assumes toric will be used. The surgeon decides from the measured total corneal astigmatism. If toric is not used, the premium options must be revisited."},
+  refs:["R13","R8"], grade:"C", tests:[T.TCA, T.TOPO]
+},
+{
   id:"toric_indicated", layer:"note", targets:[],
   when:d => num(d.cylD) !== null && d.cylD >= 1.0,
   ko:{t:"토릭 IOL 적응증", why:"각막난시 1.0 D 이상에서 토릭 IOL이 보편적으로 권고됩니다. 축이 3° 어긋날 때마다 교정효과가 약 10% 줄고 약 30°에서 완전히 소실되므로 축 표시와 정렬 정확도가 중요합니다.", act:"후면각막난시를 포함한 총 각막난시(TCA)로 계산하고, 술중 축 정렬 방법(디지털 마킹 등)을 계획하세요."},
@@ -1604,6 +1611,12 @@ function normalize(raw, mode){
     else if (d.astigKnown === "lots"){ d.cylD = 2.0; d.astigEstimated = true; }
   }
   if (d.mode === "patient") d.toricPlanned = false;   // 환자는 수술 계획을 알 수 없음
+
+  /* 토릭 병용 계획을 '입력할 수 있는' 화면인가.
+     의사 화면에만 그 칸이 있다. 환자·상담 화면에서 토릭 계획이 비어 있는 것은
+     '토릭을 안 쓰기로 했다'가 아니라 '아직 정하지 않았다'는 뜻이다. 둘을 같게
+     다루면 난시가 있다는 이유만으로 프리미엄 렌즈가 통째로 감점된다. */
+  d.toricPlanKnown = (role === "doctor" || role === "pro");   // "pro" 는 의사 화면의 옛 이름
 
   // 'unknown' 은 규칙을 발동시키지 않음 (null 취급) — 대신 추가검사로 표시
   const unknowns = [];
@@ -1865,6 +1878,8 @@ const STR = {
   decisionHint:"의사와 상의해 정한 유형을 고르면, 아래 요약과 인쇄물에 함께 표시됩니다. 이 선택은 저장되지 않고 이 화면에만 남습니다.",
   decisionPick:"환자와 확인한 유형", decisionNone:"아직 정하지 않음",
   decisionToric:"난시교정(토릭) 병용",
+  toricSuffix:" + 난시교정(토릭)",
+  toricAssumed:"난시가 있어 모든 유형에 난시교정(토릭) 병용을 전제로 순위를 매겼습니다. 토릭은 렌즈 종류와 별개의 축이라 어느 유형과도 함께 쓸 수 있습니다.",
   decisionMismatch:"이 유형은 현재 입력 기준으로 금기에 해당합니다. 반드시 담당의와 다시 확인하세요.",
   decisionCaution:"이 유형에는 아래 ‘주의’ 항목이 함께 붙습니다. 환자에게 설명하셨는지 확인하세요.",
   costTitle:"비급여 비용",
@@ -1959,6 +1974,8 @@ const STR = {
   decisionHint:"Pick the type agreed with the doctor; it appears in the summary and the printout. The choice is not stored anywhere — it stays on this screen.",
   decisionPick:"Type confirmed with the patient", decisionNone:"Not decided yet",
   decisionToric:"With toric (astigmatism) correction",
+  toricSuffix:" + toric",
+  toricAssumed:"Astigmatism is present, so the ranking assumes a toric option for every type. Toric is an axis separate from the lens category and combines with any of them.",
   decisionMismatch:"With the current inputs this type is contraindicated. Confirm with the surgeon before proceeding.",
   decisionCaution:"This type carries the cautions listed below. Check that they were explained to the patient.",
   costTitle:"Out-of-pocket cost",
@@ -2728,13 +2745,15 @@ function renderResults(res){
     host.appendChild(box);
   }
 
-  /* 1순위 */
+  /* 1순위 — 난시가 있으면 토릭 병용을 전제로 이름에 함께 적는다.
+     토릭은 렌즈 종류와 별개의 축이므로 순위는 바꾸지 않고 표기만 더한다. */
+  const toricOn = res.toricLikely || state.toric;
   const top = res.top;
   const topLens = top.lens;
   const v = el("section", {cls:"verdict"});
   const vt = el("div", {cls:"verdict-top"}, [
     el("div", {cls:"eyebrow", text:t.recTitle}),
-    el("h2", {cls:"verdict-name", text: tx(topLens)}),
+    el("h2", {cls:"verdict-name", text: tx(topLens) + (toricOn ? t.toricSuffix : "")}),
     el("div", {cls:"verdict-en", text: (state.lang === "ko" ? topLens.en : topLens.ko) + " · " + tx({ko:topLens.koSub, en:topLens.enSub})}),
     defocusStrip(topLens),
     el("p", {cls:"verdict-why", text: state.lang === "ko" ? topLens.koDesc : topLens.enDesc}),
@@ -2793,7 +2812,8 @@ function renderResults(res){
     el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:color-mix(in srgb,var(--accent-soft) 62%, var(--sunken))"}), el("span",{text:L().bandInter})]),
     el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:color-mix(in srgb,var(--accent-soft) 30%, var(--sunken))"}), el("span",{text:L().bandNear})]),
   ]);
-  host.appendChild(card(t.rankTitle, null, null, el("div", {}, [legend, rank])));
+  host.appendChild(card(t.rankTitle, null, null, el("div", {},
+    [ toricOn ? el("p", {cls:"hint", style:"padding:11px 18px 0", text:t.toricAssumed}) : null, legend, rank ])));
 
   /* 렌즈 유형 설명 — 환자·상담 화면에서 설명 자료로 씁니다 */
   if (state.role !== "doctor") host.appendChild(lensGuideCard());
@@ -3436,7 +3456,7 @@ function buildA5(res){
   root.appendChild(el("h4", {text: chosen ? (ko ? "함께 확인한 인공수정체" : "Lens type agreed with you")
                                           : (ko ? "상담에서 제안드린 유형" : "Type suggested at this consultation")}));
   const pick = el("div", {cls:"a5-pick"}, [
-    el("b", {text: tx(lens) + (state.toric ? (ko ? " + 난시교정(토릭)" : " + toric") : "")}),
+    el("b", {text: tx(lens) + ((res.toricLikely || state.toric) ? t.toricSuffix : "")}),
     el("p", {text: ko ? lens.koPlain : lens.enPlain}),
   ]);
   const bar = el("div", {cls:"a5-bar"});
@@ -3649,8 +3669,39 @@ function runSelfTests(){
   r = G({cornealComa:0.35}); ok("코마 0.35 → 발동", fired(r,"coma_high"));
   r = G({cornealComa:0.25}); ok("코마 0.25 → 미발동", !fired(r,"coma_high"));
 
-  r = G({cylD:1.5, toricPlanned:false}); ok("난시 1.5D 교정계획 없음 → 발동", fired(r,"astig_uncorrected"));
-  r = G({cylD:1.5, toricPlanned:true});  ok("난시 1.5D 교정계획 있음 → 미발동", !fired(r,"astig_uncorrected"));
+  r = G({cylD:1.5, toricPlanned:false}); ok("의사 화면: 난시 1.5D 교정계획 없음 → 발동", fired(r,"astig_uncorrected"));
+  r = G({cylD:1.5, toricPlanned:true});  ok("의사 화면: 난시 1.5D 교정계획 있음 → 미발동", !fired(r,"astig_uncorrected"));
+
+  /* ── 난시는 렌즈 '종류'의 순위를 바꾸지 않는다 ──────────────────────
+     토릭은 별개의 축이라 단초점부터 다초점까지 어느 유형과도 함께 쓴다.
+     환자·상담 화면에는 토릭 계획을 입력할 칸이 없으므로, 비어 있는 것을
+     '토릭을 안 쓴다'로 읽어 프리미엄을 감점하면 안 된다. */
+  const astigOf = (v, mode) => evaluate(baseInput({
+      specIndep:"3", nearPriority:"2", interPriority:"2", costSensitivity:"0",
+      nightDriving:"1", dysphTolerance:"1", astigKnown:v}), mode);
+  const rankStr = rr => rr.viable.map(x => x.id).join(">");
+  ["patient","counselor"].forEach(mode => {
+    const none = astigOf("no", mode), lots = astigOf("lots", mode), some = astigOf("some", mode);
+    ok(`${mode === "patient" ? "환자" : "상담"} 화면: 난시 유무가 렌즈 종류 순위를 바꾸지 않는다`,
+       rankStr(none) === rankStr(lots) && rankStr(none) === rankStr(some),
+       rankStr(none) + "  vs  " + rankStr(lots));
+    ok(`${mode === "patient" ? "환자" : "상담"} 화면: 난시교정 계획 감점이 발동하지 않는다`,
+       !fired(lots, "astig_uncorrected"));
+    ok(`${mode === "patient" ? "환자" : "상담"} 화면: 대신 토릭 전제 권고가 뜬다`,
+       fired(lots, "astig_toric_axis"));
+    ok(`${mode === "patient" ? "환자" : "상담"} 화면: 난시가 있으면 토릭 병용으로 표시한다`,
+       lots.toricLikely === true && none.toricLikely === false);
+  });
+
+  /* 단초점이 어울리는 환자에서는 난시가 있어도 여전히 단초점이 1순위이고,
+     화면에는 '단초점 + 난시교정(토릭)' 으로 나타난다 */
+  const plainEye = v => evaluate(baseInput({
+      specIndep:"0", nearPriority:"0", interPriority:"1", costSensitivity:"1",
+      nightDriving:"1", dysphTolerance:"1", astigKnown:v}), "patient");
+  ok("탈안경 요구가 없으면 난시가 있어도 단초점이 1순위",
+     plainEye("lots").top.id === "mono" && plainEye("no").top.id === "mono",
+     plainEye("lots").top.id);
+  ok("그 경우 토릭 병용으로 표시된다", plainEye("lots").toricLikely === true);
   r = G({cylD:1.5}); ok("난시 1.5D → 토릭 적응증 권고", fired(r,"toric_indicated"));
   r = G({cylD:0.5}); ok("난시 0.5D → 토릭 권고 미발동", !fired(r,"toric_indicated"));
 
@@ -3679,7 +3730,7 @@ function runSelfTests(){
   /* --- 환자 모드 --- */
   r = evaluate(baseInput({astigKnown:"lots"}), "patient");
   ok("환자모드: ‘난시 많음’ → 난시 추정 + 추정 표시", r.d.cylD === 2.0 && r.d.astigEstimated === true);
-  ok("환자모드: 난시 교정계획 미상 → 난시 주의 발동", fired(r,"astig_uncorrected"));
+  ok("환자모드: 난시가 많다고 해도 프리미엄을 감점하지 않는다 (토릭은 별개 축)", !fired(r,"astig_uncorrected") && fired(r,"astig_toric_axis"));
   r = evaluate(baseInput({astigKnown:"unknown"}), "patient");
   ok("환자모드: 난시 모름 → 난시 규칙 미발동", !fired(r,"astig_uncorrected") && r.d.cylD === null);
 

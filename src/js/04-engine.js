@@ -75,6 +75,12 @@ function normalize(raw, mode){
   }
   if (d.mode === "patient") d.toricPlanned = false;   // 환자는 수술 계획을 알 수 없음
 
+  /* 토릭 병용 계획을 '입력할 수 있는' 화면인가.
+     의사 화면에만 그 칸이 있다. 환자·상담 화면에서 토릭 계획이 비어 있는 것은
+     '토릭을 안 쓰기로 했다'가 아니라 '아직 정하지 않았다'는 뜻이다. 둘을 같게
+     다루면 난시가 있다는 이유만으로 프리미엄 렌즈가 통째로 감점된다. */
+  d.toricPlanKnown = (role === "doctor" || role === "pro");   // "pro" 는 의사 화면의 옛 이름
+
   // 'unknown' 은 규칙을 발동시키지 않음 (null 취급) — 대신 추가검사로 표시
   const unknowns = [];
   Object.keys(CRITICAL_UNKNOWN).forEach(k => {
