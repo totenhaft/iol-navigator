@@ -298,10 +298,52 @@ function runSelfTests(){
      [c0,c1,c2,c3].map(r=>r.scored.find(x=>x.id==="trifocal").score).join(">"));
   ok("비용이 매우 큰 문제면 가장 싼 선택지가 1순위로 올라온다",
      c3.top.id === "monoBlend" || c3.top.id === "mono", "top=" + c3.top.id);
-  ok("비용 민감도는 싼 렌즈의 점수를 올리지는 않는다 (감점 전용)",
-     c0.scored.find(x=>x.id==="mono").score === c3.scored.find(x=>x.id==="mono").score);
+  ok("비용 감점은 가장 싼 렌즈의 점수를 건드리지 않는다 (감점 전용)",
+     c1.scored.find(x=>x.id==="mono").score === c3.scored.find(x=>x.id==="mono").score,
+     c1.scored.find(x=>x.id==="mono").score + " vs " + c3.scored.find(x=>x.id==="mono").score);
   ok("비용 순위가 점수 순위를 뒤집을 만큼만 작동한다 (탈안경 요구는 여전히 반영)",
      rankOf("mono", c3) > rankOf("edof", c3), "단초점 순위=" + rankOf("mono", c3));
+
+  /* 재정 제약이 없을 때의 가산 — 두 조건이 함께여야만 붙는다 */
+  const affordBase = {nearPriority:"1", interPriority:"1", nightDriving:"1", dysphTolerance:"1", toricPlanned:true};
+  const A = o => G(Object.assign({}, affordBase, o));
+  ok("비용 상관없음 + 탈안경 뚜렷(3) → 다초점이 1순위",
+     A({costSensitivity:"0", specIndep:"3"}).top.id === "trifocal",
+     "top=" + A({costSensitivity:"0", specIndep:"3"}).top.id);
+  ok("비용 상관없음 + 탈안경 뚜렷(2) → 다초점이 1순위",
+     A({costSensitivity:"0", specIndep:"2"}).top.id === "trifocal",
+     "top=" + A({costSensitivity:"0", specIndep:"2"}).top.id);
+  ok("탈안경 의지가 약하면(1) 비용이 상관없어도 밀어주지 않는다",
+     A({costSensitivity:"0", specIndep:"1"}).top.id !== "trifocal",
+     "top=" + A({costSensitivity:"0", specIndep:"1"}).top.id);
+  ok("탈안경 의지가 없으면(0) 비용이 상관없어도 단초점이 남는다",
+     A({costSensitivity:"0", specIndep:"0", nearPriority:"0"}).top.id === "mono",
+     "top=" + A({costSensitivity:"0", specIndep:"0", nearPriority:"0"}).top.id);
+  /* 이 가산이 '비싸서 밀어주는 것'이 아님을 금액표를 뒤집어 확인한다.
+     금액에 비례했다면 순위가 따라 뒤집혔을 것이다. */
+  const affordRank = () => A({costSensitivity:"0", specIndep:"3"}).viable.map(v => v.id).join(">");
+  const rankNormalPrice = affordRank();
+  setCostTable({trifocal:{min:25, max:25}, lentis:{min:400, max:400}, mono:{min:400, max:400}});
+  const rankFlippedPrice = affordRank();
+  setCostTable({});
+  ok("비용 상관없음일 때의 가산은 금액과 무관하다 (금액표를 뒤집어도 순위가 같다)",
+     rankNormalPrice === rankFlippedPrice, rankNormalPrice + "  vs  " + rankFlippedPrice);
+  ok("비용을 답하지 않은 것은 '상관없다'와 다르게 취급한다",
+     A({specIndep:"3"}).scored.find(x=>x.id==="trifocal").score
+       < A({costSensitivity:"0", specIndep:"3"}).scored.find(x=>x.id==="trifocal").score);
+  ok("가산이 붙은 이유가 1순위 사유에 드러난다",
+     A({costSensitivity:"0", specIndep:"3"}).top.pref.items.some(i => i.k === "afford" && i.v > 0.4));
+
+  /* 빛번짐 척도 — '조금은'의 낙차를 줄이되 '전혀 못 견딘다'는 강하게 유지 */
+  const byTol = t => G(Object.assign({}, affordBase, {costSensitivity:"0", specIndep:"3", dysphTolerance:t}))
+                       .scored.find(x => x.id === "trifocal").score;
+  ok("빛번짐 감내 답이 낮을수록 회절형 점수가 단조롭게 내려간다",
+     byTol("3") >= byTol("2") && byTol("2") > byTol("1") && byTol("1") > byTol("0"),
+     [byTol("3"), byTol("2"), byTol("1"), byTol("0")].join(" ≥ "));
+  ok("'전혀 못 견딘다'는 여전히 회절형을 크게 끌어내린다",
+     byTol("2") - byTol("0") >= 10, "차이 " + (byTol("2") - byTol("0")) + "점");
+  ok("'조금은'과 '웬만큼' 사이의 낙차는 완만하다",
+     byTol("2") - byTol("1") <= 5, "차이 " + (byTol("2") - byTol("1")) + "점");
 
   /* 토릭은 모든 후보에 같은 금액이 더해지므로 상대 순위를 바꾸지 않아야 한다 */
   const toricBase = {specIndep:"3", nearPriority:"2", interPriority:"2", costSensitivity:"2"};

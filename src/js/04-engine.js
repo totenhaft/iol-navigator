@@ -100,7 +100,12 @@ function normalize(raw, mode){
 function prefBreakdown(d, lens, cost){
   const cap = lens.cap;
   const nightPressure = Math.max(0, d.nightDriving - 1);            // 0..2
-  const glarePressure = Math.max(0, (3 - d.dysphTolerance) - 1);    // 0..2
+  /* 빛번짐 감내는 4단계가 고르게 나뉘지 않는다. 겪어본 적 없는 증상이라 대부분
+     '조금은'이나 '웬만큼'을 고르는데, 예전 계산('조금은'=1, 최대의 절반)에서는
+     그 한 칸이 회절형에서만 7점을 깎아 결과가 뒤집혔다. '전혀 못 견딘다'는
+     여전히 강한 신호로 두되, '조금은'은 가벼운 유보로만 반영한다. */
+  const GLARE = [2, 0.5, 0, 0];
+  const glarePressure = GLARE[Math.max(0, Math.min(3, Math.round(d.dysphTolerance)))];
   const nightWeak = Math.max(0, 2.6 - cap.night) / 1.6;             // 0(야간 안정) .. 1(취약)
 
   /* 비용은 실제 금액에서 계산한다. 가장 싼 선택지와의 차이를 가장 비싼 선택지와의
@@ -119,6 +124,17 @@ function prefBreakdown(d, lens, cost){
     {k:"night", v: -nightPressure * nightWeak * 2.4},
     {k:"dysph", v: -glarePressure * nightWeak * 2.0},
     {k:"cost",  v: -d.costSensitivity * rel * 2.4},
+    /* 재정 제약이 없고 탈안경 의지가 뚜렷하면 초점 범위가 넓은 쪽을 더 적극적으로
+       올려 준다. 두 조건을 함께 요구하는 것이 핵심이다 —
+       · '비용 상관없다'만으로는 올리지 않는다. 탈안경을 원하지 않는다고 답한
+         환자에게 비싼 렌즈를 권하는 셈이 되기 때문이다.
+       · 금액이 아니라 초점 범위(cap.near + cap.inter)에 비례시킨다. 가격 자체가
+         추천 사유가 되면, 환자도 보는 화면에서 '비싸서 골랐다'가 된다.
+       · 비용을 답하지 않은 경우는 '상관없다'가 아니라 '아직 모름'이라 제외한다. */
+    {k:"afford", v: (d.costSensitivity === 0
+                     && !(d._prefUnanswered || []).includes("costSensitivity")
+                     && d.specIndep >= 2)
+                    ? ((cap.near + cap.inter) / 6) * 2.4 : 0},
   ];
   return {items, total: items.reduce((s,i) => s + i.v, 0), price, costRel: rel};
 }
