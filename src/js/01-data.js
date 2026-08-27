@@ -120,8 +120,10 @@ const LENSES = [
   { id:"mono",      ko:"단초점", en:"Standard monofocal",
     koSub:"Partial ROF · narrow", enSub:"Partial ROF · narrow",
     cap:{far:3, inter:1,   near:0,   night:3,   contrast:3,   cost:3},
-    band:[78,18,4], base:22,
-    plain:{glasses:3, glare:0, contrast:3, cost:3},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
+    band:[78,18,4], base:20,
+    plain:{glasses:3, glare:0, contrast:3, cost:3},
+    koPlain:"먼 곳 한 거리에 초점을 맞춥니다. 밤에 빛 번짐이 가장 적고 보이는 선명함이 가장 안정적인 대신, 책·휴대폰과 컴퓨터 거리는 안경이 필요합니다.",
+    enPlain:"Focuses at one distance, usually far. The least night glare and the steadiest clarity, but reading and computer distance need glasses.",
     koDesc:"한 거리(대개 원거리)에만 초점. 대비감도와 야간 시질이 가장 안정적이며, 근거리·중간거리는 안경이 필요합니다.",
     enDesc:"Single focus (usually distance). Best contrast and night-vision stability; glasses needed for intermediate and near." },
 
@@ -129,51 +131,56 @@ const LENSES = [
     koSub:"blended vision · −0.75~−1.25 D", enSub:"blended vision · −0.75 to −1.25 D",
     cap:{far:2.8, inter:2,  near:1.5, night:2.8, contrast:3,  cost:3},
     band:[52,30,18], base:16,
-    plain:{glasses:2, glare:0, contrast:3, cost:3},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
+    plain:{glasses:2, glare:0, contrast:3, cost:3},
+    koPlain:"한쪽 눈은 먼 곳, 다른 쪽 눈은 조금 가까운 곳에 맞춰 두 눈이 서로 보완하게 합니다. 밤 빛 번짐은 거의 없지만 두 눈이 익숙해지는 기간이 필요합니다.",
+    enPlain:"One eye is set for distance and the other slightly nearer, so the two eyes complement each other. Almost no night glare, but the eyes need time to adapt.",
     koDesc:"주시안은 원거리, 반대눈은 약간 근시로 맞춰 초점 범위를 넓힙니다. 회절 광학을 쓰지 않아 야간 광학현상이 거의 없지만 양안시 적응이 필요합니다.",
     enDesc:"Dominant eye set for distance, fellow eye slightly myopic. No diffractive optics so minimal dysphotopsia, but requires binocular adaptation." },
 
   { id:"enhMono",   ko:"프리미엄 단초점 (enhanced monofocal)", en:"Enhanced monofocal (monofocal-plus)",
     koSub:"Partial ROF · enhanced", enSub:"Partial ROF · enhanced",
     cap:{far:3, inter:2,   near:1,   night:3,   contrast:2.9, cost:2},
-    band:[62,30,8], base:20,
-    plain:{glasses:2, glare:0, contrast:3, cost:2},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
+    band:[62,30,8], base:18,
+    plain:{glasses:2, glare:0, contrast:3, cost:2},
+    koPlain:"단초점을 개량해 컴퓨터·주방 정도의 중간 거리를 조금 더 편하게 보도록 만든 렌즈입니다. 밤 빛 번짐은 단초점과 같은 수준이고, 작은 글씨는 돋보기가 필요합니다.",
+    enPlain:"An improved monofocal that makes computer and kitchen distance a little easier. Night glare is the same as a monofocal; small print still needs readers.",
     koDesc:"비회절 방식으로 중간거리를 약 1줄 넓힌 단초점. 광학현상 발생률은 단초점과 통계적으로 동등합니다. EDOF의 국제표준 초점심도 기준은 충족하지 않으므로 ‘연속초점’이 아닙니다.",
     enDesc:"Non-diffractive design giving about one line of extra intermediate vision. Photic phenomena equivalent to a standard monofocal. Does NOT meet the ISO/ANSI EDOF depth-of-focus criterion." },
 
-  { id:"edofND",    ko:"연속초점 EDOF (비회절형)", en:"EDOF — non-diffractive",
-    koSub:"Partial ROF · extended", enSub:"Partial ROF · extended",
-    cap:{far:2.95, inter:2.6, near:1.5, night:2.5, contrast:2.6, cost:1.5},
-    band:[48,36,16], base:14,
-    plain:{glasses:1, glare:1, contrast:2, cost:1},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
-    koDesc:"파면 조절·구면수차 확장 방식으로 초점을 연속적으로 늘립니다. 회절 링이 없어 헤일로가 상대적으로 적고, 근거리는 대개 돋보기가 일부 필요합니다.",
-    enDesc:"Wavefront-shaping / SA-based continuous elongation of focus. No diffractive rings, so fewer halos; most patients still need readers for fine print." },
+  { id:"edof",      ko:"연속초점 EDOF", en:"EDOF (continuous range)",
+    koSub:"Partial ROF · extended · 비회절", enSub:"Partial ROF · extended · non-diffractive",
+    cap:{far:2.95, inter:2.8, near:1.7, night:2.4, contrast:2.5, cost:1.4},
+    band:[46,36,18], base:15,
+    plain:{glasses:1, glare:1, contrast:2, cost:1},
+    koPlain:"먼 곳부터 중간 거리까지 초점이 끊기지 않고 이어지는 렌즈입니다. 빛을 잘게 나누는 구조가 없어 밤 빛 번짐이 적은 편이고, 아주 작은 글씨에는 돋보기가 필요할 수 있습니다.",
+    enPlain:"Focus runs continuously from far into the intermediate range. Without a light-splitting ring structure there is less night glare; very small print may still need readers.",
+    koDesc:"파면 조절·구면수차 확장 방식으로 초점을 연속적으로 늘립니다. 회절 링이 없어 헤일로가 상대적으로 적고, 아주 작은 글씨에는 대개 돋보기가 일부 필요합니다.",
+    enDesc:"Wavefront-shaping / SA-based continuous elongation of focus. No diffractive rings, so fewer halos; fine print usually still needs readers." },
 
-  { id:"edofDiff",  ko:"연속초점 EDOF (회절형)", en:"EDOF — diffractive",
-    koSub:"Partial ROF · extended", enSub:"Partial ROF · extended",
-    cap:{far:2.9, inter:3,  near:2,   night:1.7, contrast:2.1, cost:1.2},
-    band:[40,36,24], base:11,
-    plain:{glasses:1, glare:2, contrast:1, cost:1},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
-    koDesc:"에쉘렛/회절 구조로 중간~근거리를 넓게 확보합니다. 비회절형보다 근거리가 낫지만 헤일로·글레어와 대비감도 저하가 늘어납니다.",
-    enDesc:"Echelette/diffractive optic extending intermediate and near range. Better near than non-diffractive EDOF, at the cost of more halo/glare and reduced contrast." },
+  { id:"lentis",    ko:"굴절형 분절 이중초점 (렌티스)", en:"Refractive segmented bifocal (LENTIS)",
+    koSub:"회전비대칭 굴절형 · add +2.0/+3.0 D", enSub:"rotationally asymmetric refractive · +2.0/+3.0 D add",
+    cap:{far:2.8, inter:2.4, near:2.6, night:2.0, contrast:2.2, cost:1.2},
+    band:[40,28,32], base:12,
+    plain:{glasses:1, glare:2, contrast:2, cost:1},
+    koPlain:"렌즈 아래쪽에 가까운 곳을 보는 구역을 따로 둔 방식입니다. 빛을 잘게 나누지 않아 선명함 손실이 덜하고, 각막에 굴곡이 있는 눈에도 비교적 잘 맞습니다. 밤에는 불빛이 한쪽으로 번져 보일 수 있습니다.",
+    enPlain:"A separate near-vision zone sits in the lower part of the lens. It does not split light into fine rings, so less clarity is lost, and it suits an unevenly shaped cornea reasonably well. At night, lights may smear to one side.",
+    koDesc:"아래쪽에 부채꼴 근거리 구역을 둔 굴절형 이중초점입니다. 회절 링이 없어 빛 손실과 대비감도 저하가 회절형보다 적고, 각막 고위수차(특히 코마)가 있는 눈에서 회절형보다 견딜 만하다고 보아 씁니다. 대신 광학이 비대칭이라 중심화·기울어짐에 민감하고, 야간 광원이 한쪽으로 번지는 형태의 현상이 생길 수 있습니다.",
+    enDesc:"Refractive bifocal with a sector-shaped near zone. No diffractive rings, so less light loss and less contrast reduction than a diffractive design, and it is used where corneal higher-order aberration (especially coma) makes diffractive optics unattractive. The asymmetric optic is sensitive to decentration and tilt, and night-time flare tends to smear to one side." },
 
   { id:"trifocal",  ko:"다초점 · 삼중초점 (전 시야범위)", en:"Multifocal / trifocal (full range of vision)",
     koSub:"Full ROF · MIOL/FVR", enSub:"Full ROF · MIOL/FVR",
     cap:{far:2.8, inter:3,  near:3,   night:1,   contrast:1.6, cost:1},
-    band:[34,32,34], base:8,
-    plain:{glasses:0, glare:3, contrast:0, cost:0},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
+    band:[34,32,34], base:11,
+    plain:{glasses:0, glare:3, contrast:0, cost:0},
+    koPlain:"먼 곳·중간 거리·가까운 곳에 동시에 초점을 나눕니다. 안경을 가장 적게 쓰게 되지만, 밤에 불빛 번짐이 가장 많고 보이는 선명함이 다소 떨어집니다.",
+    enPlain:"Splits focus between far, intermediate and near at the same time. You will need glasses least often, but night glare is greatest and clarity is somewhat reduced.",
     koDesc:"원·중간·근거리에 동시에 초점을 나눕니다. 안경 의존도를 가장 크게 줄이지만(RR 0.63) 헤일로 위험이 가장 높고(RR 3.58) 대비감도가 떨어집니다.",
-    enDesc:"Splits light across distance, intermediate and near. Largest reduction in spectacle dependence (RR 0.63) but the highest halo risk (RR 3.58) and lowest contrast." },
-
-  { id:"smallAp",   ko:"소구경 (small-aperture) IOL", en:"Small-aperture IOL",
-    koSub:"pinhole optic · 단안 삽입", enSub:"pinhole optic · monocular",
-    cap:{far:2.7, inter:2.7, near:2.4, night:1.4, contrast:1.6, cost:1},
-    band:[38,32,30], base:5,
-    plain:{glasses:1, glare:2, contrast:1, cost:0},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
-    koDesc:"핀홀 원리로 초점심도를 늘리면서 각막 고위수차의 영향을 줄입니다. 불규칙 각막(RK 후, 각막이식 후 등)의 구제 옵션이며 원칙적으로 한쪽 눈에만 삽입합니다.",
-    enDesc:"Pinhole optic that extends depth of focus while masking corneal higher-order aberrations. A salvage option for irregular corneas (post-RK, post-keratoplasty); implanted in one eye only." }
+    enDesc:"Splits light across distance, intermediate and near. Largest reduction in spectacle dependence (RR 0.63) but the highest halo risk (RR 3.58) and lowest contrast." }
 ];
 const LENS_BY_ID = Object.fromEntries(LENSES.map(l => [l.id, l]));
-const ALL_PRESBY = ["enhMono","edofND","edofDiff","trifocal","smallAp"];
-const DIFFRACTIVE = ["edofDiff","trifocal"];
-const ALL_PREMIUM = ["monoBlend","enhMono","edofND","edofDiff","trifocal","smallAp"];
+const ALL_PRESBY  = ["enhMono","edof","lentis","trifocal"];
+/* 빛을 여러 초점으로 '나누는' 광학 — 대비감도 손실이 구조적으로 따라옵니다.
+   렌티스는 회절이 아니라 굴절 분절이지만, 빛을 나눈다는 점은 같아 여기에 넣습니다. */
+const FOCUS_SPLIT = ["lentis","trifocal"];
+const DIFFRACTIVE = ["trifocal"];
+const ALL_PREMIUM = ["monoBlend","enhMono","edof","lentis","trifocal"];

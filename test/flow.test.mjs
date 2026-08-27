@@ -124,6 +124,43 @@ export default async function run(){
   ok("역할을 바꿔도 입력값이 유지된다",
      await page3.evaluate(() => String(state.values.age) === "71"));
 
+  /* ---- 환자 배부용 A5 결과지 ----
+     "A5에 맞췄다"는 눈으로는 확인이 안 됩니다. 실제로 A5 PDF 로 뽑아
+     페이지가 하나인지 세어 봅니다. 두 장이 되면 실패입니다. */
+  await page3.evaluate(() => {
+    window.__printed = 0;
+    window.print = () => { window.__printed++; };
+  });
+  await page3.click("#a5Btn");
+  /* afterprint 가 오지 않는 환경(여기서는 print 를 가로챘으므로)에서도
+     되돌아와야 하므로, 대비용 타이머(1.5초)가 도는 것까지 기다립니다. */
+  await wait(page3, 2000);
+  const a5 = await page3.evaluate(() => ({
+    printed: window.__printed,
+    rule: document.getElementById("pageRule").textContent,
+    text: document.querySelector("#a5sheet").textContent,
+  }));
+  ok("환자용 결과지 버튼이 인쇄를 부른다", a5.printed >= 1, String(a5.printed));
+  ok("결과지에 병원명과 추천 유형이 들어 있다",
+     a5.text.includes("연세솔안과") && a5.text.includes("인공수정체 상담 결과지"));
+  ok("결과지에 점수·규칙번호 같은 내부 표현을 넣지 않는다",
+     !/적합도|Grade\s[ABCD]|R1[0-9]?\b/.test(a5.text));
+  ok("인쇄가 끝나면 용지 규칙이 A4 로 되돌아온다", /A4/.test(a5.rule), a5.rule);
+
+  await page3.evaluate(() => {
+    const host = document.getElementById("a5sheet");
+    host.textContent = "";
+    host.appendChild(buildA5(state.last));
+    document.body.classList.add("print-a5");
+  });
+  const pdf = await page3.pdf({
+    format: "A5", printBackground: true,
+    margin: { top: "9mm", bottom: "9mm", left: "9mm", right: "9mm" },
+  });
+  const pageCount = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
+  ok("환자용 결과지가 A5 한 장에 들어간다", pageCount === 1, `${pageCount} 장`);
+  await page3.evaluate(() => document.body.classList.remove("print-a5"));
+
   if (errors.length){ fail += errors.length; console.log("  FAIL  자바스크립트 오류\n    " + errors.join("\n    ")); }
   else console.log("  PASS  자바스크립트 오류 없음");
 

@@ -34,22 +34,22 @@ function runSelfTests(){
   ok("시각 요구 없음 → 단초점 1순위", r.top.id === "mono", "top=" + r.top.id);
 
   r = G({specIndep:"3", nearPriority:"1", interPriority:"3", nightDriving:"3", dysphTolerance:"0"});
-  ok("야간운전 필수 + 탈안경 요구 → 회절형이 1순위가 아님",
-     !["trifocal","edofDiff"].includes(r.top.id), "top=" + r.top.id);
+  ok("야간운전 필수 + 탈안경 요구 → 초점을 나누는 렌즈가 1순위가 아님",
+     !FOCUS_SPLIT.includes(r.top.id), "top=" + r.top.id);
   ok("야간운전 필수 → night_demand 규칙 발동", fired(r,"night_demand"));
 
   /* --- 금기 --- */
   r = G({macula:"amd_advanced"});
-  ok("진행성 황반변성 → 다초점·회절EDOF·소구경 제외",
-     ["trifocal","edofDiff","smallAp"].every(i => blockedIds(r).includes(i)), blockedIds(r).join(","));
+  ok("진행성 황반변성 → 초점을 나누는 렌즈 제외",
+     FOCUS_SPLIT.every(i => blockedIds(r).includes(i)), blockedIds(r).join(","));
   ok("진행성 황반변성 → 단초점은 유지", !blockedIds(r).includes("mono"));
 
   r = G({dr:"pdr"});
   ok("PDR → 다초점 제외", blockedIds(r).includes("trifocal"));
 
   r = G({glaucoma:"severe"});
-  ok("중증 녹내장 → 다초점·소구경 제외",
-     ["trifocal","smallAp"].every(i => blockedIds(r).includes(i)), blockedIds(r).join(","));
+  ok("중증 녹내장 → 초점을 나누는 렌즈 제외",
+     FOCUS_SPLIT.every(i => blockedIds(r).includes(i)), blockedIds(r).join(","));
 
   r = G({glaucoma:"mild"});
   ok("초기 녹내장 → 금기가 아니라 주의", !blockedIds(r).includes("trifocal") && fired(r,"glaucoma_early"));
@@ -59,32 +59,32 @@ function runSelfTests(){
   ok("시력영향 OSD → 단초점은 남아 1순위", r.top.id === "mono", "top=" + r.top.id);
 
   r = G({priorRefSx:"rk"});
-  ok("RK → 다초점·회절EDOF 제외", ["trifocal","edofDiff"].every(i => blockedIds(r).includes(i)));
-  ok("RK → 소구경 IOL 가산", r.scored.find(s => s.id === "smallAp").boosts.length > 0);
+  ok("RK → 초점을 나누는 렌즈 제외", FOCUS_SPLIT.every(i => blockedIds(r).includes(i)));
+  ok("RK → 연속초점 EDOF는 금기가 아니라 주의", !blockedIds(r).includes("edof") && fired(r,"cornea_irregular_edof"));
 
   r = G({cornea:"kc_progressive"});
-  ok("진행성 원추각막 → 회절형 제외", ["trifocal","edofDiff"].every(i => blockedIds(r).includes(i)));
+  ok("진행성 원추각막 → 초점을 나누는 렌즈 제외", FOCUS_SPLIT.every(i => blockedIds(r).includes(i)));
 
   r = G({zonule:"phacodonesis"});
   ok("소대 불안정 → 단초점이 1순위", r.top.id === "mono", "top=" + r.top.id);
   ok("소대 불안정 → 프리미엄 단초점은 강한 주의", fired(r,"zonule_unstable_enh"));
 
   r = G({perfectionism:"3", dysphTolerance:"0"});
-  ok("완벽주의 최대 + 빛번짐 감내 불가 → 회절형 제외",
-     ["trifocal","edofDiff"].every(i => blockedIds(r).includes(i)));
+  ok("완벽주의 최대 + 빛번짐 감내 불가 → 초점을 나누는 렌즈 제외",
+     FOCUS_SPLIT.every(i => blockedIds(r).includes(i)));
 
   r = G({precisionNearWork:true});
   ok("현미경·정밀근업 직업 → 다초점 제외", blockedIds(r).includes("trifocal"));
 
   r = G({vitrectomy:true});
-  ok("유리체절제술 → 소구경 IOL 제외", blockedIds(r).includes("smallAp"));
+  ok("유리체절제술 → 금기가 아니라 주의", !blockedIds(r).includes("trifocal") && fired(r,"vitrectomy_other"));
 
   r = G({opticNeuro:true});
-  ok("시신경병증·약시 → 회절형 제외", ["trifocal","edofDiff"].every(i => blockedIds(r).includes(i)));
+  ok("시신경병증·약시 → 초점을 나누는 렌즈 제외", FOCUS_SPLIT.every(i => blockedIds(r).includes(i)));
 
   r = G({cornea:"fuchs_edema"});
   ok("푹스+각막부종 → EDOF까지 모두 제외",
-     ["trifocal","edofDiff","edofND","smallAp"].every(i => blockedIds(r).includes(i)));
+     ["trifocal","lentis","edof"].every(i => blockedIds(r).includes(i)));
 
   /* --- 수치 cut-off 경계 --- */
   r = G({chordAlpha:0.65}); ok("chord alpha 0.65 → chord_high", fired(r,"chord_high") && !fired(r,"chord_border"));
@@ -155,6 +155,55 @@ function runSelfTests(){
   ok("불변 조건: 항상 1순위 존재 · 단초점은 결코 배제되지 않음 · 점수 3–100 · 검사목록 비지 않음",
      invariantOk, invDetail);
 
+
+
+  /* --- 렌즈 구성 (2026-08-27 개편) --- */
+  ok("소구경 IOL은 더 이상 후보에 없다", !LENS_BY_ID.smallAp);
+  ok("EDOF는 회절/비회절로 나누지 않고 하나로 다룬다",
+     !!LENS_BY_ID.edof && !LENS_BY_ID.edofND && !LENS_BY_ID.edofDiff);
+  ok("굴절형 분절 이중초점(렌티스)이 후보에 있다", !!LENS_BY_ID.lentis);
+  const noPlainDesc = LENSES.filter(l => !l.koPlain || !l.enPlain).map(l => l.id);
+  ok("모든 렌즈에 환자용 쉬운 설명이 있다 (A5 결과지에 쓰임)", noPlainDesc.length === 0, noPlainDesc.join(","));
+  const jargon = LENSES.filter(l => /회절|수차|비대칭|logMAR|ROF/.test(l.koPlain)).map(l => l.id);
+  ok("환자용 설명에 전문 용어를 쓰지 않는다", jargon.length === 0, jargon.join(","));
+  const noPlainTest = Object.entries(T).filter(([k,v]) => k !== "COUNSEL" && (!v.p_ko || !v.p_en)).map(([k]) => k);
+  ok("모든 검사 항목에 환자용 이름이 있다", noPlainTest.length === 0, noPlainTest.join(","));
+  ok("단초점의 기본신뢰도가 가장 높다 (요구가 없으면 단초점이 남는다)",
+     LENSES.every(l => l.id === "mono" || l.base < LENS_BY_ID.mono.base));
+
+  /* --- 선호가 실제로 결과를 움직이는가 --- */
+  const unanswered = evaluate({age:68, bilateral:"yes", macula:"normal", glaucoma:"none", dr:"none",
+    cornea:"normal", osd:"none", zonule:"stable", priorRefSx:"none", hoaZone:"4"}, "doctor");
+  ok("아무 요구도 고르지 않으면 단초점이 1순위", unanswered.top.id === "mono", "top=" + unanswered.top.id);
+  ok("고르지 않은 생활 요구 항목이 목록으로 남는다", unanswered.prefUnanswered.length === 7,
+     String(unanswered.prefUnanswered.length));
+
+  const rank = rr => rr.viable.map(v => v.id);
+  r = G({specIndep:"3", nearPriority:"2", interPriority:"2", costSensitivity:"0",
+         nightDriving:"1", dysphTolerance:"1", toricPlanned:true});
+  ok("눈이 깨끗하고 탈안경 요구가 최대면 삼중초점이 1순위",
+     r.top.id === "trifocal", "순위=" + rank(r).join(">"));
+  ok("이때 프리미엄 단초점·미니모노비전이 연속초점보다 위로 오지 않는다",
+     rank(r).indexOf("edof") < rank(r).indexOf("enhMono") &&
+     rank(r).indexOf("edof") < rank(r).indexOf("monoBlend"), "순위=" + rank(r).join(">"));
+
+  r = G({specIndep:"3", nearPriority:"3", interPriority:"2",
+         nightDriving:"1", dysphTolerance:"1", toricPlanned:true});
+  ok("근거리를 맨눈으로 원하면 연속초점 이상이 상위 세 자리를 차지",
+     rank(r).slice(0,3).every(id => ["trifocal","lentis","edof"].includes(id)), "순위=" + rank(r).join(">"));
+
+  /* --- 코마가 큰 눈에서 굴절형 분절 이중초점 --- */
+  r = G({specIndep:"3", nearPriority:"3", interPriority:"2", cornealComa:0.45,
+         nightDriving:"1", dysphTolerance:"1", toricPlanned:true});
+  ok("각막 코마가 크면 렌티스가 삼중초점보다 위로 온다",
+     rank(r).indexOf("lentis") < rank(r).indexOf("trifocal"), "순위=" + rank(r).join(">"));
+  ok("코마가 크면 렌티스에 가산이 붙는다",
+     r.scored.find(x => x.id === "lentis").boosts.length > 0);
+  ok("코마 상담 계획 권고가 함께 뜬다", fired(r, "lentis_plan"));
+  r = G({specIndep:"3", nearPriority:"3", interPriority:"2", cornealComa:0.1,
+         nightDriving:"1", dysphTolerance:"1", toricPlanned:true});
+  ok("코마가 정상이면 삼중초점이 렌티스보다 위",
+     rank(r).indexOf("trifocal") < rank(r).indexOf("lentis"), "순위=" + rank(r).join(">"));
 
   /* --- 역할 --- */
   ok("상담·의사 역할은 실측 데이터 모드(pro)로 동작",

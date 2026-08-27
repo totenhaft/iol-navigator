@@ -10,6 +10,7 @@
         <circle cx="16" cy="16" r="8.2" stroke="var(--accent)" stroke-width="1" opacity=".55"/>
       </svg>
       <div style="min-width:0">
+        <div class="brand-c" data-i18n="brandClinic">연세솔안과</div>
         <div class="brand-t" data-i18n="brandTitle">IOL 내비게이터</div>
         <div class="brand-s" data-i18n="brandSub">인공수정체 선택 보조</div>
       </div>
@@ -86,6 +87,9 @@
   <div class="card-h"><h3>Self-test</h3></div>
   <div id="testout"></div>
 </section>
+
+<!-- 환자 배부용 A5 결과지 (평소에는 숨김, 인쇄할 때만 나타납니다) -->
+<div id="a5sheet" aria-hidden="true"></div>
 
 <!-- 인계 코드 패널 -->
 <div class="ovl" id="handoffOvl" hidden>

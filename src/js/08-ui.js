@@ -130,8 +130,11 @@ function renderField(f){
     wrap.appendChild(el("div", {cls:"flabel"}, labelFor(f)));
     const h = hintFor(f); if (h) wrap.appendChild(h);
     const grid = el("div", {cls:"scale", role:"radiogroup", "aria-label": tx(f)});
-    const cur = state.values[f.key] !== undefined ? String(state.values[f.key]) : (f.def || "1");
-    state.values[f.key] = cur;
+    /* 기본 선택을 만들지 않는다 — 아무도 고르지 않은 값이 답으로 집계되면
+       가만히 있어도 결과가 한쪽으로 기운다. */
+    const cur = state.values[f.key] !== undefined && state.values[f.key] !== null
+      ? String(state.values[f.key]) : (f.def !== undefined ? f.def : null);
+    if (cur !== null) state.values[f.key] = cur;
     f.options.forEach(o => {
       const r = el("input", {type:"radio", name:id, value:o.v, id:id+"_"+o.v});
       r.checked = (cur === o.v);
@@ -172,9 +175,9 @@ function renderField(f){
 function defocusStrip(lens){
   const [a,b,c] = lens.band;
   const s = el("div", {cls:"dstrip", title:`${L().bandFar} ${a}% · ${L().bandInter} ${b}% · ${L().bandNear} ${c}%`});
-  s.appendChild(el("i", {style:`width:${a}%;background:var(--accent)`}));
-  s.appendChild(el("i", {style:`width:${b}%;background:color-mix(in srgb,var(--accent) 55%, var(--sunken))`}));
-  s.appendChild(el("i", {style:`width:${c}%;background:color-mix(in srgb,var(--accent) 26%, var(--sunken))`}));
+  s.appendChild(el("i", {style:`width:${a}%;background:var(--accent-soft)`}));
+  s.appendChild(el("i", {style:`width:${b}%;background:color-mix(in srgb,var(--accent-soft) 62%, var(--sunken))`}));
+  s.appendChild(el("i", {style:`width:${c}%;background:color-mix(in srgb,var(--accent-soft) 30%, var(--sunken))`}));
   return s;
 }
 
@@ -220,7 +223,7 @@ function renderResults(res){
   const isPatient = state.role === "patient";
 
   /* 잠정 결과 경고 */
-  if (res.unknowns.length || (res.d.mode === "patient")){
+  if (res.unknowns.length || res.prefUnanswered.length || (res.d.mode === "patient")){
     const box = el("div", {cls:"card", style:"border-color:color-mix(in srgb,var(--caution) 45%, var(--line))"});
     const b = el("div", {cls:"card-b", style:"display:flex;flex-direction:column;gap:9px"});
     if (res.d.mode === "patient")
@@ -229,6 +232,12 @@ function renderResults(res){
       b.appendChild(el("p", {cls:"f-why", html:"<b>"+t.unknownTitle+"</b> — "+t.unknownBody}));
       const ul = el("div", {cls:"f-lens"});
       res.unknowns.forEach(k => ul.appendChild(el("span", {cls:"chip", text: tx(CRITICAL_UNKNOWN[k])})));
+      b.appendChild(ul);
+    }
+    if (res.prefUnanswered.length){
+      b.appendChild(el("p", {cls:"f-why", html:"<b>"+t.prefUnansweredTitle+"</b> — "+t.prefUnansweredBody}));
+      const ul = el("div", {cls:"f-lens"});
+      res.prefUnanswered.forEach(k => ul.appendChild(el("span", {cls:"chip", text: tx(PREF_LABEL[k])})));
       b.appendChild(ul);
     }
     if (res.d.astigEstimated) b.appendChild(el("p", {cls:"hint", text:t.astigEst}));
@@ -295,9 +304,9 @@ function renderResults(res){
   });
   const legend = el("div", {cls:"legend"}, [
     el("span", {cls:"eyebrow", text: state.lang === "ko" ? "초점 분포" : "Focus distribution"}),
-    el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:var(--accent)"}), el("span",{text:L().bandFar})]),
-    el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:color-mix(in srgb,var(--accent) 55%, var(--sunken))"}), el("span",{text:L().bandInter})]),
-    el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:color-mix(in srgb,var(--accent) 26%, var(--sunken))"}), el("span",{text:L().bandNear})]),
+    el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:var(--accent-soft)"}), el("span",{text:L().bandFar})]),
+    el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:color-mix(in srgb,var(--accent-soft) 62%, var(--sunken))"}), el("span",{text:L().bandInter})]),
+    el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:color-mix(in srgb,var(--accent-soft) 30%, var(--sunken))"}), el("span",{text:L().bandNear})]),
   ]);
   host.appendChild(card(t.rankTitle, null, null, el("div", {}, [legend, rank])));
 
@@ -405,6 +414,7 @@ function renderResults(res){
   host.appendChild(el("div", {cls:"btnrow", style:"padding:2px 0"}, [
     el("button", {type:"button", cls:"btn", onclick:() => window.print()}, [ic(IC_PRINT), el("span",{text:t.printBtn})]),
     el("button", {type:"button", cls:"btn", onclick:() => openHandoff()}, [ic(IC_SHARE), el("span",{text:t.handoffBtn})]),
+    el("button", {type:"button", cls:"btn", id:"a5Btn", onclick:() => printA5()}, [ic(IC_PRINT), el("span",{text:t.a5Btn})]),
   ]));
 }
 
@@ -435,7 +445,7 @@ function topReasons(res){
   }
 
   // 배제된 상위 유형
-  const blockedPremium = res.blocked.filter(b => ["trifocal","edofDiff","edofND","smallAp"].includes(b.id));
+  const blockedPremium = res.blocked.filter(b => ALL_PRESBY.includes(b.id));
   if (blockedPremium.length){
     out.push({
       t: ko ? "더 넓은 초점 범위의 선택지가 금기로 제외됨" : "Wider-range options were excluded",
@@ -834,4 +844,152 @@ function loadFromHash(){
   if (!r.ok) return;
   applyHandoffValues(r.values);
   run({scroll:false});
+}
+
+/* ==================================================================
+   환자 배부용 A5 결과지
+
+   진료실에서 바로 뽑아 환자 손에 쥐어 주는 한 장입니다. 그래서
+   화면 결과와는 다른 것을 담습니다 — 점수와 규칙 번호는 빼고,
+   "무엇을 골랐고, 그게 어떤 렌즈이고, 무엇을 기억해야 하는가"만 남깁니다.
+   환자 이름·차트번호는 프로그램이 채우지 않고 손으로 적도록 빈칸으로 둡니다.
+   ================================================================== */
+function a5Dots(n){
+  const box = el("span", {cls:"a5-dots"});
+  for (let i = 0; i < 3; i++) box.appendChild(el("i", {cls: i < n ? "on" : ""}));
+  return box;
+}
+
+function buildA5(res){
+  const t = L(), ko = state.lang === "ko";
+  const root = el("div");
+
+  /* 머리말 */
+  root.appendChild(el("div", {cls:"a5-head"}, [
+    el("div", {}, [
+      el("div", {cls:"a5-clinic", text: t.brandClinic}),
+      el("div", {style:"font-size:9pt;color:#555;margin-top:1pt", text: ko ? "인공수정체 상담 결과지" : "IOL consultation summary"}),
+    ]),
+    el("div", {cls:"a5-doc", text: new Date().toLocaleDateString(ko ? "ko-KR" : "en-GB")}),
+  ]));
+  root.appendChild(el("div", {cls:"a5-id"}, [
+    el("span", {text: ko ? "성함" : "Name"}),
+    el("span", {text: ko ? "차트번호" : "Chart no."}),
+    el("span", {text: ko ? "담당의" : "Surgeon"}),
+  ]));
+
+  /* 어떤 유형을 이야기했는가 — 상담에서 확인한 선택이 있으면 그것을, 없으면 1순위를 */
+  const chosen = state.decision ? res.scored.find(x => x.id === state.decision) : null;
+  const lead = chosen || res.top;
+  const lens = lead.lens;
+  root.appendChild(el("h4", {text: chosen ? (ko ? "함께 확인한 인공수정체" : "Lens type agreed with you")
+                                          : (ko ? "상담에서 제안드린 유형" : "Type suggested at this consultation")}));
+  const pick = el("div", {cls:"a5-pick"}, [
+    el("b", {text: tx(lens) + (state.toric ? (ko ? " + 난시교정(토릭)" : " + toric") : "")}),
+    el("p", {text: ko ? lens.koPlain : lens.enPlain}),
+  ]);
+  const bar = el("div", {cls:"a5-bar"});
+  const [bf, bi2, bn] = lens.band;
+  bar.appendChild(el("i", {style:`width:${bf}%;background:#82692F`}));
+  bar.appendChild(el("i", {style:`width:${bi2}%;background:#AC9766`}));
+  bar.appendChild(el("i", {style:`width:${bn}%;background:#D8C79B`}));
+  pick.appendChild(bar);
+  pick.appendChild(el("div", {cls:"a5-barleg"}, [
+    el("span", {text: t.guideFar}), el("span", {text: t.guideInter}), el("span", {text: t.guideNear}),
+  ]));
+  root.appendChild(pick);
+
+  /* 비용 — 원장이 입력해 둔 값이 있을 때만 */
+  const cost = loadCosts()[lens.id];
+  if (cost !== undefined && cost !== null && cost !== ""){
+    pick.appendChild(el("div", {cls:"a5-cost"}, [
+      el("span", {text: t.costTitle}),
+      el("b", {cls:"mono", text: wonFmt(cost) + " " + t.costUnit}),
+    ]));
+  }
+
+  const cols = el("div", {cls:"a5-cols"});
+
+  /* 이 유형의 성격 */
+  const left = el("div");
+  left.appendChild(el("h4", {text: ko ? "이 유형의 성격" : "What this type is like"}));
+  const tbl = el("table");
+  const p = lens.plain;
+  [[t.guideGlasses, p.glasses, t.lvl[p.glasses]],
+   [t.guideGlare,   p.glare,   t.lvl[p.glare]],
+   [t.guideContrast, p.contrast, t.lvlContrast[p.contrast]]].forEach(([label, n, word]) => {
+    tbl.appendChild(el("tr", {}, [
+      el("td", {style:"width:44%", text:label}),
+      el("td", {}, [a5Dots(n), el("span", {style:"margin-left:3pt", text:word})]),
+    ]));
+  });
+  left.appendChild(tbl);
+  cols.appendChild(left);
+
+  /* 함께 검토한 대안 */
+  const right = el("div");
+  right.appendChild(el("h4", {text: ko ? "함께 검토한 다른 유형" : "Other types considered"}));
+  const alts = res.viable.filter(x => x.id !== lead.id).slice(0, 3);
+  if (alts.length){
+    const ul = el("ul");
+    alts.forEach(a => ul.appendChild(el("li", {text: tx(a.lens)})));
+    right.appendChild(ul);
+  } else {
+    right.appendChild(el("p", {style:"font-size:8.4pt;color:#555", text: ko ? "현재 정보로는 뚜렷한 대안이 없습니다." : "No clear alternative with the current information."}));
+  }
+  cols.appendChild(right);
+  root.appendChild(cols);
+
+  /* 꼭 기억하실 점 — 렌즈 종류와 무관하게 항상 같은 세 가지 */
+  root.appendChild(el("h4", {text: ko ? "꼭 기억해 주세요" : "Please remember"}));
+  const notes = ko ? [
+    "어떤 인공수정체도 모든 거리에서 안경을 완전히 없애 주지는 못합니다. 상황에 따라 안경이 필요할 수 있습니다.",
+    "초점을 나누는 렌즈는 밤에 불빛 주변이 번져 보일 수 있고, 눈이 익숙해지는 데 두세 달에서 길게는 1년이 걸립니다.",
+    "최종 결정은 검사 결과와 담당 의사의 진찰에 따릅니다. 이 종이는 상담 내용을 기억하시라고 드리는 것입니다.",
+  ] : [
+    "No intraocular lens removes the need for glasses at every distance. Glasses may still be needed in some situations.",
+    "Focus-splitting lenses can cause haloes around lights at night, and the eyes take two to three months — sometimes up to a year — to adapt.",
+    "The final decision rests on your measurements and your surgeon's examination. This sheet is a reminder of what we discussed.",
+  ];
+  const nl = el("ul");
+  notes.forEach(x => nl.appendChild(el("li", {text:x})));
+  root.appendChild(el("div", {cls:"a5-note"}, nl));
+
+  /* 남은 검사 — 상담·설명 항목은 검사가 아니므로 환자 종이에서는 뺍니다 */
+  const tests = res.tests.filter(x => x.ko !== T.COUNSEL.ko).slice(0, 4);
+  if (tests.length){
+    root.appendChild(el("h4", {text: ko ? "수술 전 확인할 검사" : "Tests to complete before surgery"}));
+    const ul = el("ul");
+    tests.forEach(x => ul.appendChild(el("li", {text: (ko ? (x.p_ko || x.ko) : (x.p_en || x.en))})));
+    root.appendChild(ul);
+  }
+
+  root.appendChild(el("div", {cls:"a5-foot"}, [
+    el("div", {text: ko
+      ? "이 결과지는 상담 보조 자료이며 의료기기가 아닙니다. 진단·처방을 하지 않으며, 담당 안과의사의 진찰과 판단을 대체하지 않습니다."
+      : "This sheet is a counselling aid, not a medical device. It does not diagnose or prescribe and does not replace your ophthalmologist's judgement."}),
+    el("div", {style:"margin-top:2pt", text: t.brandClinic + " · " + t.brandTitle}),
+  ]));
+  return root;
+}
+
+/* A5 인쇄 — 용지 규칙을 잠깐 A5 로 바꾸고, 끝나면 되돌립니다 */
+function printA5(){
+  if (!state.last) return;
+  const host = $("#a5sheet");
+  host.textContent = "";
+  host.appendChild(buildA5(state.last));
+
+  const rule = document.getElementById("pageRule");
+  const before = rule ? rule.textContent : "";
+  if (rule) rule.textContent = "@page{ size:A5; margin:9mm }";
+  document.body.classList.add("print-a5");
+
+  const restore = () => {
+    document.body.classList.remove("print-a5");
+    if (rule) rule.textContent = before;
+    window.removeEventListener("afterprint", restore);
+  };
+  window.addEventListener("afterprint", restore);
+  setTimeout(() => { window.print(); setTimeout(restore, 1500); }, 30);
 }

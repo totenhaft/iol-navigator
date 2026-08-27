@@ -32,12 +32,13 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="근거 기반 백내장 인공수정체(IOL) 선택 보조 도구 — 환자 설문 모드와 전문가 정밀 입력 모드, 금기/주의/선호 3계층 의사결정 로직, 문헌 근거 연결.">
+<meta name="description" content="연세솔안과 IOL 내비게이터 — 근거 기반 백내장 인공수정체 선택 보조. 환자·상담직원·의사 세 화면, 금기/주의/선호 3계층 의사결정 로직, 문헌 근거 연결.">
 <meta name="color-scheme" content="light dark">
-<meta property="og:title" content="IOL 내비게이터">
-<meta property="og:description" content="근거 기반 백내장 인공수정체 선택 보조 도구. 임상 의사결정 보조이며 의료기기가 아닙니다.">
+<meta property="og:title" content="연세솔안과 IOL 내비게이터">
+<meta property="og:description" content="연세솔안과의 근거 기반 백내장 인공수정체 선택 보조 도구. 임상 의사결정 보조이며 의료기기가 아닙니다.">
 <meta property="og:type" content="website">
 ${head.trim()}
+<style id="pageRule">@page{ size:A4; margin:14mm }</style>
 </head>
 <body>
 ${body.trim()}

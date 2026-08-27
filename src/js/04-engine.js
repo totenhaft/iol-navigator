@@ -8,6 +8,22 @@ function num(v){
 }
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 
+/* 생활 요구 항목의 '중립값' — 이 값에서는 어느 렌즈에도 가산도 감점도 생기지 않는다.
+   (빛번짐 감내는 척도가 뒤집혀 있어 3 이 중립이다) */
+const PREF_NEUTRAL = {
+  specIndep:0, nearPriority:0, interPriority:0,
+  nightDriving:0, dysphTolerance:3, perfectionism:1, costSensitivity:0,
+};
+const PREF_LABEL = {
+  specIndep:      {ko:"안경으로부터 자유롭고 싶은 정도", en:"Desire for spectacle independence"},
+  nearPriority:   {ko:"근거리 작업 비중", en:"Near-work demand"},
+  interPriority:  {ko:"중간거리 작업 비중", en:"Intermediate demand"},
+  nightDriving:   {ko:"야간 운전의 중요도", en:"Night-driving demand"},
+  dysphTolerance: {ko:"빛번짐 감내 정도", en:"Tolerance for halo and glare"},
+  perfectionism:  {ko:"기대 수준·완벽주의 성향", en:"Expectation level"},
+  costSensitivity:{ko:"비용 민감도", en:"Cost sensitivity"},
+};
+
 /* 미확인 시 결론에 실질적 영향을 주는 항목 */
 const CRITICAL_UNKNOWN = {
   macula:     {tests:["OCT","MACSTAB"], ko:"황반 상태", en:"Macular status"},
@@ -33,8 +49,17 @@ function normalize(raw, mode){
   ["age","cylD","cornealSA","cornealComa","hoaRMS","chordMu","chordAlpha","pupPhotopic","pupMesopic","al"]
     .forEach(k => { d[k] = num(d[k]); });
 
-  ["specIndep","nearPriority","interPriority","nightDriving","dysphTolerance","perfectionism","costSensitivity"]
-    .forEach(k => { const n = num(d[k]); d[k] = n === null ? 1 : n; });
+  /* 생활 요구 항목은 화면에서 미리 골라 두지 않는다. 답하지 않은 항목은
+     '요구 없음'이 아니라 '아직 모름'이므로, 어느 쪽으로도 점수를 밀지 않는
+     중립값으로 바꾸고 별도로 기록한다. 미입력을 임의의 기본값으로 추론하지
+     않는다는 이 도구의 원칙을 선호 항목에도 그대로 적용한 것이다. */
+  const prefUnanswered = [];
+  Object.entries(PREF_NEUTRAL).forEach(([k, neutral]) => {
+    const n = num(d[k]);
+    if (n === null){ prefUnanswered.push(k); d[k] = neutral; }
+    else d[k] = n;
+  });
+  d._prefUnanswered = prefUnanswered;
 
   ["opticNeuro","uveitis","vitrectomy","ifis","irregularAstig","toricPlanned","precisionNearWork","nightWork"]
     .forEach(k => { d[k] = d[k] === true || d[k] === "true"; });
@@ -59,15 +84,31 @@ function normalize(raw, mode){
   return d;
 }
 
-/* 선호 적합도 원점수 */
+/* 선호 적합도 원점수
+
+   설계 원칙: **요구가 있을 때만 점수가 움직인다.**
+
+   이전 판에서는 야간·빛번짐·비용 항목이 양방향으로 작동했다. 즉 환자가 아무 말도
+   하지 않은 기본값(4단계 중 1)에서도 야간에 강한 렌즈에 큰 가산점이 붙었고, 그
+   결과 "안경을 되도록 안 쓰고 싶다"를 최대로 고른 건강한 눈에서도 프리미엄 단초점
+   이나 미니모노비전이 1순위로 나왔다. 기본값은 '특별한 요구 없음'에 가깝지 신호가
+   아니므로, 이 세 항목은 이제 **요구가 기본값을 넘을 때만 감점으로** 작동한다.
+   반대로 야간 요구가 없다고 해서 야간에 강한 렌즈에 가산점을 주지는 않는다.
+
+   근거리·중간거리·탈안경 요구는 그대로 가산으로 둔다 — 이것들은 환자가 명시적으로
+   고른 값이고, 렌즈 선택을 움직여야 하는 신호다. */
 function prefBreakdown(d, cap){
+  const nightPressure = Math.max(0, d.nightDriving - 1);            // 0..2
+  const glarePressure = Math.max(0, (3 - d.dysphTolerance) - 1);    // 0..2
+  const costPressure  = Math.max(0, d.costSensitivity - 1);         // 0..2
+  const nightWeak = Math.max(0, 2.6 - cap.night) / 1.6;             // 0(야간 안정) .. 1(취약)
   const items = [
-    {k:"near",  v: d.nearPriority   * (cap.near  / 3) * 2.0},
-    {k:"inter", v: d.interPriority  * (cap.inter / 3) * 1.6},
-    {k:"spec",  v: d.specIndep      * ((cap.near + cap.inter) / 6) * 2.0},
-    {k:"night", v: d.nightDriving   * ((cap.night - 1.5) / 1.5) * 1.8},
-    {k:"dysph", v: (3 - d.dysphTolerance) * ((cap.night - 1.5) / 1.5) * 1.5},
-    {k:"cost",  v: d.costSensitivity * ((cap.cost - 2) / 1.0) * 0.7},
+    {k:"near",  v:  d.nearPriority  * (cap.near  / 3) * 2.2},
+    {k:"inter", v:  d.interPriority * (cap.inter / 3) * 1.7},
+    {k:"spec",  v:  d.specIndep     * ((cap.near + cap.inter) / 6) * 2.6},
+    {k:"night", v: -nightPressure * nightWeak * 2.4},
+    {k:"dysph", v: -glarePressure * nightWeak * 2.0},
+    {k:"cost",  v: -costPressure * ((3 - cap.cost) / 3) * 1.6},
   ];
   return {items, total: items.reduce((s,i) => s + i.v, 0)};
 }
@@ -144,18 +185,10 @@ function evaluate(raw, mode){
   const blockedList = scored.filter(s => s.blocked)
     .sort((a,b) => b.stops.length - a.stops.length);
 
-  // 소구경 IOL은 불규칙 각막 구제 목적일 때만 상위 추천으로 올림
-  const irregular = fired.some(id => ["cornea_irregular","rk","kc_stable","coma_high","hoa_high"].includes(id));
-  if (!irregular){
-    const i = viable.findIndex(v => v.id === "smallAp");
-    if (i > -1 && i < viable.length - 1){
-      const [sa] = viable.splice(i, 1);
-      sa.score = Math.min(sa.score, 45);
-      sa.demoted = true;
-      viable.push(sa);
-      viable.sort((a,b) => b.score - a.score);
-    }
-  }
+  /* 예전에는 소구경 IOL 을 특정 상황에서만 상위로 올리는 예외 처리가 여기 있었다.
+     소구경 IOL 을 뺀 지금은 필요 없다. 굴절형 분절 이중초점(렌티스)도 같은 예외가
+     필요 없는데, 코마·고위수차 규칙이 삼중초점을 감점하면서 렌티스에는 가산을
+     주므로 순위가 자연스럽게 뒤집히기 때문이다. */
 
   const top = viable[0] || scored.find(s => s.id === "mono");
   const alternatives = viable.slice(1, 4);
@@ -166,6 +199,7 @@ function evaluate(raw, mode){
     scored: scored.slice().sort((a,b) => (b.blocked?-1:b.score) - (a.blocked?-1:a.score)),
     tests: Array.from(testSet.values()),
     unknowns: d._unknowns,
+    prefUnanswered: d._prefUnanswered,
     allStopRules: Array.from(new Set([].concat(...scored.map(s => s.stops)))),
     allCautionRules: (() => {
       const m = new Map();
