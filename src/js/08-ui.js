@@ -890,9 +890,9 @@ function buildA5(res){
   ]);
   const bar = el("div", {cls:"a5-bar"});
   const [bf, bi2, bn] = lens.band;
-  bar.appendChild(el("i", {style:`width:${bf}%;background:#82692F`}));
-  bar.appendChild(el("i", {style:`width:${bi2}%;background:#AC9766`}));
-  bar.appendChild(el("i", {style:`width:${bn}%;background:#D8C79B`}));
+  bar.appendChild(el("i", {style:`width:${bf}%;background:#0E7C86`}));
+  bar.appendChild(el("i", {style:`width:${bi2}%;background:#3E9EA6`}));
+  bar.appendChild(el("i", {style:`width:${bn}%;background:#A8CFD3`}));
   pick.appendChild(bar);
   pick.appendChild(el("div", {cls:"a5-barleg"}, [
     el("span", {text: t.guideFar}), el("span", {text: t.guideInter}), el("span", {text: t.guideNear}),

@@ -18,38 +18,35 @@
    light palette on bare :root ; dark redefined twice (media + stamp)
    ============================================================ */
 :root{
-  --bg:#F6F3EA;
+  --bg:#F2F5F6;
   --surface:#FFFFFF;
-  --surface-2:#F1EBDC;
-  --sunken:#EDE7D9;
-  --ink:#23252A;
-  --ink-2:#4B463D;
-  --muted:#78705F;
-  --faint:#A0947E;
-  --line:#E3DBC9;
-  --line-strong:#CCC0A8;
+  --surface-2:#E9EFF1;
+  --sunken:#E3EBED;
+  --ink:#0F1F27;
+  --ink-2:#33505C;
+  --muted:#5F7B88;
+  --faint:#8AA3AE;
+  --line:#D5E0E4;
+  --line-strong:#B9CAD1;
 
-  /* 연세솔안과 홈페이지 색: 골드 #AC9766 · 차콜 #2D2F32 · 아이보리 #F6F2E4.
-     --accent 는 흰 글씨를 얹거나 본문 링크로 쓰이므로 대비를 위해 골드를 어둡게
-     조정한 값(#82692F, 흰색 대비 5.2:1)을 쓰고, 브랜드 골드 자체는 글씨가 얹히지
-     않는 장식 막대에 --accent-soft 로 남겨 둔다. */
-  --accent:#82692F;
-  --accent-ink:#5E4B1F;
-  --accent-wash:#F2E8D0;
-  --accent-soft:#AC9766;
+  --accent:#0E7C86;
+  --accent-ink:#075A62;
+  --accent-wash:#DDEFF0;
+  /* 장식 막대(적합도 바·탈초점 글리프)용. 예전 판에서 --accent 를 그대로 쓰던
+  자리라 같은 값을 넣어 두면 보이는 결과가 이전과 같다. */
+  --accent-soft:#0E7C86;
 
   --stop:#B3261E;
   --stop-wash:#FBE6E4;
-  --caution:#A0491A;
-  --caution-wash:#F8E7D9;
-  --pref:#5A4A82;
-  --pref-wash:#EBE6F5;
+  --caution:#9A5B00;
+  --caution-wash:#FBEEDA;
+  --pref:#5048A0;
+  --pref-wash:#E9E7F8;
   --ok:#2E6B4F;
   --ok-wash:#DFF0E7;
 
-  --shadow:0 1px 2px rgba(45,40,26,.07), 0 8px 24px -12px rgba(45,40,26,.20);
-  --shadow-lift:0 2px 4px rgba(45,40,26,.09), 0 18px 40px -18px rgba(45,40,26,.30);
-
+  --shadow:0 1px 2px rgba(15,31,39,.06), 0 8px 24px -12px rgba(15,31,39,.18);
+  --shadow-lift:0 2px 4px rgba(15,31,39,.08), 0 18px 40px -18px rgba(15,31,39,.28);
   --r-sm:5px; --r:9px; --r-lg:14px;
   --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
   --display:"Gothic A1","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -59,58 +56,58 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#15161A;
-    --surface:#1E2024;
-    --surface-2:#292B30;
-    --sunken:#17181C;
-    --ink:#EFEADF;
-    --ink-2:#CFC6B4;
-    --muted:#A2988A;
-    --faint:#7C7365;
-    --line:#32343A;
-    --line-strong:#474A50;
+    --bg:#080F13;
+    --surface:#101C22;
+    --surface-2:#16262D;
+    --sunken:#0B161B;
+    --ink:#E4EEF1;
+    --ink-2:#B6CBD3;
+    --muted:#8FA8B2;
+    --faint:#6B848F;
+    --line:#22343C;
+    --line-strong:#31474F;
 
-    --accent:#C9AE72;
-    --accent-ink:#E2CB95;
-    --accent-wash:#372F1C;
-    --accent-soft:#AC9766;
+    --accent:#3FB6BC;
+    --accent-ink:#7BD5D8;
+    --accent-wash:#0F3237;
+    --accent-soft:#3FB6BC;
 
     --stop:#F08A80;
     --stop-wash:#3A1512;
-    --caution:#E8956A;
-    --caution-wash:#37200F;
-    --pref:#A99CE8;
-    --pref-wash:#211C3C;
+    --caution:#E0A44A;
+    --caution-wash:#33220A;
+    --pref:#A49CF0;
+    --pref-wash:#1E1B3C;
     --ok:#69C79A;
     --ok-wash:#0F2A1F;
 
     --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.7);
     --shadow-lift:0 2px 4px rgba(0,0,0,.55), 0 18px 40px -18px rgba(0,0,0,.85);
-}
+  }
 }
 :root[data-theme="dark"]{
-  --bg:#15161A;
-  --surface:#1E2024;
-  --surface-2:#292B30;
-  --sunken:#17181C;
-  --ink:#EFEADF;
-  --ink-2:#CFC6B4;
-  --muted:#A2988A;
-  --faint:#7C7365;
-  --line:#32343A;
-  --line-strong:#474A50;
+  --bg:#080F13;
+  --surface:#101C22;
+  --surface-2:#16262D;
+  --sunken:#0B161B;
+  --ink:#E4EEF1;
+  --ink-2:#B6CBD3;
+  --muted:#8FA8B2;
+  --faint:#6B848F;
+  --line:#22343C;
+  --line-strong:#31474F;
 
-  --accent:#C9AE72;
-  --accent-ink:#E2CB95;
-  --accent-wash:#372F1C;
-  --accent-soft:#AC9766;
+  --accent:#3FB6BC;
+  --accent-ink:#7BD5D8;
+  --accent-wash:#0F3237;
+  --accent-soft:#3FB6BC;
 
   --stop:#F08A80;
   --stop-wash:#3A1512;
-  --caution:#E8956A;
-  --caution-wash:#37200F;
-  --pref:#A99CE8;
-  --pref-wash:#211C3C;
+  --caution:#E0A44A;
+  --caution-wash:#33220A;
+  --pref:#A49CF0;
+  --pref-wash:#1E1B3C;
   --ok:#69C79A;
   --ok-wash:#0F2A1F;
 
@@ -494,28 +491,28 @@ table.guide td:first-child{min-width:190px}
   font-family:var(--sans); color:#1a1a1a; background:#fff;
   font-size:9.2pt; line-height:1.45;
 }
-#a5sheet .a5-head{display:flex;align-items:flex-end;gap:8px;border-bottom:1.6pt solid #82692F;padding-bottom:5pt;margin-bottom:8pt}
-#a5sheet .a5-clinic{font-family:var(--display);font-weight:800;font-size:12pt;letter-spacing:-.01em;color:#82692F}
+#a5sheet .a5-head{display:flex;align-items:flex-end;gap:8px;border-bottom:1.6pt solid #0E7C86;padding-bottom:5pt;margin-bottom:8pt}
+#a5sheet .a5-clinic{font-family:var(--display);font-weight:800;font-size:12pt;letter-spacing:-.01em;color:#0E7C86}
 #a5sheet .a5-doc{font-size:9pt;color:#444;margin-left:auto}
 #a5sheet .a5-id{display:flex;gap:14pt;font-size:8.4pt;color:#555;margin-bottom:8pt}
 #a5sheet .a5-id span{border-bottom:.6pt solid #bbb;flex:1;padding-bottom:1pt}
-#a5sheet h4{font-family:var(--display);font-size:8.4pt;letter-spacing:.06em;color:#82692F;margin:9pt 0 3pt;font-weight:800}
-#a5sheet .a5-pick{border:1pt solid #CCC0A8;border-left:3pt solid #82692F;border-radius:3pt;padding:7pt 9pt;background:#FBF8F1}
+#a5sheet h4{font-family:var(--display);font-size:8.4pt;letter-spacing:.06em;color:#0E7C86;margin:9pt 0 3pt;font-weight:800}
+#a5sheet .a5-pick{border:1pt solid #B9CAD1;border-left:3pt solid #0E7C86;border-radius:3pt;padding:7pt 9pt;background:#F4FAFB}
 #a5sheet .a5-pick b{font-family:var(--display);font-size:13pt;display:block;line-height:1.2}
 #a5sheet .a5-pick p{font-size:8.6pt;color:#333;margin-top:3pt}
 #a5sheet .a5-bar{display:flex;height:5pt;border-radius:99pt;overflow:hidden;background:#EDE7D9;margin-top:6pt}
 #a5sheet .a5-bar i{display:block;height:100%}
 #a5sheet .a5-barleg{display:flex;justify-content:space-between;font-size:7.4pt;color:#666;margin-top:2pt}
 #a5sheet table{width:100%;border-collapse:collapse;font-size:8.4pt}
-#a5sheet td,#a5sheet th{border-bottom:.5pt solid #E3DBC9;padding:3pt 2pt;text-align:left;vertical-align:top}
+#a5sheet td,#a5sheet th{border-bottom:.5pt solid #D5E0E4;padding:3pt 2pt;text-align:left;vertical-align:top}
 #a5sheet th{color:#666;font-weight:600;font-size:7.8pt}
-#a5sheet .a5-dots i{display:inline-block;width:5pt;height:5pt;border-radius:99pt;background:#D8CFBB;margin-right:2pt}
-#a5sheet .a5-dots i.on{background:#82692F}
+#a5sheet .a5-dots i{display:inline-block;width:5pt;height:5pt;border-radius:99pt;background:#C6D5DA;margin-right:2pt}
+#a5sheet .a5-dots i.on{background:#0E7C86}
 #a5sheet ul{margin:2pt 0 0;padding-left:12pt}
 #a5sheet li{margin-bottom:2pt}
-#a5sheet .a5-note{background:#F6F3EA;border-radius:3pt;padding:6pt 8pt;font-size:8.4pt}
-#a5sheet .a5-cost{display:flex;justify-content:space-between;border-top:.8pt solid #CCC0A8;margin-top:5pt;padding-top:4pt;font-size:9pt}
-#a5sheet .a5-foot{border-top:.8pt solid #CCC0A8;margin-top:9pt;padding-top:5pt;font-size:7.4pt;color:#666;line-height:1.4}
+#a5sheet .a5-note{background:#F2F5F6;border-radius:3pt;padding:6pt 8pt;font-size:8.4pt}
+#a5sheet .a5-cost{display:flex;justify-content:space-between;border-top:.8pt solid #B9CAD1;margin-top:5pt;padding-top:4pt;font-size:9pt}
+#a5sheet .a5-foot{border-top:.8pt solid #B9CAD1;margin-top:9pt;padding-top:5pt;font-size:7.4pt;color:#666;line-height:1.4}
 #a5sheet .a5-cols{display:grid;grid-template-columns:1fr 1fr;gap:9pt}
 </style>
 <style id="pageRule">@page{ size:A4; margin:14mm }</style>
@@ -3287,9 +3284,9 @@ function buildA5(res){
   ]);
   const bar = el("div", {cls:"a5-bar"});
   const [bf, bi2, bn] = lens.band;
-  bar.appendChild(el("i", {style:`width:${bf}%;background:#82692F`}));
-  bar.appendChild(el("i", {style:`width:${bi2}%;background:#AC9766`}));
-  bar.appendChild(el("i", {style:`width:${bn}%;background:#D8C79B`}));
+  bar.appendChild(el("i", {style:`width:${bf}%;background:#0E7C86`}));
+  bar.appendChild(el("i", {style:`width:${bi2}%;background:#3E9EA6`}));
+  bar.appendChild(el("i", {style:`width:${bn}%;background:#A8CFD3`}));
   pick.appendChild(bar);
   pick.appendChild(el("div", {cls:"a5-barleg"}, [
     el("span", {text: t.guideFar}), el("span", {text: t.guideInter}), el("span", {text: t.guideNear}),
