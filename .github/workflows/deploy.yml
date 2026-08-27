@@ -25,7 +25,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: 의존성 설치
         run: npm install
@@ -34,9 +34,12 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # Pages 가 아직 꺼져 있으면 여기서 자동으로 켭니다 (enablement: true).
-      # 덕분에 저장소 Settings 에서 손으로 켤 필요가 없습니다.
+      # 다만 fork 처럼 권한이 없는 경우 'Resource not accessible by integration' 으로
+      # 실패하는데, 그때 빌드 전체를 막지 않도록 continue-on-error 를 둡니다.
+      # (배포 단계는 어차피 Pages 가 켜져 있어야 성공합니다)
       - name: Pages 설정
         if: github.event_name != 'pull_request'
+        continue-on-error: true
         uses: actions/configure-pages@v5
         with:
           enablement: true
