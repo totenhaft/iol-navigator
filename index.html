@@ -400,6 +400,48 @@ footer.foot p{max-width:70ch;line-height:1.6}
 footer.foot p + p{margin-top:9px}
 
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ── 역할 안내 한 줄 ─────────────────────────────────────── */
+.rolehint{
+  flex:0 0 auto;
+  font-size:12.5px;line-height:1.5;color:var(--ink-2);
+  background:var(--surface-2);border:1px solid var(--line);
+  border-radius:var(--r);padding:9px 12px;margin-bottom:12px;
+}
+
+/* ── 설명 표의 단계 표시 ──────────────────────────────────── */
+.meter{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.dots{display:inline-flex;gap:3px}
+.dots i{width:7px;height:7px;border-radius:99px;background:var(--line-strong);display:block}
+.dots i.on{background:var(--accent)}
+.mlabel{font-size:11.5px;color:var(--muted)}
+table.guide td{vertical-align:top}
+table.guide td:first-child{min-width:190px}
+.gsub{display:block;color:var(--muted);font-size:11.5px;line-height:1.45;margin-top:3px;max-width:42ch;font-weight:400}
+
+/* ── 상담 화면: 선택 확인과 비용 ──────────────────────────── */
+.costrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.costgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.costitem{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-2)}
+.costitem input{height:40px}
+
+/* ── 인계 코드 패널 ──────────────────────────────────────── */
+.ovl{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:18px}
+.ovl-bd{position:absolute;inset:0;background:color-mix(in srgb,var(--ink) 46%, transparent);backdrop-filter:blur(2px)}
+.ovl-card{position:relative;width:min(520px,100%);max-height:calc(100vh - 36px);overflow:auto;box-shadow:var(--shadow-lift)}
+.ovl-card .card-b{display:flex;flex-direction:column;gap:14px}
+.codebox{
+  font-size:15px;letter-spacing:.06em;word-break:break-all;line-height:1.7;
+  background:var(--sunken);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;
+  user-select:all;
+}
+.qrbox{display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 0}
+.qrbox svg{border-radius:6px;border:1px solid var(--line)}
+.qrbox .hint{text-align:center;max-width:34ch}
+.loadbox{display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--line);padding-top:14px}
+.loadrow{display:flex;gap:8px}
+.loadrow input{flex:1;min-width:0;height:44px;font-family:var(--mono);letter-spacing:.04em}
+
 [hidden]{display:none !important}
 #testout{font-family:var(--mono);font-size:11.5px;white-space:pre-wrap;padding:16px;line-height:1.6}
 .pass{color:var(--ok)} .fail{color:var(--stop);font-weight:600}
@@ -422,7 +464,7 @@ footer.foot p + p{margin-top:9px}
 .legend .lg{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
 .legend .sw{width:16px;height:6px;border-radius:99px;display:block}
 @media print{
-  .topbar,.rail,.actions,#testcard,.btnrow{display:none !important}
+  .topbar,.rail,.actions,#testcard,.btnrow,.ovl{display:none !important}
   .shell{grid-template-columns:1fr}
   body{background:#fff}
   .card,.verdict{break-inside:avoid;box-shadow:none}
@@ -447,9 +489,10 @@ footer.foot p + p{margin-top:9px}
       </div>
     </div>
 
-    <div class="seg" role="group" aria-label="입력 모드">
-      <button type="button" id="modePatient" aria-pressed="true" data-i18n="modePatient">환자 설문</button>
-      <button type="button" id="modePro" aria-pressed="false" data-i18n="modePro">전문가 정밀</button>
+    <div class="seg" role="group" aria-label="사용자 역할 / Role">
+      <button type="button" id="role_patient"   aria-pressed="true">환자</button>
+      <button type="button" id="role_counselor" aria-pressed="false">상담</button>
+      <button type="button" id="role_doctor"    aria-pressed="false">의사</button>
     </div>
     <div class="seg" role="group" aria-label="언어 / Language">
       <button type="button" id="langKo" aria-pressed="true">한국어</button>
@@ -476,6 +519,7 @@ footer.foot p + p{margin-top:9px}
       <div id="formSections"></div>
       <div class="actions" id="actions">
         <button type="button" class="btn primary" id="runBtn" data-i18n="runBtn">결과 보기</button>
+        <button type="button" class="btn" id="handoffBtn" data-i18n="handoffBtn">인계 코드</button>
         <button type="button" class="btn ghost" id="resetBtn" data-i18n="resetBtn">초기화</button>
         <span class="autohint" id="autoHint" hidden data-i18n="autoHint"></span>
       </div>
@@ -516,6 +560,20 @@ footer.foot p + p{margin-top:9px}
   <div class="card-h"><h3>Self-test</h3></div>
   <div id="testout"></div>
 </section>
+
+<!-- 인계 코드 패널 -->
+<div class="ovl" id="handoffOvl" hidden>
+  <div class="ovl-bd" id="handoffBackdrop"></div>
+  <section class="card ovl-card" role="dialog" aria-modal="true" aria-labelledby="handoffH">
+    <div class="card-h">
+      <h3 id="handoffH" data-i18n="handoffTitle">다음 단계로 넘기기</h3>
+      <button type="button" class="iconbtn" id="handoffClose" style="margin-left:auto" aria-label="닫기">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="card-b" id="handoffBody"></div>
+  </section>
+</div>
 
 <footer class="foot">
   <div class="wrap">
@@ -647,6 +705,7 @@ const LENSES = [
     koSub:"Partial ROF · narrow", enSub:"Partial ROF · narrow",
     cap:{far:3, inter:1,   near:0,   night:3,   contrast:3,   cost:3},
     band:[78,18,4], base:22,
+    plain:{glasses:3, glare:0, contrast:3, cost:3},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"한 거리(대개 원거리)에만 초점. 대비감도와 야간 시질이 가장 안정적이며, 근거리·중간거리는 안경이 필요합니다.",
     enDesc:"Single focus (usually distance). Best contrast and night-vision stability; glasses needed for intermediate and near." },
 
@@ -654,6 +713,7 @@ const LENSES = [
     koSub:"blended vision · −0.75~−1.25 D", enSub:"blended vision · −0.75 to −1.25 D",
     cap:{far:2.8, inter:2,  near:1.5, night:2.8, contrast:3,  cost:3},
     band:[52,30,18], base:16,
+    plain:{glasses:2, glare:0, contrast:3, cost:3},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"주시안은 원거리, 반대눈은 약간 근시로 맞춰 초점 범위를 넓힙니다. 회절 광학을 쓰지 않아 야간 광학현상이 거의 없지만 양안시 적응이 필요합니다.",
     enDesc:"Dominant eye set for distance, fellow eye slightly myopic. No diffractive optics so minimal dysphotopsia, but requires binocular adaptation." },
 
@@ -661,6 +721,7 @@ const LENSES = [
     koSub:"Partial ROF · enhanced", enSub:"Partial ROF · enhanced",
     cap:{far:3, inter:2,   near:1,   night:3,   contrast:2.9, cost:2},
     band:[62,30,8], base:20,
+    plain:{glasses:2, glare:0, contrast:3, cost:2},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"비회절 방식으로 중간거리를 약 1줄 넓힌 단초점. 광학현상 발생률은 단초점과 통계적으로 동등합니다. EDOF의 국제표준 초점심도 기준은 충족하지 않으므로 ‘연속초점’이 아닙니다.",
     enDesc:"Non-diffractive design giving about one line of extra intermediate vision. Photic phenomena equivalent to a standard monofocal. Does NOT meet the ISO/ANSI EDOF depth-of-focus criterion." },
 
@@ -668,6 +729,7 @@ const LENSES = [
     koSub:"Partial ROF · extended", enSub:"Partial ROF · extended",
     cap:{far:2.95, inter:2.6, near:1.5, night:2.5, contrast:2.6, cost:1.5},
     band:[48,36,16], base:14,
+    plain:{glasses:1, glare:1, contrast:2, cost:1},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"파면 조절·구면수차 확장 방식으로 초점을 연속적으로 늘립니다. 회절 링이 없어 헤일로가 상대적으로 적고, 근거리는 대개 돋보기가 일부 필요합니다.",
     enDesc:"Wavefront-shaping / SA-based continuous elongation of focus. No diffractive rings, so fewer halos; most patients still need readers for fine print." },
 
@@ -675,6 +737,7 @@ const LENSES = [
     koSub:"Partial ROF · extended", enSub:"Partial ROF · extended",
     cap:{far:2.9, inter:3,  near:2,   night:1.7, contrast:2.1, cost:1.2},
     band:[40,36,24], base:11,
+    plain:{glasses:1, glare:2, contrast:1, cost:1},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"에쉘렛/회절 구조로 중간~근거리를 넓게 확보합니다. 비회절형보다 근거리가 낫지만 헤일로·글레어와 대비감도 저하가 늘어납니다.",
     enDesc:"Echelette/diffractive optic extending intermediate and near range. Better near than non-diffractive EDOF, at the cost of more halo/glare and reduced contrast." },
 
@@ -682,6 +745,7 @@ const LENSES = [
     koSub:"Full ROF · MIOL/FVR", enSub:"Full ROF · MIOL/FVR",
     cap:{far:2.8, inter:3,  near:3,   night:1,   contrast:1.6, cost:1},
     band:[34,32,34], base:8,
+    plain:{glasses:0, glare:3, contrast:0, cost:0},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"원·중간·근거리에 동시에 초점을 나눕니다. 안경 의존도를 가장 크게 줄이지만(RR 0.63) 헤일로 위험이 가장 높고(RR 3.58) 대비감도가 떨어집니다.",
     enDesc:"Splits light across distance, intermediate and near. Largest reduction in spectacle dependence (RR 0.63) but the highest halo risk (RR 3.58) and lowest contrast." },
 
@@ -689,6 +753,7 @@ const LENSES = [
     koSub:"pinhole optic · 단안 삽입", enSub:"pinhole optic · monocular",
     cap:{far:2.7, inter:2.7, near:2.4, night:1.4, contrast:1.6, cost:1},
     band:[38,32,30], base:5,
+    plain:{glasses:1, glare:2, contrast:1, cost:0},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"핀홀 원리로 초점심도를 늘리면서 각막 고위수차의 영향을 줄입니다. 불규칙 각막(RK 후, 각막이식 후 등)의 구제 옵션이며 원칙적으로 한쪽 눈에만 삽입합니다.",
     enDesc:"Pinhole optic that extends depth of focus while masking corneal higher-order aberrations. A salvage option for irregular corneas (post-RK, post-keratoplasty); implanted in one eye only." }
 ];
@@ -931,6 +996,50 @@ const SECTIONS_PATIENT = [
    ]},
  ]},
 ];
+
+/* ---- 상담직원 모드 ------------------------------------------------
+   상담직원은 진단을 내리지 않습니다. 하는 일은 세 가지뿐입니다.
+     1) 환자에게 같은 질문을 대신 물어 입력한다 (문구는 환자 모드와 동일)
+     2) 검사실에서 나온 계측 수치를 옮겨 적는다
+     3) 결과를 환자에게 설명하고 선택을 확인한다
+   그래서 '황반 상태'처럼 판독이 필요한 항목은 전문가용 문구가 아니라
+   환자용 문구(=환자가 들은 대로)를 그대로 씁니다. 판독 결과 입력은
+   의사 모드의 몫입니다. -------------------------------------------- */
+const findField = (secs, key) => {
+  for (const s of secs) for (const f of s.fields) if (f.key === key) return f;
+  throw new Error("스키마에 없는 항목: " + key);
+};
+const pf = k => findField(SECTIONS_PATIENT, k);   // 환자용 문구
+const rf = k => findField(SECTIONS_PRO, k);       // 전문가용 문구
+
+const SECTIONS_COUNSELOR = [
+ { id:"cbasics", ko:"접수 정보", en:"Intake", open:true, fields:[ pf("age"), pf("bilateral") ]},
+
+ { id:"cwant", ko:"환자가 원하는 시력 (대신 여쭤보세요)", en:"What the patient wants (ask on their behalf)", open:true,
+   fields:["specIndep","nearPriority","interPriority","nightDriving","dysphTolerance"].map(pf) },
+
+ { id:"cstyle", ko:"성향과 생활", en:"Temperament and lifestyle", open:true,
+   fields:["perfectionism","costSensitivity","lflags"].map(pf) },
+
+ { id:"ceye", ko:"눈 건강 문진 (환자가 아는 만큼만)", en:"Eye-health interview (as far as the patient knows)", open:true,
+   fields:["macula","glaucoma","dr","cornea","osd","priorRefSx","astigKnown","pflags"].map(pf) },
+
+ { id:"cmeasure", ko:"검사실 계측값", en:"Measurements from the exam room", open:true, fields:[
+   rf("cylD"), rf("pupPhotopic"), rf("pupMesopic"), rf("al"),
+   rf("cornealSA"), rf("cornealComa"), rf("hoaRMS"), rf("hoaZone"),
+   rf("chordMu"), rf("chordAlpha"),
+ ]},
+];
+
+/* 역할 → 입력 스키마 */
+const SECTIONS_BY_ROLE = {
+  patient:   SECTIONS_PATIENT,
+  counselor: SECTIONS_COUNSELOR,
+  doctor:    SECTIONS_PRO,
+};
+const ROLES = ["patient","counselor","doctor"];
+/* 역할 → 엔진이 쓰는 데이터 모드. 상담·의사는 실제 계측값을 다루므로 'pro'. */
+const ROLE_DATA_MODE = { patient:"patient", counselor:"pro", doctor:"pro", pro:"pro" };
 
 /* ------------------------------------------------------------------
    의사결정 규칙
@@ -1331,10 +1440,14 @@ const CRITICAL_UNKNOWN = {
   bilateral:  {tests:[],                ko:"양안/단안 수술 계획", en:"Bilateral vs unilateral plan"},
 };
 
-/* 원시 입력 → 엔진 입력 정규화 */
+/* 원시 입력 → 엔진 입력 정규화
+   mode 에는 역할(patient·counselor·doctor) 또는 데이터 모드(patient·pro)가 들어옵니다.
+   d.role 은 화면 구성에, d.mode 는 임상 로직에 쓰입니다. */
 function normalize(raw, mode){
   const d = Object.assign({}, raw);
-  d.mode = mode;
+  const role = mode || "patient";
+  d.role = role;
+  d.mode = (typeof ROLE_DATA_MODE !== "undefined" && ROLE_DATA_MODE[role]) || "pro";
 
   ["age","cylD","cornealSA","cornealComa","hoaRMS","chordMu","chordAlpha","pupPhotopic","pupMesopic","al"]
     .forEach(k => { d[k] = num(d[k]); });
@@ -1345,15 +1458,16 @@ function normalize(raw, mode){
   ["opticNeuro","uveitis","vitrectomy","ifis","irregularAstig","toricPlanned","precisionNearWork","nightWork"]
     .forEach(k => { d[k] = d[k] === true || d[k] === "true"; });
 
-  // 환자 모드: 난시 서술 → 추정 난시량 (불확실 표시 유지)
-  if (mode === "patient"){
-    d.astigEstimated = false;
+  /* 난시: 실제 계측값(cylD)이 있으면 언제나 그것을 씁니다.
+     계측값이 없고 환자·상담 단계의 서술만 있으면 추정하되 '추정'임을 표시합니다.
+     (상담직원이 문진만 하고 계측 전이어도 환자 응답이 버려지지 않게 하려는 것) */
+  d.astigEstimated = false;
+  if (d.cylD === null && d.astigKnown && d.astigKnown !== "unknown"){
     if (d.astigKnown === "no")        d.cylD = 0;
     else if (d.astigKnown === "some"){ d.cylD = 1.0; d.astigEstimated = true; }
     else if (d.astigKnown === "lots"){ d.cylD = 2.0; d.astigEstimated = true; }
-    else d.cylD = null;
-    d.toricPlanned = false;   // 환자 모드에서는 계획을 알 수 없음
   }
+  if (d.mode === "patient") d.toricPlanned = false;   // 환자는 수술 계획을 알 수 없음
 
   // 'unknown' 은 규칙을 발동시키지 않음 (null 취급) — 대신 추가검사로 표시
   const unknowns = [];
@@ -1421,7 +1535,7 @@ function evaluate(raw, mode){
   // 기본 술전 검사 (AAO PPP 표준 평가)
   [T.OCT, T.TOPO, T.OSD, T.BIOM].forEach(addTest);
   // 미측정 항목 → 추가검사
-  if (mode === "pro"){
+  if (d.mode === "pro"){
     if (d.cornealSA === null || d.cornealComa === null || d.hoaRMS === null) addTest(T.ABERRO);
     if (d.chordMu === null && d.chordAlpha === null) addTest(T.KAPPA);
     if (d.pupMesopic === null || d.pupPhotopic === null) addTest(T.PUPIL);
@@ -1490,7 +1604,7 @@ function evaluate(raw, mode){
 const STR = {
  ko:{
   brandTitle:"IOL 내비게이터", brandSub:"인공수정체 선택 보조",
-  modePatient:"환자 설문", modePro:"전문가 정밀",
+  modePatient:"환자 설문", modePro:"의사 정밀",
   disclaimer:"이 도구는 <b>임상 의사결정 보조(CDS)</b>이며 의료기기가 아닙니다. 진단·처방을 하지 않고, 담당 안과의사의 판단과 진찰을 대체하지 않습니다. 최종 인공수정체 선택은 반드시 실제 검사 소견과 집도의의 판단에 따라 이루어져야 합니다.",
   runBtn:"결과 보기", resetBtn:"초기화", autoHint:"입력을 바꾸면 결과가 자동으로 갱신됩니다",
   emptyTitle:"아직 결과가 없습니다",
@@ -1520,6 +1634,60 @@ const STR = {
   taxCols:["분류","ESCRS / ISO 위치","정의 기준","핵심 절충"],
   footer1:"이 도구는 공개된 동료심사 문헌·국제 표준·학회 종설을 근거로 규칙을 구성했습니다. 각 규칙에는 근거 문헌과 근거 수준을 표시했으며, 문헌 간 수치가 상충하는 항목(angle kappa, 각막 고위수차 등)에서는 단일 cut-off로 결론짓지 않고 범위와 반대 근거를 함께 제시합니다.",
   footer2:"입력한 정보는 브라우저 안에서만 처리되며 어디로도 전송되지 않습니다. 이 도구는 진단하지 않고, 처방하지 않으며, 의료진의 판단을 대체하지 않습니다.",
+
+  /* 역할 */
+  rolePatient:"환자", roleCounselor:"상담", roleDoctor:"의사",
+  roleHint:{
+    patient:"환자분이 직접 답하는 화면입니다. 검사 수치 없이, 아는 만큼만 답하시면 됩니다.",
+    counselor:"상담직원용입니다. 환자에게 대신 여쭤 입력하고, 검사실 계측값을 옮겨 적고, 결과를 설명합니다. 진단이나 최종 결정은 하지 않습니다.",
+    doctor:"의사용 정밀 입력입니다. 판독 소견과 계측값을 직접 넣고, 규칙별 근거와 등급까지 확인합니다.",
+  },
+
+  /* 인계 */
+  handoffBtn:"인계 코드", handoffTitle:"다음 단계로 넘기기",
+  handoffDesc:"지금까지 입력한 내용을 코드에 담았습니다. 다음 사람이 이 코드를 읽으면 같은 값이 그대로 채워집니다. <b>이름·생년월일 같은 개인정보는 코드에 들어 있지 않습니다.</b>",
+  handoffCodeLabel:"인계 코드", handoffCheckLabel:"확인 번호",
+  handoffCheckHint:"말로 맞춰볼 때 쓰는 4자리입니다. 환자 정보가 아닙니다.",
+  handoffCopy:"코드 복사", handoffCopyLink:"링크 복사", handoffCopied:"복사했습니다",
+  handoffScan:"휴대폰·태블릿으로 이 QR을 찍으면 같은 화면이 열립니다.",
+  handoffLoadTitle:"받은 코드 불러오기",
+  handoffLoadPh:"예: 2C88-PAHG-304P-…",
+  handoffLoadBtn:"불러오기",
+  handoffLoaded:"불러왔습니다. 입력 항목이 채워졌습니다.",
+  handoffClose:"닫기",
+  handoffErr:{
+    empty:"코드를 입력하세요.",
+    charset:"코드에 쓸 수 없는 글자가 있습니다. 다시 확인해 주세요.",
+    version:"이 코드는 다른 버전에서 만들어졌습니다. 새로 만들어 주세요.",
+    fingerprint:"프로그램이 갱신되어 예전 코드 형식과 맞지 않습니다. 코드를 새로 만들어 주세요.",
+    short:"코드가 잘린 것 같습니다. 전체를 다시 복사해 주세요.",
+  },
+  qrFail:"QR을 만들지 못했습니다. 코드를 직접 복사해 주세요.",
+
+  /* 렌즈 설명 */
+  guideTitle:"렌즈 유형 한눈에 보기",
+  guideIntro:"거리별로 얼마나 잘 보이는지, 안경이 얼마나 필요한지, 밤에 빛번짐이 얼마나 생기는지를 유형별로 비교한 표입니다. 개별 제품이 아니라 <b>유형</b>의 특성입니다.",
+  guideGlasses:"안경 필요", guideGlare:"야간 빛번짐", guideContrast:"대비(선명함)", guideCost:"비용",
+  lvl:["없음","조금","보통","많음"],
+  lvlContrast:["많이 낮음","다소 낮음","거의 유지","가장 안정"],
+  lvlCost:["가장 높음","높은 편","중간","보험 범위"],
+  guideNear:"가까운 곳", guideInter:"중간 거리", guideFar:"먼 곳",
+
+  /* 상담 확인 */
+  decisionTitle:"선택 확인",
+  decisionHint:"의사와 상의해 정한 유형을 고르면, 아래 요약과 인쇄물에 함께 표시됩니다. 이 선택은 저장되지 않고 이 화면에만 남습니다.",
+  decisionPick:"환자와 확인한 유형", decisionNone:"아직 정하지 않음",
+  decisionToric:"난시교정(토릭) 병용",
+  decisionMismatch:"이 유형은 현재 입력 기준으로 금기에 해당합니다. 반드시 담당의와 다시 확인하세요.",
+  decisionCaution:"이 유형에는 아래 ‘주의’ 항목이 함께 붙습니다. 환자에게 설명하셨는지 확인하세요.",
+  costTitle:"비급여 비용",
+  costHint:"원장님이 직접 입력하는 값입니다. 이 브라우저에만 저장되고 서버나 저장소로 전송되지 않습니다.",
+  costEdit:"비용 설정", costSave:"저장", costUnit:"원", costEmpty:"미설정",
+  summaryBtn:"상담 요약 인쇄",
+
+  /* 환자 화면 전용 */
+  askTitle:"진료 때 여쭤보면 좋은 것",
+  askIntro:"아래 항목은 검사나 진찰로만 알 수 있습니다. 진료 때 함께 확인해 보세요.",
  },
  en:{
   brandTitle:"IOL Navigator", brandSub:"Lens selection support",
@@ -1553,6 +1721,60 @@ const STR = {
   taxCols:["Category","ESCRS / ISO position","Defining criterion","Core trade-off"],
   footer1:"Rules are built from peer-reviewed literature, international standards and society reviews. Every rule carries its sources and an evidence grade, and where the literature conflicts (angle kappa, corneal higher-order aberrations) the range and the contradicting evidence are shown rather than a single cut-off.",
   footer2:"Everything you enter stays in your browser and is never transmitted. This tool does not diagnose, does not prescribe, and does not replace clinical judgement.",
+
+  /* roles */
+  rolePatient:"Patient", roleCounselor:"Counsellor", roleDoctor:"Doctor",
+  roleHint:{
+    patient:"For the patient to answer directly. No measurements needed — answer as far as you know.",
+    counselor:"For counselling staff: ask the patient on their behalf, transcribe the measurements, and explain the result. No diagnosis or final decision here.",
+    doctor:"Clinician detail: enter examination findings and measurements, with the evidence and grade behind every rule.",
+  },
+
+  /* handoff */
+  handoffBtn:"Handoff code", handoffTitle:"Pass this on",
+  handoffDesc:"Everything entered so far is packed into a code. Whoever reads it next gets the same values. <b>No name, date of birth or other identifying data is in the code.</b>",
+  handoffCodeLabel:"Handoff code", handoffCheckLabel:"Check digits",
+  handoffCheckHint:"Four digits for confirming out loud. Not patient data.",
+  handoffCopy:"Copy code", handoffCopyLink:"Copy link", handoffCopied:"Copied",
+  handoffScan:"Scan this QR with a phone or tablet to open the same screen.",
+  handoffLoadTitle:"Load a code",
+  handoffLoadPh:"e.g. 2C88-PAHG-304P-…",
+  handoffLoadBtn:"Load",
+  handoffLoaded:"Loaded — the fields have been filled in.",
+  handoffClose:"Close",
+  handoffErr:{
+    empty:"Enter a code.",
+    charset:"That code contains characters it cannot contain. Please check it.",
+    version:"This code was made by a different version. Please generate a new one.",
+    fingerprint:"The tool has been updated and no longer matches this code format. Please generate a new code.",
+    short:"The code looks truncated. Copy the whole thing again.",
+  },
+  qrFail:"Could not build the QR code — copy the code instead.",
+
+  /* lens guide */
+  guideTitle:"Lens types at a glance",
+  guideIntro:"How well each type sees at each distance, how much you still need glasses, and how much night glare it adds. These are properties of the <b>type</b>, not of any single product.",
+  guideGlasses:"Glasses still needed", guideGlare:"Night glare / halo", guideContrast:"Contrast", guideCost:"Cost",
+  lvl:["None","A little","Moderate","A lot"],
+  lvlContrast:["Much reduced","Somewhat reduced","Largely kept","Most stable"],
+  lvlCost:["Highest","High","Middle","Covered"],
+  guideNear:"Near", guideInter:"Intermediate", guideFar:"Distance",
+
+  /* counselling confirmation */
+  decisionTitle:"Confirm the choice",
+  decisionHint:"Pick the type agreed with the doctor; it appears in the summary and the printout. The choice is not stored anywhere — it stays on this screen.",
+  decisionPick:"Type confirmed with the patient", decisionNone:"Not decided yet",
+  decisionToric:"With toric (astigmatism) correction",
+  decisionMismatch:"With the current inputs this type is contraindicated. Confirm with the surgeon before proceeding.",
+  decisionCaution:"This type carries the cautions listed below. Check that they were explained to the patient.",
+  costTitle:"Out-of-pocket cost",
+  costHint:"Entered by the practice. Stored only in this browser; never transmitted.",
+  costEdit:"Set costs", costSave:"Save", costUnit:"KRW", costEmpty:"not set",
+  summaryBtn:"Print counselling summary",
+
+  /* patient-only */
+  askTitle:"Worth asking at your appointment",
+  askIntro:"These can only be established by examination. Bring them up at your visit.",
  }
 };
 
@@ -1590,9 +1812,490 @@ const TAXONOMY = [
 ];
 
 /* ------------------------------------------------------------------
+   QR 코드 생성 — 바이트 모드 · 오류정정 레벨 M · 버전 1~10
+
+   이 앱은 외부 스크립트를 전혀 불러오지 않는 단일 HTML 파일이므로
+   QR 라이브러리를 쓸 수 없어 직접 구현했습니다.
+
+   검증: test/qr.test.mjs 가 파이썬 segno 라이브러리가 만든 모듈 행렬과
+   한 칸씩 비교합니다. 한 칸이라도 다르면 테스트가 실패합니다.
+   ------------------------------------------------------------------ */
+
+/* 버전별 블록 구조 (오류정정 M)
+   ec = 블록당 오류정정 코드워드 수, g1/d1 = 1군 블록수/블록당 데이터 코드워드 */
+const QR_M = {
+  1:{ec:10,g1:1,d1:16,g2:0,d2:0},   2:{ec:16,g1:1,d1:28,g2:0,d2:0},
+  3:{ec:26,g1:1,d1:44,g2:0,d2:0},   4:{ec:18,g1:2,d1:32,g2:0,d2:0},
+  5:{ec:24,g1:2,d1:43,g2:0,d2:0},   6:{ec:16,g1:4,d1:27,g2:0,d2:0},
+  7:{ec:18,g1:4,d1:31,g2:0,d2:0},   8:{ec:22,g1:2,d1:38,g2:2,d2:39},
+  9:{ec:22,g1:3,d1:36,g2:2,d2:37}, 10:{ec:26,g1:4,d1:43,g2:1,d2:44},
+};
+/* 정렬 패턴 중심 좌표 */
+const QR_ALIGN = {
+  1:[], 2:[6,18], 3:[6,22], 4:[6,26], 5:[6,30],
+  6:[6,34], 7:[6,22,38], 8:[6,24,42], 9:[6,26,46], 10:[6,28,50],
+};
+/* 데이터 뒤에 붙는 나머지 비트 */
+const QR_REMAINDER = {1:0,2:7,3:7,4:7,5:7,6:7,7:0,8:0,9:0,10:0};
+
+/* ---- GF(256) 산술 ---- */
+const GF_EXP = new Uint8Array(512), GF_LOG = new Uint8Array(256);
+(function(){
+  let x = 1;
+  for (let i = 0; i < 255; i++){ GF_EXP[i] = x; GF_LOG[x] = i; x <<= 1; if (x & 0x100) x ^= 0x11d; }
+  for (let i = 255; i < 512; i++) GF_EXP[i] = GF_EXP[i - 255];
+})();
+const gfMul = (a,b) => (a === 0 || b === 0) ? 0 : GF_EXP[GF_LOG[a] + GF_LOG[b]];
+
+function rsGenPoly(n){
+  let p = [1];
+  for (let i = 0; i < n; i++){
+    const q = new Array(p.length + 1).fill(0);
+    for (let j = 0; j < p.length; j++){
+      q[j]     ^= p[j];
+      q[j + 1] ^= gfMul(p[j], GF_EXP[i]);
+    }
+    p = q;
+  }
+  return p;
+}
+function rsEncode(data, ecLen){
+  const gen = rsGenPoly(ecLen);
+  const buf = new Uint8Array(data.length + ecLen);
+  buf.set(data);
+  for (let i = 0; i < data.length; i++){
+    const c = buf[i];
+    if (!c) continue;
+    for (let j = 0; j < gen.length; j++) buf[i + j] ^= gfMul(gen[j], c);
+  }
+  return Array.from(buf.slice(data.length));
+}
+
+/* ---- BCH (형식정보 · 버전정보) ---- */
+function bchDigit(v){ let d = 0; while (v !== 0){ d++; v >>>= 1; } return d; }
+/* 형식정보 15비트: (EC 2비트 + 마스크 3비트) + BCH(15,5), 0x5412 로 XOR */
+function bch15(data){
+  let d = data << 10;
+  while (bchDigit(d) - bchDigit(0x537) >= 0) d ^= (0x537 << (bchDigit(d) - bchDigit(0x537)));
+  return ((data << 10) | d) ^ 0x5412;
+}
+/* 버전정보 18비트 (버전 7 이상) */
+function bch18(data){
+  let d = data << 12;
+  while (bchDigit(d) - bchDigit(0x1f25) >= 0) d ^= (0x1f25 << (bchDigit(d) - bchDigit(0x1f25)));
+  return (data << 12) | d;
+}
+
+/* ---- 마스크 ---- */
+const QR_MASKS = [
+  (r,c) => (r + c) % 2 === 0,
+  (r,c) => r % 2 === 0,
+  (r,c) => c % 3 === 0,
+  (r,c) => (r + c) % 3 === 0,
+  (r,c) => (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0,
+  (r,c) => (r * c) % 2 + (r * c) % 3 === 0,
+  (r,c) => ((r * c) % 2 + (r * c) % 3) % 2 === 0,
+  (r,c) => ((r + c) % 2 + (r * c) % 3) % 2 === 0,
+];
+
+/* ---- 본체 ---- */
+function qrEncode(text){
+  const bytes = Array.from(new TextEncoder().encode(text));
+
+  let ver = 0;
+  for (let v = 1; v <= 10; v++){
+    const s = QR_M[v];
+    const dataCw = s.g1 * s.d1 + s.g2 * s.d2;
+    const need = 4 + (v < 10 ? 8 : 16) + bytes.length * 8;
+    if (need <= dataCw * 8){ ver = v; break; }
+  }
+  if (!ver) throw new Error("QR: 내용이 너무 깁니다 (버전 10 초과)");
+
+  const spec = QR_M[ver];
+  const dataCw = spec.g1 * spec.d1 + spec.g2 * spec.d2;
+
+  /* 비트열 구성 */
+  const bits = [];
+  const push = (val, n) => { for (let i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+  push(0b0100, 4);                       // 바이트 모드
+  push(bytes.length, ver < 10 ? 8 : 16);
+  bytes.forEach(b => push(b, 8));
+  for (let i = 0; i < 4 && bits.length < dataCw * 8; i++) bits.push(0);   // 종단자
+  while (bits.length % 8) bits.push(0);
+  const pads = [0xEC, 0x11];
+  for (let i = 0; bits.length < dataCw * 8; i++) push(pads[i % 2], 8);
+
+  const codewords = [];
+  for (let i = 0; i < bits.length; i += 8){
+    let b = 0; for (let j = 0; j < 8; j++) b = (b << 1) | bits[i + j];
+    codewords.push(b);
+  }
+
+  /* 블록 분할 → 오류정정 → 인터리브 */
+  const blocks = [];
+  let p = 0;
+  for (let i = 0; i < spec.g1; i++){ blocks.push(codewords.slice(p, p + spec.d1)); p += spec.d1; }
+  for (let i = 0; i < spec.g2; i++){ blocks.push(codewords.slice(p, p + spec.d2)); p += spec.d2; }
+  const ecBlocks = blocks.map(b => rsEncode(Uint8Array.from(b), spec.ec));
+
+  const finalCw = [];
+  const maxData = Math.max(...blocks.map(b => b.length));
+  for (let i = 0; i < maxData; i++) blocks.forEach(b => { if (i < b.length) finalCw.push(b[i]); });
+  for (let i = 0; i < spec.ec; i++) ecBlocks.forEach(b => finalCw.push(b[i]));
+
+  const finalBits = [];
+  finalCw.forEach(b => { for (let i = 7; i >= 0; i--) finalBits.push((b >>> i) & 1); });
+  for (let i = 0; i < QR_REMAINDER[ver]; i++) finalBits.push(0);
+
+  /* 행렬 배치 */
+  const size = ver * 4 + 17;
+  const m = Array.from({length:size}, () => new Int8Array(size).fill(-1));
+  const fn = Array.from({length:size}, () => new Uint8Array(size));   // 기능 패턴 표시
+  const set = (r,c,v) => { m[r][c] = v; fn[r][c] = 1; };
+
+  const finder = (r0,c0) => {
+    for (let r = -1; r <= 7; r++) for (let c = -1; c <= 7; c++){
+      const r1 = r0 + r, c1 = c0 + c;
+      if (r1 < 0 || c1 < 0 || r1 >= size || c1 >= size) continue;
+      const inRing = (r >= 0 && r <= 6 && (c === 0 || c === 6)) || (c >= 0 && c <= 6 && (r === 0 || r === 6));
+      const inCore = r >= 2 && r <= 4 && c >= 2 && c <= 4;
+      set(r1, c1, (inRing || inCore) ? 1 : 0);
+    }
+  };
+  finder(0,0); finder(0,size-7); finder(size-7,0);
+
+  for (let i = 8; i < size - 8; i++){ set(6, i, i % 2 === 0 ? 1 : 0); set(i, 6, i % 2 === 0 ? 1 : 0); }
+
+  const centers = QR_ALIGN[ver];
+  centers.forEach(r0 => centers.forEach(c0 => {
+    if ((r0 === 6 && c0 === 6) || (r0 === 6 && c0 === size - 7) || (r0 === size - 7 && c0 === 6)) return;
+    for (let r = -2; r <= 2; r++) for (let c = -2; c <= 2; c++)
+      set(r0 + r, c0 + c, (Math.max(Math.abs(r), Math.abs(c)) !== 1) ? 1 : 0);
+  }));
+
+  set(size - 8, 8, 1);                                   // 항상 검은 모듈
+
+  for (let i = 0; i < 9; i++){                           // 형식정보 자리 예약
+    if (m[8][i] === -1) set(8, i, 0);
+    if (m[i][8] === -1) set(i, 8, 0);
+  }
+  for (let i = 0; i < 8; i++){
+    if (m[8][size-1-i] === -1) set(8, size-1-i, 0);
+    if (m[size-1-i][8] === -1) set(size-1-i, 8, 0);
+  }
+  if (ver >= 7){
+    const vb = bch18(ver);
+    for (let i = 0; i < 18; i++){
+      const bit = (vb >>> i) & 1;
+      set(Math.floor(i / 3), size - 11 + (i % 3), bit);
+      set(size - 11 + (i % 3), Math.floor(i / 3), bit);
+    }
+  }
+
+  /* 데이터 지그재그 배치 */
+  let bi = 0, up = true;
+  for (let col = size - 1; col > 0; col -= 2){
+    if (col === 6) col--;                                 // 타이밍 열 건너뜀
+    for (let n = 0; n < size; n++){
+      const row = up ? size - 1 - n : n;
+      for (const c of [col, col - 1]){
+        if (fn[row][c]) continue;
+        m[row][c] = bi < finalBits.length ? finalBits[bi] : 0;
+        bi++;
+      }
+    }
+    up = !up;
+  }
+
+  /* 마스크 선택 */
+  let best = null, bestPenalty = Infinity;
+  for (let k = 0; k < 8; k++){
+    const cand = m.map(row => Int8Array.from(row));
+    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++)
+      if (!fn[r][c] && QR_MASKS[k](r,c)) cand[r][c] ^= 1;
+    applyFormat(cand, k, size);
+    const pen = penalty(cand, size);
+    if (pen < bestPenalty){ bestPenalty = pen; best = cand; }
+  }
+  return best.map(row => Array.from(row));
+}
+
+/* 형식정보 배치 — 비트 0(LSB)이 좌상단 세로줄 맨 위, 그리고 우상단 가로줄 맨 오른쪽.
+   이 대응을 뒤집으면 QR 이 전혀 읽히지 않습니다 (크기는 같아서 눈으로는 구분되지 않음). */
+function applyFormat(mat, maskIdx, size){
+  const f = bch15((0b00 << 3) | maskIdx);          // 0b00 = 오류정정 레벨 M
+  for (let i = 0; i < 15; i++){
+    const bit = (f >>> i) & 1;
+    if (i < 6)       mat[i][8] = bit;              // 세로줄 (좌상단)
+    else if (i < 8)  mat[i + 1][8] = bit;
+    else             mat[size - 15 + i][8] = bit;  // 세로줄 (좌하단)
+    if (i < 8)       mat[8][size - 1 - i] = bit;   // 가로줄 (우상단)
+    else if (i === 8) mat[8][7] = bit;
+    else             mat[8][14 - i] = bit;         // 가로줄 (좌상단)
+  }
+  mat[size - 8][8] = 1;
+}
+
+function penalty(mat, size){
+  let score = 0;
+  // 규칙 1 — 같은 색 5칸 이상 연속
+  for (let i = 0; i < size; i++){
+    for (const line of [mat[i], mat.map(r => r[i])]){
+      let run = 1;
+      for (let j = 1; j < size; j++){
+        if (line[j] === line[j-1]) run++;
+        else { if (run >= 5) score += run - 2; run = 1; }
+      }
+      if (run >= 5) score += run - 2;
+    }
+  }
+  // 규칙 2 — 2×2 동색 블록
+  for (let r = 0; r < size - 1; r++) for (let c = 0; c < size - 1; c++){
+    const v = mat[r][c];
+    if (v === mat[r][c+1] && v === mat[r+1][c] && v === mat[r+1][c+1]) score += 3;
+  }
+  // 규칙 3 — 1:1:3:1:1 패턴
+  const pat1 = [1,0,1,1,1,0,1,0,0,0,0], pat2 = [0,0,0,0,1,0,1,1,1,0,1];
+  const match = (line, i, pat) => pat.every((v,k) => line[i+k] === v);
+  for (let i = 0; i < size; i++){
+    const row = Array.from(mat[i]), col = mat.map(r => r[i]);
+    for (const line of [row, col])
+      for (let j = 0; j + 11 <= size; j++)
+        if (match(line, j, pat1) || match(line, j, pat2)) score += 40;
+  }
+  // 규칙 4 — 검은 모듈 비율
+  let dark = 0;
+  for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) dark += mat[r][c];
+  const pct = dark * 100 / (size * size);
+  score += Math.floor(Math.abs(pct - 50) / 5) * 10;
+  return score;
+}
+
+/* 행렬 → SVG 문자열 (여백 4모듈, 인쇄 시에도 대비 유지) */
+function qrSvg(text, px){
+  const m = qrEncode(text);
+  const n = m.length, q = 4, total = n + q * 2;
+  let d = "";
+  for (let r = 0; r < n; r++){
+    let c = 0;
+    while (c < n){
+      if (!m[r][c]){ c++; continue; }
+      let w = 1;
+      while (c + w < n && m[r][c + w]) w++;
+      d += `M${c + q} ${r + q}h${w}v1h-${w}z`;
+      c += w;
+    }
+  }
+  const size = px || 168;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}" width="${size}" height="${size}" role="img" shape-rendering="crispEdges">`
+       + `<rect width="${total}" height="${total}" fill="#ffffff"/>`
+       + `<path d="${d}" fill="#000000"/></svg>`;
+}
+
+/* ------------------------------------------------------------------
+   인계 코드 — 환자 → 상담직원 → 의사
+
+   서버가 없는 정적 사이트이므로 입력값을 짧은 코드에 담아 넘깁니다.
+   코드는 QR 로도 표시되고, 링크(#h=…)로도 열립니다.
+
+   설계 원칙
+   · 이름·생년월일·연락처 같은 개인 식별정보는 코드에 넣지 않습니다.
+     사람 확인은 진료실에서 직접 하고, 코드는 임상 입력값만 나릅니다.
+   · 스키마가 바뀌면 코드 형식도 바뀝니다. 지문(fingerprint)을 함께 실어
+     형식이 다른 코드는 조용히 잘못 읽히는 대신 명확히 거부됩니다.
+   · 값을 비운 항목은 '없음'으로 실려서, 받는 쪽에서도 그대로 비어 있습니다.
+     (임의의 기본값으로 채우지 않는다는 이 앱의 원칙을 코드에서도 지킵니다)
+   ------------------------------------------------------------------ */
+
+const HANDOFF_VER = 1;
+/* Crockford Base32 — I·L·O·U 를 뺀 32글자. 손으로 옮겨 적을 때 헷갈리지 않습니다. */
+const B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+const bitsFor = n => { let b = 1; while ((1 << b) - 1 < n) b++; return b; };
+const decimalsOf = step => (String(step).split(".")[1] || "").length;
+
+/* 세 역할의 스키마를 합쳐 코드 형식을 자동으로 만듭니다.
+   항목을 추가하면 여기에 자동 반영되고, 지문이 바뀌어 예전 코드는 거부됩니다. */
+function buildHandoffSpec(){
+  const map = new Map();
+  const addField = f => {
+    if (f.type === "checks"){
+      f.items.forEach(it => map.set(it.key, {key:it.key, kind:"bool", bits:1}));
+    } else if (f.type === "select" || f.type === "scale"){
+      const prev = map.get(f.key);
+      const vals = new Set(prev ? prev.values : []);
+      f.options.forEach(o => vals.add(o.v));
+      map.set(f.key, {key:f.key, kind:"enum", values:Array.from(vals).sort()});
+    } else if (f.type === "number"){
+      const prev = map.get(f.key);
+      map.set(f.key, {key:f.key, kind:"num",
+        min:  prev ? Math.min(prev.min, f.min)   : f.min,
+        max:  prev ? Math.max(prev.max, f.max)   : f.max,
+        step: prev ? Math.min(prev.step, f.step) : f.step});
+    }
+  };
+  [SECTIONS_PATIENT, SECTIONS_COUNSELOR, SECTIONS_PRO]
+    .forEach(secs => secs.forEach(s => s.fields.forEach(addField)));
+
+  const list = Array.from(map.values()).sort((a,b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
+  list.forEach(f => {
+    if (f.kind === "enum") f.bits = bitsFor(f.values.length);          // 0 = 미입력
+    if (f.kind === "num"){
+      f.count = Math.round((f.max - f.min) / f.step) + 1;
+      f.bits  = bitsFor(f.count - 1);                                  // 앞에 '있음' 1비트가 따로 붙습니다
+      f.dec   = decimalsOf(f.step);
+    }
+  });
+  return list;
+}
+const HANDOFF_SPEC = buildHandoffSpec();
+
+/* 형식 지문 — FNV-1a 32비트에서 하위 16비트 */
+function handoffFingerprint(spec){
+  const s = spec.map(f => f.kind === "enum" ? `${f.key}:e:${f.values.join(",")}`
+                        : f.kind === "num"  ? `${f.key}:n:${f.min}:${f.max}:${f.step}`
+                        : `${f.key}:b`).join("|") + "|v" + HANDOFF_VER;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++){
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h & 0xffff;
+}
+const HANDOFF_FP = handoffFingerprint(HANDOFF_SPEC);
+/* 코드 전체 길이(비트). 뒤쪽 0 은 잘라서 보내고 읽을 때 다시 채웁니다 —
+   비어 있는 항목이 많은 초기 문진일수록 코드가 짧아집니다. */
+const HANDOFF_BITS = 20 + HANDOFF_SPEC.reduce((n,f) => n + f.bits + (f.kind === "num" ? 1 : 0), 0);
+
+/* ---- 비트 입출력 ---- */
+function bitWriter(){
+  const bits = [];
+  return {
+    bits,
+    put(val, n){ for (let i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); },
+  };
+}
+function bitReader(bits){
+  let p = 0;
+  return {
+    left(){ return bits.length - p; },
+    take(n){
+      if (p + n > bits.length) throw new Error("코드가 너무 짧습니다");
+      let v = 0;
+      for (let i = 0; i < n; i++) v = (v << 1) | bits[p + i];
+      p += n;
+      return v >>> 0;
+    },
+  };
+}
+
+/* ---- 값 ↔ 비트 ---- */
+function encodeHandoff(values){
+  const w = bitWriter();
+  w.put(HANDOFF_VER, 4);
+  w.put(HANDOFF_FP, 16);
+
+  HANDOFF_SPEC.forEach(f => {
+    const raw = values[f.key];
+    if (f.kind === "bool"){ w.put(raw === true || raw === "true" ? 1 : 0, 1); return; }
+
+    if (f.kind === "enum"){
+      const i = (raw === undefined || raw === null || raw === "") ? -1 : f.values.indexOf(String(raw));
+      w.put(i < 0 ? 0 : i + 1, f.bits);
+      return;
+    }
+
+    // 숫자: '있음' 1비트 + 값
+    const n = (raw === null || raw === undefined || raw === "") ? null : Number(raw);
+    if (n === null || !Number.isFinite(n)){ w.put(0, 1); return; }
+    let idx = Math.round((n - f.min) / f.step);
+    idx = Math.max(0, Math.min(f.count - 1, idx));
+    w.put(1, 1);
+    w.put(idx, f.bits);
+  });
+
+  // 5비트 단위로 채워 Base32 로
+  while (w.bits.length % 5) w.bits.push(0);
+  let out = "";
+  for (let i = 0; i < w.bits.length; i += 5){
+    let v = 0;
+    for (let j = 0; j < 5; j++) v = (v << 1) | w.bits[i + j];
+    out += B32[v];
+  }
+  out = out.replace(/0+$/, "");                 // 뒤쪽 미입력 구간은 잘라냄
+  if (out.length < 5) out = out.padEnd(5, "0"); // 버전·지문(20비트)은 항상 남김
+  return out.replace(/(.{4})(?=.)/g, "$1-");
+}
+
+function normalizeHandoffCode(code){
+  return String(code || "")
+    .toUpperCase()
+    .replace(/[\s\-–—_.]/g, "")
+    .replace(/^IOL:?/, "")
+    .replace(/O/g, "0").replace(/[IL]/g, "1").replace(/U/g, "V");
+}
+
+function decodeHandoff(code){
+  const s = normalizeHandoffCode(code);
+  if (!s) return {ok:false, reason:"empty"};
+  const bits = [];
+  for (const ch of s){
+    const v = B32.indexOf(ch);
+    if (v < 0) return {ok:false, reason:"charset", detail:ch};
+    for (let i = 4; i >= 0; i--) bits.push((v >>> i) & 1);
+  }
+  while (bits.length < HANDOFF_BITS) bits.push(0);   // 잘려 온 뒤쪽을 0(미입력)으로 복원
+  const r = bitReader(bits);
+  try {
+    if (r.take(4) !== HANDOFF_VER) return {ok:false, reason:"version"};
+    if (r.take(16) !== HANDOFF_FP) return {ok:false, reason:"fingerprint"};
+    const values = {};
+    HANDOFF_SPEC.forEach(f => {
+      if (f.kind === "bool"){ if (r.take(1)) values[f.key] = true; return; }
+      if (f.kind === "enum"){
+        const i = r.take(f.bits);
+        if (i > 0 && i <= f.values.length) values[f.key] = f.values[i - 1];
+        return;
+      }
+      if (!r.take(1)) return;                       // 미입력
+      const idx = r.take(f.bits);
+      const v = f.min + idx * f.step;
+      values[f.key] = Number(v.toFixed(f.dec));
+    });
+    return {ok:true, values};
+  } catch (e) {
+    return {ok:false, reason:"short"};
+  }
+}
+
+/* 구두 확인용 4자리 — 상담직원과 의사가 "같은 코드 맞죠?" 를 말로 맞춰볼 때 씁니다.
+   코드 자체의 해시일 뿐 환자 정보가 아닙니다. */
+function handoffCheckDigits(code){
+  const s = normalizeHandoffCode(code);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return String(h % 10000).padStart(4, "0");
+}
+
+/* 코드가 담긴 링크 — 같은 페이지를 다른 기기에서 열면 값이 채워집니다. */
+function handoffUrl(code){
+  if (typeof location === "undefined") return "#h=" + code;
+  const base = location.origin + location.pathname;
+  if (location.protocol === "file:") return "#h=" + code;
+  return base + "#h=" + code;
+}
+
+/* ------------------------------------------------------------------
    UI
    ------------------------------------------------------------------ */
-const state = { lang:"ko", mode:"patient", values:{}, last:null };
+const state = {
+  lang:"ko",
+  role:"patient",          // patient | counselor | doctor
+  values:{},
+  last:null,
+  decision:null,           // 상담에서 환자와 확인한 렌즈 유형 (id)
+  toric:false,             // 토릭 병용 여부
+};
 let _rerunTimer = null;
 
 /* 레일 높이 동기화 — 레일의 실제 화면상 top 을 읽어 액션바가 항상 화면 안에 들어오게 한다.
@@ -1655,14 +2358,18 @@ const ic = p => {
 };
 const IC_CHEV  = '<path d="m9 18 6-6-6-6"/>';
 const IC_CHECK = '<path d="M20 6 9 17l-5-5"/>';
+const IC_PRINT = '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>';
+const IC_SHARE = '<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M12 3v13M8 7l4-4 4 4"/>';
+const IC_ASK   = '<path d="M9.1 9a3 3 0 1 1 4.5 2.6c-.9.5-1.6 1.3-1.6 2.4"/><path d="M12 18h.01"/><circle cx="12" cy="12" r="9"/>';
 
 /* ---------- 폼 ---------- */
-function sectionsFor(mode){ return mode === "pro" ? SECTIONS_PRO : SECTIONS_PATIENT; }
+function sectionsFor(role){ return SECTIONS_BY_ROLE[role] || SECTIONS_PATIENT; }
 
 function renderForm(){
   const host = $("#formSections");
   host.textContent = "";
-  const secs = sectionsFor(state.mode);
+  host.appendChild(el("p", {cls:"rolehint", text: L().roleHint[state.role]}));
+  const secs = sectionsFor(state.role);
   secs.forEach(sec => {
     const body = el("div", {cls:"sect-b"});
     sec.fields.forEach(f => body.appendChild(renderField(f)));
@@ -1797,6 +2504,7 @@ function renderResults(res){
   host.hidden = false;
   $("#emptyState").hidden = true;
   const t = L();
+  const isPatient = state.role === "patient";
 
   /* 잠정 결과 경고 */
   if (res.unknowns.length || (res.d.mode === "patient")){
@@ -1880,8 +2588,11 @@ function renderResults(res){
   ]);
   host.appendChild(card(t.rankTitle, null, null, el("div", {}, [legend, rank])));
 
-  /* 금기 */
-  if (res.allStopRules.length){
+  /* 렌즈 유형 설명 — 환자·상담 화면에서 설명 자료로 씁니다 */
+  if (state.role !== "doctor") host.appendChild(lensGuideCard());
+
+  /* 금기 — 환자 화면에서는 규칙 원문 대신 아래 ‘피해야 할 유형’으로만 보여줍니다 */
+  if (!isPatient && res.allStopRules.length){
     const list = el("div", {cls:"flist"});
     res.allStopRules.forEach(r => {
       const affected = res.scored.filter(s => s.stops.includes(r)).map(s => s.id);
@@ -1944,7 +2655,7 @@ function renderResults(res){
   host.appendChild(card(t.altTitle, null, null, altBox));
 
   /* 주의 */
-  if (res.allCautionRules.length){
+  if (!isPatient && res.allCautionRules.length){
     const list = el("div", {cls:"flist"});
     res.allCautionRules
       .slice().sort((a,b) => Math.max(...b.lenses.map(x=>x.w)) - Math.max(...a.lenses.map(x=>x.w)))
@@ -1953,26 +2664,34 @@ function renderResults(res){
   }
 
   /* 권고 */
-  if (res.notes.length){
+  if (!isPatient && res.notes.length){
     const list = el("div", {cls:"flist"});
     res.notes.forEach(r => list.appendChild(findingNode(r, null, "pref")));
     host.appendChild(card(t.noteTitle, String(res.notes.length), "t-pref", list));
   }
 
-  /* 추가검사 */
-  const tests = el("div", {cls:"tests"});
-  res.tests.forEach(x => {
-    const d = state.lang === "ko" ? x.d_ko : (x.d_en || x.d_ko);
-    tests.appendChild(el("div", {cls:"test"}, [
-      ic(IC_CHECK),
-      el("div", {}, [ el("span", {text: tx(x)}), d ? el("small", {text:d}) : null ])
-    ]));
-  });
-  host.appendChild(card(t.testsTitle, String(res.tests.length), "t-neutral", tests));
+  /* 추가검사 — 환자 화면에서는 ‘진료 때 여쭤볼 것’으로 바꿔 보여줍니다 */
+  if (isPatient){
+    host.appendChild(patientAskCard(res));
+  } else {
+    const tests = el("div", {cls:"tests"});
+    res.tests.forEach(x => {
+      const d = state.lang === "ko" ? x.d_ko : (x.d_en || x.d_ko);
+      tests.appendChild(el("div", {cls:"test"}, [
+        ic(IC_CHECK),
+        el("div", {}, [ el("span", {text: tx(x)}), d ? el("small", {text:d}) : null ])
+      ]));
+    });
+    host.appendChild(card(t.testsTitle, String(res.tests.length), "t-neutral", tests));
+  }
 
-  /* 인쇄 */
+  /* 선택 확인 — 상담직원 화면 전용 */
+  if (state.role === "counselor") host.appendChild(decisionCard(res));
+
+  /* 인쇄 · 인계 */
   host.appendChild(el("div", {cls:"btnrow", style:"padding:2px 0"}, [
-    el("button", {type:"button", cls:"btn", onclick:() => window.print()}, [ic('<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>'), el("span",{text:t.printBtn})])
+    el("button", {type:"button", cls:"btn", onclick:() => window.print()}, [ic(IC_PRINT), el("span",{text:t.printBtn})]),
+    el("button", {type:"button", cls:"btn", onclick:() => openHandoff()}, [ic(IC_SHARE), el("span",{text:t.handoffBtn})]),
   ]));
 }
 
@@ -2074,7 +2793,7 @@ function applyI18n(){
 /* ---------- 실행 ---------- */
 function run(opts){
   const scroll = !opts || opts.scroll !== false;
-  const res = evaluate(state.values, state.mode);
+  const res = evaluate(state.values, state.role);
   state.last = res;
   renderResults(res);
   const hint = $("#autoHint");
@@ -2085,10 +2804,13 @@ function run(opts){
   return res;
 }
 
-function setMode(m){
-  state.mode = m;
-  $("#modePatient").setAttribute("aria-pressed", String(m === "patient"));
-  $("#modePro").setAttribute("aria-pressed", String(m === "pro"));
+function setRole(r){
+  if (!ROLES.includes(r)) r = "patient";
+  state.role = r;
+  ROLES.forEach(x => $("#role_" + x).setAttribute("aria-pressed", String(x === r)));
+  document.body.setAttribute("data-role", r);
+  $("#taxonomyCard").hidden = (r === "patient");
+  $("#refCard").hidden      = (r === "patient");
   renderForm();
   if (state.last) run({scroll:false});
 }
@@ -2096,7 +2818,7 @@ function setLang(l){
   state.lang = l;
   $("#langKo").setAttribute("aria-pressed", String(l === "ko"));
   $("#langEn").setAttribute("aria-pressed", String(l === "en"));
-  applyI18n(); renderForm(); renderTaxonomy(); renderRefs();
+  applyI18n(); renderForm(); renderTaxonomy(); renderRefs(); syncRoleLabels();
   if (state.last) run({scroll:false});
 }
 
@@ -2106,13 +2828,16 @@ function boot(){
   renderTaxonomy();
   renderRefs();
 
-  $("#modePatient").addEventListener("click", () => setMode("patient"));
-  $("#modePro").addEventListener("click", () => setMode("pro"));
+  ROLES.forEach(r => $("#role_" + r).addEventListener("click", () => setRole(r)));
+  syncRoleLabels();
+  setRole(state.role);
+  wireHandoff();
   $("#langKo").addEventListener("click", () => setLang("ko"));
   $("#langEn").addEventListener("click", () => setLang("en"));
   $("#runBtn").addEventListener("click", () => run({scroll:true}));
   $("#resetBtn").addEventListener("click", () => {
-    state.values = {}; state.last = null;
+    state.values = {}; state.last = null; state.decision = null; state.toric = false;
+    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
     renderForm();
     $("#resultBody").hidden = true; $("#resultBody").textContent = "";
     $("#emptyState").hidden = false;
@@ -2136,7 +2861,266 @@ function boot(){
   window.addEventListener("resize", queueRailSync);
   if (window.visualViewport) window.visualViewport.addEventListener("resize", queueRailSync);
 
+  loadFromHash();
   if (new URLSearchParams(location.search).has("test")) runSelfTests();
+}
+
+/* ==================================================================
+   렌즈 유형 설명 — 환자·상담 화면
+   ================================================================== */
+function dots(n, max){
+  const box = el("span", {cls:"dots", "aria-hidden":"true"});
+  for (let i = 0; i < (max || 3); i++) box.appendChild(el("i", {cls: i < n ? "on" : ""}));
+  return box;
+}
+function meter(level, labels){
+  return el("span", {cls:"meter"}, [ dots(level, 3), el("span", {cls:"mlabel", text: labels[level]}) ]);
+}
+
+function lensGuideCard(){
+  const t = L();
+  const tbl = el("table", {cls:"gloss guide"});
+  tbl.appendChild(el("thead", {}, el("tr", {}, [
+    el("th", {text: state.lang === "ko" ? "유형" : "Type"}),
+    el("th", {text: t.guideFar + " · " + t.guideInter + " · " + t.guideNear}),
+    el("th", {text: t.guideGlasses}),
+    el("th", {text: t.guideGlare}),
+    el("th", {text: t.guideContrast}),
+    el("th", {text: t.guideCost}),
+  ])));
+  const tb = el("tbody");
+  LENSES.forEach(l => {
+    const p = l.plain;
+    tb.appendChild(el("tr", {}, [
+      el("td", {}, [ el("b", {text: tx(l)}),
+                     el("small", {cls:"gsub", text: state.lang === "ko" ? l.koDesc : l.enDesc}) ]),
+      el("td", {}, defocusStrip(l)),
+      el("td", {}, meter(p.glasses, t.lvl)),
+      el("td", {}, meter(p.glare, t.lvl)),
+      el("td", {}, meter(p.contrast, t.lvlContrast)),
+      el("td", {}, meter(p.cost, t.lvlCost)),
+    ]));
+  });
+  tbl.appendChild(tb);
+  const body = el("div", {}, [
+    el("p", {cls:"hint", style:"padding:12px 18px 0", html:t.guideIntro}),
+    el("div", {cls:"tblwrap"}, tbl),
+  ]);
+  return card(t.guideTitle, null, null, body);
+}
+
+/* ==================================================================
+   환자 화면 — 진료 때 여쭤볼 것
+   ================================================================== */
+function patientAskCard(res){
+  const t = L();
+  const list = el("div", {cls:"tests"});
+  res.unknowns.forEach(k => list.appendChild(el("div", {cls:"test"}, [
+    ic(IC_ASK),
+    el("div", {}, el("span", {text: tx(CRITICAL_UNKNOWN[k]) + (state.lang === "ko" ? " — 검사 결과가 어떤지" : " — what the test showed")}))
+  ])));
+  res.tests.slice(0, 6).forEach(x => list.appendChild(el("div", {cls:"test"}, [
+    ic(IC_CHECK), el("div", {}, el("span", {text: tx(x)}))
+  ])));
+  const body = el("div", {}, [
+    el("p", {cls:"hint", style:"padding:12px 18px", text:t.askIntro}),
+    list,
+  ]);
+  return card(t.askTitle, null, null, body);
+}
+
+/* ==================================================================
+   상담직원 화면 — 선택 확인과 비용
+   비용은 이 브라우저(localStorage)에만 남습니다. 저장소에 커밋되지 않습니다.
+   ================================================================== */
+const COST_KEY = "iolnav-cost-v1";
+function loadCosts(){ try { return JSON.parse(localStorage.getItem(COST_KEY) || "{}"); } catch(e){ return {}; } }
+function saveCosts(o){ try { localStorage.setItem(COST_KEY, JSON.stringify(o)); } catch(e){} }
+const wonFmt = n => Number(n).toLocaleString(state.lang === "ko" ? "ko-KR" : "en-US");
+
+function decisionCard(res){
+  const t = L();
+  const costs = loadCosts();
+  const body = el("div", {cls:"card-b", style:"display:flex;flex-direction:column;gap:14px"});
+  body.appendChild(el("p", {cls:"hint", text:t.decisionHint}));
+
+  const sel = el("select", {id:"decisionSel", "aria-label":t.decisionPick});
+  sel.appendChild(el("option", {value:"", text:t.decisionNone}));
+  LENSES.forEach(l => {
+    const o = el("option", {value:l.id, text: tx(l)});
+    if (state.decision === l.id) o.selected = true;
+    sel.appendChild(o);
+  });
+  const field = el("div", {cls:"field"}, [ el("label", {for:"decisionSel", text:t.decisionPick}), sel ]);
+  body.appendChild(field);
+
+  const tcb = el("input", {type:"checkbox", id:"decisionToric"});
+  tcb.checked = !!state.toric;
+  tcb.addEventListener("change", () => { state.toric = tcb.checked; run({scroll:false}); });
+  body.appendChild(el("label", {cls:"chk", for:"decisionToric"}, [tcb, el("span", {text:t.decisionToric})]));
+
+  if (state.decision){
+    const picked = res.scored.find(x => x.id === state.decision);
+    if (picked){
+      if (picked.blocked)
+        body.appendChild(el("div", {cls:"finding lv-stop", style:"border-top:0;padding-left:0"}, [
+          el("div", {cls:"f-stripe"}),
+          el("div", {cls:"f-body"}, el("p", {cls:"f-why", text:t.decisionMismatch}))]));
+      else if (picked.cautions.length)
+        body.appendChild(el("div", {cls:"finding lv-caution", style:"border-top:0;padding-left:0"}, [
+          el("div", {cls:"f-stripe"}),
+          el("div", {cls:"f-body"}, [
+            el("p", {cls:"f-why", text:t.decisionCaution}),
+            el("div", {cls:"f-lens"}, picked.cautions.slice(0,5).map(c => el("span", {cls:"chip", text: tx(c.rule).t})))])]));
+
+      const c = costs[state.decision];
+      body.appendChild(el("div", {cls:"costrow"}, [
+        el("span", {cls:"eyebrow", text:t.costTitle}),
+        el("b", {cls:"mono", style:"font-size:16px",
+                 text: (c === undefined || c === "" || c === null) ? t.costEmpty : wonFmt(c) + " " + t.costUnit}),
+      ]));
+    }
+  }
+  sel.addEventListener("change", () => { state.decision = sel.value || null; run({scroll:false}); });
+
+  /* 비용 설정 */
+  const editor = el("div", {cls:"costgrid", hidden:true});
+  LENSES.forEach(l => {
+    const inp = el("input", {type:"number", min:0, step:10000, id:"cost_"+l.id, placeholder:t.costEmpty});
+    if (costs[l.id] !== undefined && costs[l.id] !== null) inp.value = costs[l.id];
+    editor.appendChild(el("label", {cls:"costitem", for:"cost_"+l.id}, [ el("span", {text: tx(l)}), inp ]));
+  });
+  const saveBtn = el("button", {type:"button", cls:"btn", text:t.costSave, onclick:() => {
+    const o = {};
+    LENSES.forEach(l => { const v = $("#cost_"+l.id).value; if (v !== "") o[l.id] = Number(v); });
+    saveCosts(o); run({scroll:false});
+  }});
+  const toggle = el("button", {type:"button", cls:"btn ghost", text:t.costEdit, onclick:() => {
+    editor.hidden = !editor.hidden; saveBtn.hidden = editor.hidden;
+  }});
+  saveBtn.hidden = true;
+  body.appendChild(el("p", {cls:"hint", text:t.costHint}));
+  body.appendChild(el("div", {cls:"btnrow"}, [toggle, saveBtn]));
+  body.appendChild(editor);
+
+  return card(t.decisionTitle, null, null, body);
+}
+
+/* ==================================================================
+   인계 코드 패널
+   ================================================================== */
+function syncRoleLabels(){
+  const t = L();
+  $("#role_patient").textContent   = t.rolePatient;
+  $("#role_counselor").textContent = t.roleCounselor;
+  $("#role_doctor").textContent    = t.roleDoctor;
+}
+
+let _copyTimer = null;
+function copyText(str, btn){
+  const done = () => {
+    const old = btn.dataset.label || btn.textContent;
+    btn.dataset.label = old;
+    btn.textContent = L().handoffCopied;
+    clearTimeout(_copyTimer);
+    _copyTimer = setTimeout(() => { btn.textContent = btn.dataset.label; }, 1600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(str).then(done, () => fallback());
+  } else fallback();
+  function fallback(){
+    const ta = el("textarea", {style:"position:fixed;opacity:0"});
+    ta.value = str; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch(e){}
+    ta.remove();
+  }
+}
+
+function openHandoff(){
+  const t = L();
+  const code = encodeHandoff(state.values);
+  const url  = handoffUrl(code);
+  const host = $("#handoffBody");
+  host.textContent = "";
+
+  host.appendChild(el("p", {cls:"hint", html:t.handoffDesc}));
+
+  host.appendChild(el("div", {cls:"field"}, [
+    el("span", {cls:"eyebrow", text:t.handoffCodeLabel}),
+    el("div", {cls:"codebox mono", id:"handoffCode", text:code}),
+  ]));
+
+  host.appendChild(el("div", {cls:"costrow"}, [
+    el("span", {cls:"eyebrow", text:t.handoffCheckLabel}),
+    el("b", {cls:"mono", style:"font-size:18px;letter-spacing:.12em", text: handoffCheckDigits(code)}),
+    el("span", {cls:"hint", text:t.handoffCheckHint}),
+  ]));
+
+  const bcopy = el("button", {type:"button", cls:"btn primary", text:t.handoffCopy});
+  bcopy.addEventListener("click", () => copyText(code, bcopy));
+  const blink = el("button", {type:"button", cls:"btn", text:t.handoffCopyLink});
+  blink.addEventListener("click", () => copyText(url, blink));
+  host.appendChild(el("div", {cls:"btnrow"}, [bcopy, blink]));
+
+  try {
+    host.appendChild(el("div", {cls:"qrbox"}, [
+      el("div", {html: qrSvg(url, 176)}),
+      el("p", {cls:"hint", text:t.handoffScan}),
+    ]));
+  } catch(e){
+    host.appendChild(el("p", {cls:"hint", text:t.qrFail}));
+  }
+
+  /* 코드 불러오기 */
+  const inp = el("input", {type:"text", id:"handoffIn", placeholder:t.handoffLoadPh, autocomplete:"off", spellcheck:"false"});
+  const msg = el("p", {cls:"hint", id:"handoffMsg"});
+  const load = () => {
+    const r = decodeHandoff(inp.value);
+    if (!r.ok){
+      msg.textContent = t.handoffErr[r.reason] || t.handoffErr.charset;
+      msg.style.color = "var(--stop)";
+      return;
+    }
+    applyHandoffValues(r.values);
+    msg.textContent = t.handoffLoaded;
+    msg.style.color = "var(--ok)";
+  };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); load(); } });
+  host.appendChild(el("div", {cls:"loadbox"}, [
+    el("span", {cls:"eyebrow", text:t.handoffLoadTitle}),
+    el("div", {cls:"loadrow"}, [inp, el("button", {type:"button", cls:"btn", text:t.handoffLoadBtn, onclick:load})]),
+    msg,
+  ]));
+
+  $("#handoffOvl").hidden = false;
+  document.body.style.overflow = "hidden";
+  bcopy.focus();
+}
+function closeHandoff(){
+  $("#handoffOvl").hidden = true;
+  document.body.style.overflow = "";
+}
+function applyHandoffValues(values){
+  state.values = Object.assign({}, values);
+  renderForm();
+  run({scroll:false});
+}
+function wireHandoff(){
+  $("#handoffClose").addEventListener("click", closeHandoff);
+  $("#handoffBackdrop").addEventListener("click", closeHandoff);
+  $("#handoffBtn").addEventListener("click", openHandoff);
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !$("#handoffOvl").hidden) closeHandoff();
+  });
+}
+/* 주소의 #h=... 로 열렸으면 값을 채웁니다 */
+function loadFromHash(){
+  const m = /[#&]h=([^&]+)/.exec(location.hash || "");
+  if (!m) return;
+  const r = decodeHandoff(decodeURIComponent(m[1]));
+  if (!r.ok) return;
+  applyHandoffValues(r.values);
+  run({scroll:false});
 }
 
 /* ------------------------------------------------------------------
@@ -2283,7 +3267,7 @@ function runSelfTests(){
   ];
   let invariantOk = true, invDetail = "";
   scenarios.forEach((s,i) => {
-    ["pro","patient"].forEach(m => {
+    ["patient","counselor","doctor"].forEach(m => {
       const rr = evaluate(baseInput(s), m);
       if (!rr.top){ invariantOk = false; invDetail = `#${i}/${m}: top 없음`; }
       if (blockedIds(rr).includes("mono")){ invariantOk = false; invDetail = `#${i}/${m}: 단초점이 제외됨`; }
@@ -2295,6 +3279,79 @@ function runSelfTests(){
   });
   ok("불변 조건: 항상 1순위 존재 · 단초점은 결코 배제되지 않음 · 점수 3–100 · 검사목록 비지 않음",
      invariantOk, invDetail);
+
+
+  /* --- 역할 --- */
+  ok("상담·의사 역할은 실측 데이터 모드(pro)로 동작",
+     ROLE_DATA_MODE.counselor === "pro" && ROLE_DATA_MODE.doctor === "pro" && ROLE_DATA_MODE.patient === "patient");
+
+  const counselorKeys = new Set();
+  SECTIONS_COUNSELOR.forEach(sec => sec.fields.forEach(f => {
+    if (f.type === "checks") f.items.forEach(i => counselorKeys.add(i.key)); else counselorKeys.add(f.key);
+  }));
+  ok("상담 화면에 판독·수술계획 항목을 두지 않음 (소대·불규칙난시·토릭계획)",
+     !counselorKeys.has("zonule") && !counselorKeys.has("irregularAstig") && !counselorKeys.has("toricPlanned"),
+     Array.from(counselorKeys).join(","));
+  ok("상담 화면에 계측 입력이 있음", counselorKeys.has("cylD") && counselorKeys.has("al"));
+
+  r = evaluate(baseInput({cylD:0.4, astigKnown:"lots"}), "counselor");
+  ok("계측 난시가 있으면 문진 서술로 덮어쓰지 않음", r.d.cylD === 0.4 && r.d.astigEstimated === false,
+     `cylD=${r.d.cylD} est=${r.d.astigEstimated}`);
+  r = evaluate(baseInput({cylD:null, astigKnown:"lots"}), "counselor");
+  ok("계측 전이면 환자 응답에서 추정하되 '추정'으로 표시", r.d.cylD === 2.0 && r.d.astigEstimated === true);
+
+  /* --- 인계 코드 --- */
+  const allKeys = new Set();
+  [SECTIONS_PATIENT, SECTIONS_COUNSELOR, SECTIONS_PRO].forEach(secs => secs.forEach(sec => sec.fields.forEach(f => {
+    if (f.type === "checks") f.items.forEach(i => allKeys.add(i.key)); else allKeys.add(f.key);
+  })));
+  const specKeys = new Set(HANDOFF_SPEC.map(f => f.key));
+  const missing = Array.from(allKeys).filter(k => !specKeys.has(k));
+  ok("모든 입력 항목이 인계 코드에 실린다 (빠지면 넘길 때 값이 조용히 사라짐)",
+     missing.length === 0, missing.join(","));
+
+  const rt = (vals) => {
+    const back = decodeHandoff(encodeHandoff(vals));
+    if (!back.ok) return "디코드 실패: " + back.reason;
+    const bad = [];
+    Object.entries(vals).forEach(([k,v]) => {
+      const got = back.values[k];
+      const same = (v === false || v === null || v === "" ) ? (got === undefined || got === false)
+                 : (typeof v === "number" ? Math.abs(got - v) < 1e-9 : String(got) === String(v));
+      if (!same) bad.push(`${k}: ${v} → ${got}`);
+    });
+    return bad.length ? bad.join(", ") : "";
+  };
+  ok("인계 왕복 — 빈 입력", rt({}) === "", rt({}));
+  const mid = {age:71, bilateral:"yes", macula:"amd_intermediate", astigKnown:"lots",
+               nightDriving:"3", nightWork:true, cylD:1.25, al:23.6, cornealSA:-0.12, hoaZone:"6"};
+  ok("인계 왕복 — 일반적인 입력", rt(mid) === "", rt(mid));
+  const edge = {age:105, cylD:12, cornealSA:2, cornealComa:3, hoaRMS:3, chordMu:2, chordAlpha:2,
+                pupPhotopic:9, pupMesopic:9, al:38, toricPlanned:true, ifis:true, uveitis:true};
+  ok("인계 왕복 — 경계값(최댓값)", rt(edge) === "", rt(edge));
+  const low = {age:18, cylD:0, cornealSA:-1, cornealComa:0, chordMu:0, pupPhotopic:1, pupMesopic:1, al:18};
+  ok("인계 왕복 — 경계값(최솟값)", rt(low) === "", rt(low));
+
+  const codeMid = encodeHandoff(mid);
+  ok("소문자·공백으로 옮겨 적어도 읽힌다",
+     decodeHandoff(" " + codeMid.toLowerCase().replace(/-/g, " ") + " ").ok);
+  ok("O/0, I/1 혼동을 바로잡는다",
+     decodeHandoff(codeMid.replace(/0/g, "O").replace(/1/g, "I")).ok);
+  ok("빈 항목은 기본값으로 채워지지 않는다",
+     decodeHandoff(encodeHandoff({age:71})).values.cylD === undefined);
+  ok("형식이 다른 코드는 조용히 잘못 읽지 않고 거부한다",
+     decodeHandoff("ZZZZ-ZZZZ-ZZZZ").ok === false && decodeHandoff("$$$$").reason === "charset");
+  ok("확인 번호는 4자리이고 코드마다 다르다",
+     /^\d{4}$/.test(handoffCheckDigits(codeMid)) && handoffCheckDigits(codeMid) !== handoffCheckDigits(encodeHandoff(edge)));
+  ok("인계 코드 길이가 QR 용량 안에 들어온다", encodeHandoff(edge).length < 60, String(encodeHandoff(edge).length));
+
+  /* --- 설명 표 데이터 --- */
+  const badPlain = LENSES.filter(l => !l.plain ||
+    ["glasses","glare","contrast","cost"].some(k => !Number.isInteger(l.plain[k]) || l.plain[k] < 0 || l.plain[k] > 3))
+    .map(l => l.id);
+  ok("모든 렌즈에 설명용 4단계 값이 0~3 범위로 있다", badPlain.length === 0, badPlain.join(","));
+  ok("설명 표의 단계 라벨이 4개씩 준비돼 있다",
+     ["ko","en"].every(l => STR[l].lvl.length === 4 && STR[l].lvlContrast.length === 4 && STR[l].lvlCost.length === 4));
 
   /* --- 데이터 정합성 --- */
   const badRef = [];
@@ -2320,7 +3377,7 @@ function runSelfTests(){
   const badBand = LENSES.filter(l => Math.abs(l.band.reduce((a,b)=>a+b,0) - 100) > 0.001).map(l => l.id);
   ok("모든 렌즈의 탈초점 글리프 합 = 100", badBand.length === 0, badBand.join(","));
 
-  const header = `IOL 내비게이터 · 자체 검증\n규칙 ${RULES.length}개 · 렌즈 유형 ${LENSES.length}개 · 문헌 ${Object.keys(REFS).length}건\n${"─".repeat(58)}`;
+  const header = `IOL 내비게이터 · 자체 검증\n규칙 ${RULES.length}개 · 렌즈 유형 ${LENSES.length}개 · 문헌 ${Object.keys(REFS).length}건 · 인계 항목 ${HANDOFF_SPEC.length}개\n${"─".repeat(58)}`;
   const footer = `${"─".repeat(58)}\n통과 ${pass} · 실패 ${fail}`;
   const text = [header, ...out, footer].join("\n");
 

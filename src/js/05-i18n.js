@@ -4,7 +4,7 @@
 const STR = {
  ko:{
   brandTitle:"IOL 내비게이터", brandSub:"인공수정체 선택 보조",
-  modePatient:"환자 설문", modePro:"전문가 정밀",
+  modePatient:"환자 설문", modePro:"의사 정밀",
   disclaimer:"이 도구는 <b>임상 의사결정 보조(CDS)</b>이며 의료기기가 아닙니다. 진단·처방을 하지 않고, 담당 안과의사의 판단과 진찰을 대체하지 않습니다. 최종 인공수정체 선택은 반드시 실제 검사 소견과 집도의의 판단에 따라 이루어져야 합니다.",
   runBtn:"결과 보기", resetBtn:"초기화", autoHint:"입력을 바꾸면 결과가 자동으로 갱신됩니다",
   emptyTitle:"아직 결과가 없습니다",
@@ -34,6 +34,60 @@ const STR = {
   taxCols:["분류","ESCRS / ISO 위치","정의 기준","핵심 절충"],
   footer1:"이 도구는 공개된 동료심사 문헌·국제 표준·학회 종설을 근거로 규칙을 구성했습니다. 각 규칙에는 근거 문헌과 근거 수준을 표시했으며, 문헌 간 수치가 상충하는 항목(angle kappa, 각막 고위수차 등)에서는 단일 cut-off로 결론짓지 않고 범위와 반대 근거를 함께 제시합니다.",
   footer2:"입력한 정보는 브라우저 안에서만 처리되며 어디로도 전송되지 않습니다. 이 도구는 진단하지 않고, 처방하지 않으며, 의료진의 판단을 대체하지 않습니다.",
+
+  /* 역할 */
+  rolePatient:"환자", roleCounselor:"상담", roleDoctor:"의사",
+  roleHint:{
+    patient:"환자분이 직접 답하는 화면입니다. 검사 수치 없이, 아는 만큼만 답하시면 됩니다.",
+    counselor:"상담직원용입니다. 환자에게 대신 여쭤 입력하고, 검사실 계측값을 옮겨 적고, 결과를 설명합니다. 진단이나 최종 결정은 하지 않습니다.",
+    doctor:"의사용 정밀 입력입니다. 판독 소견과 계측값을 직접 넣고, 규칙별 근거와 등급까지 확인합니다.",
+  },
+
+  /* 인계 */
+  handoffBtn:"인계 코드", handoffTitle:"다음 단계로 넘기기",
+  handoffDesc:"지금까지 입력한 내용을 코드에 담았습니다. 다음 사람이 이 코드를 읽으면 같은 값이 그대로 채워집니다. <b>이름·생년월일 같은 개인정보는 코드에 들어 있지 않습니다.</b>",
+  handoffCodeLabel:"인계 코드", handoffCheckLabel:"확인 번호",
+  handoffCheckHint:"말로 맞춰볼 때 쓰는 4자리입니다. 환자 정보가 아닙니다.",
+  handoffCopy:"코드 복사", handoffCopyLink:"링크 복사", handoffCopied:"복사했습니다",
+  handoffScan:"휴대폰·태블릿으로 이 QR을 찍으면 같은 화면이 열립니다.",
+  handoffLoadTitle:"받은 코드 불러오기",
+  handoffLoadPh:"예: 2C88-PAHG-304P-…",
+  handoffLoadBtn:"불러오기",
+  handoffLoaded:"불러왔습니다. 입력 항목이 채워졌습니다.",
+  handoffClose:"닫기",
+  handoffErr:{
+    empty:"코드를 입력하세요.",
+    charset:"코드에 쓸 수 없는 글자가 있습니다. 다시 확인해 주세요.",
+    version:"이 코드는 다른 버전에서 만들어졌습니다. 새로 만들어 주세요.",
+    fingerprint:"프로그램이 갱신되어 예전 코드 형식과 맞지 않습니다. 코드를 새로 만들어 주세요.",
+    short:"코드가 잘린 것 같습니다. 전체를 다시 복사해 주세요.",
+  },
+  qrFail:"QR을 만들지 못했습니다. 코드를 직접 복사해 주세요.",
+
+  /* 렌즈 설명 */
+  guideTitle:"렌즈 유형 한눈에 보기",
+  guideIntro:"거리별로 얼마나 잘 보이는지, 안경이 얼마나 필요한지, 밤에 빛번짐이 얼마나 생기는지를 유형별로 비교한 표입니다. 개별 제품이 아니라 <b>유형</b>의 특성입니다.",
+  guideGlasses:"안경 필요", guideGlare:"야간 빛번짐", guideContrast:"대비(선명함)", guideCost:"비용",
+  lvl:["없음","조금","보통","많음"],
+  lvlContrast:["많이 낮음","다소 낮음","거의 유지","가장 안정"],
+  lvlCost:["가장 높음","높은 편","중간","보험 범위"],
+  guideNear:"가까운 곳", guideInter:"중간 거리", guideFar:"먼 곳",
+
+  /* 상담 확인 */
+  decisionTitle:"선택 확인",
+  decisionHint:"의사와 상의해 정한 유형을 고르면, 아래 요약과 인쇄물에 함께 표시됩니다. 이 선택은 저장되지 않고 이 화면에만 남습니다.",
+  decisionPick:"환자와 확인한 유형", decisionNone:"아직 정하지 않음",
+  decisionToric:"난시교정(토릭) 병용",
+  decisionMismatch:"이 유형은 현재 입력 기준으로 금기에 해당합니다. 반드시 담당의와 다시 확인하세요.",
+  decisionCaution:"이 유형에는 아래 ‘주의’ 항목이 함께 붙습니다. 환자에게 설명하셨는지 확인하세요.",
+  costTitle:"비급여 비용",
+  costHint:"원장님이 직접 입력하는 값입니다. 이 브라우저에만 저장되고 서버나 저장소로 전송되지 않습니다.",
+  costEdit:"비용 설정", costSave:"저장", costUnit:"원", costEmpty:"미설정",
+  summaryBtn:"상담 요약 인쇄",
+
+  /* 환자 화면 전용 */
+  askTitle:"진료 때 여쭤보면 좋은 것",
+  askIntro:"아래 항목은 검사나 진찰로만 알 수 있습니다. 진료 때 함께 확인해 보세요.",
  },
  en:{
   brandTitle:"IOL Navigator", brandSub:"Lens selection support",
@@ -67,6 +121,60 @@ const STR = {
   taxCols:["Category","ESCRS / ISO position","Defining criterion","Core trade-off"],
   footer1:"Rules are built from peer-reviewed literature, international standards and society reviews. Every rule carries its sources and an evidence grade, and where the literature conflicts (angle kappa, corneal higher-order aberrations) the range and the contradicting evidence are shown rather than a single cut-off.",
   footer2:"Everything you enter stays in your browser and is never transmitted. This tool does not diagnose, does not prescribe, and does not replace clinical judgement.",
+
+  /* roles */
+  rolePatient:"Patient", roleCounselor:"Counsellor", roleDoctor:"Doctor",
+  roleHint:{
+    patient:"For the patient to answer directly. No measurements needed — answer as far as you know.",
+    counselor:"For counselling staff: ask the patient on their behalf, transcribe the measurements, and explain the result. No diagnosis or final decision here.",
+    doctor:"Clinician detail: enter examination findings and measurements, with the evidence and grade behind every rule.",
+  },
+
+  /* handoff */
+  handoffBtn:"Handoff code", handoffTitle:"Pass this on",
+  handoffDesc:"Everything entered so far is packed into a code. Whoever reads it next gets the same values. <b>No name, date of birth or other identifying data is in the code.</b>",
+  handoffCodeLabel:"Handoff code", handoffCheckLabel:"Check digits",
+  handoffCheckHint:"Four digits for confirming out loud. Not patient data.",
+  handoffCopy:"Copy code", handoffCopyLink:"Copy link", handoffCopied:"Copied",
+  handoffScan:"Scan this QR with a phone or tablet to open the same screen.",
+  handoffLoadTitle:"Load a code",
+  handoffLoadPh:"e.g. 2C88-PAHG-304P-…",
+  handoffLoadBtn:"Load",
+  handoffLoaded:"Loaded — the fields have been filled in.",
+  handoffClose:"Close",
+  handoffErr:{
+    empty:"Enter a code.",
+    charset:"That code contains characters it cannot contain. Please check it.",
+    version:"This code was made by a different version. Please generate a new one.",
+    fingerprint:"The tool has been updated and no longer matches this code format. Please generate a new code.",
+    short:"The code looks truncated. Copy the whole thing again.",
+  },
+  qrFail:"Could not build the QR code — copy the code instead.",
+
+  /* lens guide */
+  guideTitle:"Lens types at a glance",
+  guideIntro:"How well each type sees at each distance, how much you still need glasses, and how much night glare it adds. These are properties of the <b>type</b>, not of any single product.",
+  guideGlasses:"Glasses still needed", guideGlare:"Night glare / halo", guideContrast:"Contrast", guideCost:"Cost",
+  lvl:["None","A little","Moderate","A lot"],
+  lvlContrast:["Much reduced","Somewhat reduced","Largely kept","Most stable"],
+  lvlCost:["Highest","High","Middle","Covered"],
+  guideNear:"Near", guideInter:"Intermediate", guideFar:"Distance",
+
+  /* counselling confirmation */
+  decisionTitle:"Confirm the choice",
+  decisionHint:"Pick the type agreed with the doctor; it appears in the summary and the printout. The choice is not stored anywhere — it stays on this screen.",
+  decisionPick:"Type confirmed with the patient", decisionNone:"Not decided yet",
+  decisionToric:"With toric (astigmatism) correction",
+  decisionMismatch:"With the current inputs this type is contraindicated. Confirm with the surgeon before proceeding.",
+  decisionCaution:"This type carries the cautions listed below. Check that they were explained to the patient.",
+  costTitle:"Out-of-pocket cost",
+  costHint:"Entered by the practice. Stored only in this browser; never transmitted.",
+  costEdit:"Set costs", costSave:"Save", costUnit:"KRW", costEmpty:"not set",
+  summaryBtn:"Print counselling summary",
+
+  /* patient-only */
+  askTitle:"Worth asking at your appointment",
+  askIntro:"These can only be established by examination. Bring them up at your visit.",
  }
 };
 

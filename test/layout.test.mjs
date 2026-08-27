@@ -51,9 +51,13 @@ async function checkFieldsUsable(page) {
       }
     }
 
+    // 접힌 섹션 안의 컨트롤은 애초에 보이지 않으므로 검사 대상이 아닙니다.
+    const visibleIn = sel => [...inner.querySelectorAll(sel)]
+      .filter(e => e.closest("details.sect") === null || e.closest("details.sect").open);
+
     // 2) 내용이 넘치면 스크롤이 실제로 가능해야 함
     if (inner.scrollHeight <= inner.clientHeight + 2) {
-      const controls = inner.querySelectorAll("select, input, .scale").length;
+      const controls = visibleIn("select, input, .scale").length;
       if (controls > 8 && inner.clientHeight < 2000) {
         problems.push(`스크롤 없음 (컨트롤 ${controls}개가 ${inner.clientHeight}px 안에?)`);
       }
@@ -61,7 +65,7 @@ async function checkFieldsUsable(page) {
 
     // 3) 스크롤을 끝까지 내리면 마지막 컨트롤에 닿아야 함
     inner.scrollTop = inner.scrollHeight;
-    const all = inner.querySelectorAll("select, input[type=number], .scale, .chk");
+    const all = visibleIn("select, input[type=number], .scale, .chk");
     const last = all[all.length - 1];
     if (last) {
       const ib = inner.getBoundingClientRect(), lb = last.getBoundingClientRect();
@@ -70,7 +74,7 @@ async function checkFieldsUsable(page) {
     inner.scrollTop = 0;
 
     // 4) 클릭 대상이 너무 작지 않은지 (고령 사용자 배려)
-    const small = [...inner.querySelectorAll(".scale span, select, input[type=number]")]
+    const small = visibleIn(".scale span, select, input[type=number]")
       .filter(e => e.getBoundingClientRect().height < 34).length;
     if (small > 0) problems.push(`클릭 영역 34px 미만 ${small}개`);
 
@@ -83,7 +87,7 @@ export default async function run() {
   let failures = 0;
 
   for (const v of VIEWPORTS) {
-    for (const mode of ["patient", "pro"]) {
+    for (const role of ["patient", "counselor", "doctor"]) {
       const ctx = await browser.newContext({ viewport: { width: v.w, height: v.h } });
       const page = await ctx.newPage();
       const errors = [];
@@ -92,7 +96,7 @@ export default async function run() {
 
       await page.goto(pageURL, { waitUntil: "load" });
       await page.waitForTimeout(300);
-      if (mode === "pro") { await page.click("#modePro"); await page.waitForTimeout(250); }
+      if (role !== "patient") { await page.click("#role_" + role); await page.waitForTimeout(250); }
 
       const bad = [];
       for (const spot of SPOTS) {
@@ -141,7 +145,8 @@ export default async function run() {
 
       const ok = bad.length === 0;
       if (!ok) failures++;
-      console.log(`  ${ok ? "PASS" : "FAIL"}  ${v.label} ${v.w}×${v.h} / ${mode === "pro" ? "전문가" : "환자"} 모드` +
+      const roleKo = { patient: "환자", counselor: "상담", doctor: "의사" }[role];
+      console.log(`  ${ok ? "PASS" : "FAIL"}  ${v.label} ${v.w}×${v.h} / ${roleKo} 화면` +
                   (ok ? "" : "  →  " + bad.join(", ")));
       await ctx.close();
     }

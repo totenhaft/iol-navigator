@@ -121,6 +121,7 @@ const LENSES = [
     koSub:"Partial ROF · narrow", enSub:"Partial ROF · narrow",
     cap:{far:3, inter:1,   near:0,   night:3,   contrast:3,   cost:3},
     band:[78,18,4], base:22,
+    plain:{glasses:3, glare:0, contrast:3, cost:3},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"한 거리(대개 원거리)에만 초점. 대비감도와 야간 시질이 가장 안정적이며, 근거리·중간거리는 안경이 필요합니다.",
     enDesc:"Single focus (usually distance). Best contrast and night-vision stability; glasses needed for intermediate and near." },
 
@@ -128,6 +129,7 @@ const LENSES = [
     koSub:"blended vision · −0.75~−1.25 D", enSub:"blended vision · −0.75 to −1.25 D",
     cap:{far:2.8, inter:2,  near:1.5, night:2.8, contrast:3,  cost:3},
     band:[52,30,18], base:16,
+    plain:{glasses:2, glare:0, contrast:3, cost:3},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"주시안은 원거리, 반대눈은 약간 근시로 맞춰 초점 범위를 넓힙니다. 회절 광학을 쓰지 않아 야간 광학현상이 거의 없지만 양안시 적응이 필요합니다.",
     enDesc:"Dominant eye set for distance, fellow eye slightly myopic. No diffractive optics so minimal dysphotopsia, but requires binocular adaptation." },
 
@@ -135,6 +137,7 @@ const LENSES = [
     koSub:"Partial ROF · enhanced", enSub:"Partial ROF · enhanced",
     cap:{far:3, inter:2,   near:1,   night:3,   contrast:2.9, cost:2},
     band:[62,30,8], base:20,
+    plain:{glasses:2, glare:0, contrast:3, cost:2},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"비회절 방식으로 중간거리를 약 1줄 넓힌 단초점. 광학현상 발생률은 단초점과 통계적으로 동등합니다. EDOF의 국제표준 초점심도 기준은 충족하지 않으므로 ‘연속초점’이 아닙니다.",
     enDesc:"Non-diffractive design giving about one line of extra intermediate vision. Photic phenomena equivalent to a standard monofocal. Does NOT meet the ISO/ANSI EDOF depth-of-focus criterion." },
 
@@ -142,6 +145,7 @@ const LENSES = [
     koSub:"Partial ROF · extended", enSub:"Partial ROF · extended",
     cap:{far:2.95, inter:2.6, near:1.5, night:2.5, contrast:2.6, cost:1.5},
     band:[48,36,16], base:14,
+    plain:{glasses:1, glare:1, contrast:2, cost:1},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"파면 조절·구면수차 확장 방식으로 초점을 연속적으로 늘립니다. 회절 링이 없어 헤일로가 상대적으로 적고, 근거리는 대개 돋보기가 일부 필요합니다.",
     enDesc:"Wavefront-shaping / SA-based continuous elongation of focus. No diffractive rings, so fewer halos; most patients still need readers for fine print." },
 
@@ -149,6 +153,7 @@ const LENSES = [
     koSub:"Partial ROF · extended", enSub:"Partial ROF · extended",
     cap:{far:2.9, inter:3,  near:2,   night:1.7, contrast:2.1, cost:1.2},
     band:[40,36,24], base:11,
+    plain:{glasses:1, glare:2, contrast:1, cost:1},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"에쉘렛/회절 구조로 중간~근거리를 넓게 확보합니다. 비회절형보다 근거리가 낫지만 헤일로·글레어와 대비감도 저하가 늘어납니다.",
     enDesc:"Echelette/diffractive optic extending intermediate and near range. Better near than non-diffractive EDOF, at the cost of more halo/glare and reduced contrast." },
 
@@ -156,6 +161,7 @@ const LENSES = [
     koSub:"Full ROF · MIOL/FVR", enSub:"Full ROF · MIOL/FVR",
     cap:{far:2.8, inter:3,  near:3,   night:1,   contrast:1.6, cost:1},
     band:[34,32,34], base:8,
+    plain:{glasses:0, glare:3, contrast:0, cost:0},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"원·중간·근거리에 동시에 초점을 나눕니다. 안경 의존도를 가장 크게 줄이지만(RR 0.63) 헤일로 위험이 가장 높고(RR 3.58) 대비감도가 떨어집니다.",
     enDesc:"Splits light across distance, intermediate and near. Largest reduction in spectacle dependence (RR 0.63) but the highest halo risk (RR 3.58) and lowest contrast." },
 
@@ -163,6 +169,7 @@ const LENSES = [
     koSub:"pinhole optic · 단안 삽입", enSub:"pinhole optic · monocular",
     cap:{far:2.7, inter:2.7, near:2.4, night:1.4, contrast:1.6, cost:1},
     band:[38,32,30], base:5,
+    plain:{glasses:1, glare:2, contrast:1, cost:0},   /* 환자 설명용 4단계 (0~3) — 임상 로직에는 쓰이지 않음 */
     koDesc:"핀홀 원리로 초점심도를 늘리면서 각막 고위수차의 영향을 줄입니다. 불규칙 각막(RK 후, 각막이식 후 등)의 구제 옵션이며 원칙적으로 한쪽 눈에만 삽입합니다.",
     enDesc:"Pinhole optic that extends depth of focus while masking corneal higher-order aberrations. A salvage option for irregular corneas (post-RK, post-keratoplasty); implanted in one eye only." }
 ];

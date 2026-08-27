@@ -1,7 +1,14 @@
 /* ------------------------------------------------------------------
    UI
    ------------------------------------------------------------------ */
-const state = { lang:"ko", mode:"patient", values:{}, last:null };
+const state = {
+  lang:"ko",
+  role:"patient",          // patient | counselor | doctor
+  values:{},
+  last:null,
+  decision:null,           // 상담에서 환자와 확인한 렌즈 유형 (id)
+  toric:false,             // 토릭 병용 여부
+};
 let _rerunTimer = null;
 
 /* 레일 높이 동기화 — 레일의 실제 화면상 top 을 읽어 액션바가 항상 화면 안에 들어오게 한다.
@@ -64,14 +71,18 @@ const ic = p => {
 };
 const IC_CHEV  = '<path d="m9 18 6-6-6-6"/>';
 const IC_CHECK = '<path d="M20 6 9 17l-5-5"/>';
+const IC_PRINT = '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>';
+const IC_SHARE = '<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M12 3v13M8 7l4-4 4 4"/>';
+const IC_ASK   = '<path d="M9.1 9a3 3 0 1 1 4.5 2.6c-.9.5-1.6 1.3-1.6 2.4"/><path d="M12 18h.01"/><circle cx="12" cy="12" r="9"/>';
 
 /* ---------- 폼 ---------- */
-function sectionsFor(mode){ return mode === "pro" ? SECTIONS_PRO : SECTIONS_PATIENT; }
+function sectionsFor(role){ return SECTIONS_BY_ROLE[role] || SECTIONS_PATIENT; }
 
 function renderForm(){
   const host = $("#formSections");
   host.textContent = "";
-  const secs = sectionsFor(state.mode);
+  host.appendChild(el("p", {cls:"rolehint", text: L().roleHint[state.role]}));
+  const secs = sectionsFor(state.role);
   secs.forEach(sec => {
     const body = el("div", {cls:"sect-b"});
     sec.fields.forEach(f => body.appendChild(renderField(f)));
@@ -206,6 +217,7 @@ function renderResults(res){
   host.hidden = false;
   $("#emptyState").hidden = true;
   const t = L();
+  const isPatient = state.role === "patient";
 
   /* 잠정 결과 경고 */
   if (res.unknowns.length || (res.d.mode === "patient")){
@@ -289,8 +301,11 @@ function renderResults(res){
   ]);
   host.appendChild(card(t.rankTitle, null, null, el("div", {}, [legend, rank])));
 
-  /* 금기 */
-  if (res.allStopRules.length){
+  /* 렌즈 유형 설명 — 환자·상담 화면에서 설명 자료로 씁니다 */
+  if (state.role !== "doctor") host.appendChild(lensGuideCard());
+
+  /* 금기 — 환자 화면에서는 규칙 원문 대신 아래 ‘피해야 할 유형’으로만 보여줍니다 */
+  if (!isPatient && res.allStopRules.length){
     const list = el("div", {cls:"flist"});
     res.allStopRules.forEach(r => {
       const affected = res.scored.filter(s => s.stops.includes(r)).map(s => s.id);
@@ -353,7 +368,7 @@ function renderResults(res){
   host.appendChild(card(t.altTitle, null, null, altBox));
 
   /* 주의 */
-  if (res.allCautionRules.length){
+  if (!isPatient && res.allCautionRules.length){
     const list = el("div", {cls:"flist"});
     res.allCautionRules
       .slice().sort((a,b) => Math.max(...b.lenses.map(x=>x.w)) - Math.max(...a.lenses.map(x=>x.w)))
@@ -362,26 +377,34 @@ function renderResults(res){
   }
 
   /* 권고 */
-  if (res.notes.length){
+  if (!isPatient && res.notes.length){
     const list = el("div", {cls:"flist"});
     res.notes.forEach(r => list.appendChild(findingNode(r, null, "pref")));
     host.appendChild(card(t.noteTitle, String(res.notes.length), "t-pref", list));
   }
 
-  /* 추가검사 */
-  const tests = el("div", {cls:"tests"});
-  res.tests.forEach(x => {
-    const d = state.lang === "ko" ? x.d_ko : (x.d_en || x.d_ko);
-    tests.appendChild(el("div", {cls:"test"}, [
-      ic(IC_CHECK),
-      el("div", {}, [ el("span", {text: tx(x)}), d ? el("small", {text:d}) : null ])
-    ]));
-  });
-  host.appendChild(card(t.testsTitle, String(res.tests.length), "t-neutral", tests));
+  /* 추가검사 — 환자 화면에서는 ‘진료 때 여쭤볼 것’으로 바꿔 보여줍니다 */
+  if (isPatient){
+    host.appendChild(patientAskCard(res));
+  } else {
+    const tests = el("div", {cls:"tests"});
+    res.tests.forEach(x => {
+      const d = state.lang === "ko" ? x.d_ko : (x.d_en || x.d_ko);
+      tests.appendChild(el("div", {cls:"test"}, [
+        ic(IC_CHECK),
+        el("div", {}, [ el("span", {text: tx(x)}), d ? el("small", {text:d}) : null ])
+      ]));
+    });
+    host.appendChild(card(t.testsTitle, String(res.tests.length), "t-neutral", tests));
+  }
 
-  /* 인쇄 */
+  /* 선택 확인 — 상담직원 화면 전용 */
+  if (state.role === "counselor") host.appendChild(decisionCard(res));
+
+  /* 인쇄 · 인계 */
   host.appendChild(el("div", {cls:"btnrow", style:"padding:2px 0"}, [
-    el("button", {type:"button", cls:"btn", onclick:() => window.print()}, [ic('<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>'), el("span",{text:t.printBtn})])
+    el("button", {type:"button", cls:"btn", onclick:() => window.print()}, [ic(IC_PRINT), el("span",{text:t.printBtn})]),
+    el("button", {type:"button", cls:"btn", onclick:() => openHandoff()}, [ic(IC_SHARE), el("span",{text:t.handoffBtn})]),
   ]));
 }
 
@@ -483,7 +506,7 @@ function applyI18n(){
 /* ---------- 실행 ---------- */
 function run(opts){
   const scroll = !opts || opts.scroll !== false;
-  const res = evaluate(state.values, state.mode);
+  const res = evaluate(state.values, state.role);
   state.last = res;
   renderResults(res);
   const hint = $("#autoHint");
@@ -494,10 +517,13 @@ function run(opts){
   return res;
 }
 
-function setMode(m){
-  state.mode = m;
-  $("#modePatient").setAttribute("aria-pressed", String(m === "patient"));
-  $("#modePro").setAttribute("aria-pressed", String(m === "pro"));
+function setRole(r){
+  if (!ROLES.includes(r)) r = "patient";
+  state.role = r;
+  ROLES.forEach(x => $("#role_" + x).setAttribute("aria-pressed", String(x === r)));
+  document.body.setAttribute("data-role", r);
+  $("#taxonomyCard").hidden = (r === "patient");
+  $("#refCard").hidden      = (r === "patient");
   renderForm();
   if (state.last) run({scroll:false});
 }
@@ -505,7 +531,7 @@ function setLang(l){
   state.lang = l;
   $("#langKo").setAttribute("aria-pressed", String(l === "ko"));
   $("#langEn").setAttribute("aria-pressed", String(l === "en"));
-  applyI18n(); renderForm(); renderTaxonomy(); renderRefs();
+  applyI18n(); renderForm(); renderTaxonomy(); renderRefs(); syncRoleLabels();
   if (state.last) run({scroll:false});
 }
 
@@ -515,13 +541,16 @@ function boot(){
   renderTaxonomy();
   renderRefs();
 
-  $("#modePatient").addEventListener("click", () => setMode("patient"));
-  $("#modePro").addEventListener("click", () => setMode("pro"));
+  ROLES.forEach(r => $("#role_" + r).addEventListener("click", () => setRole(r)));
+  syncRoleLabels();
+  setRole(state.role);
+  wireHandoff();
   $("#langKo").addEventListener("click", () => setLang("ko"));
   $("#langEn").addEventListener("click", () => setLang("en"));
   $("#runBtn").addEventListener("click", () => run({scroll:true}));
   $("#resetBtn").addEventListener("click", () => {
-    state.values = {}; state.last = null;
+    state.values = {}; state.last = null; state.decision = null; state.toric = false;
+    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
     renderForm();
     $("#resultBody").hidden = true; $("#resultBody").textContent = "";
     $("#emptyState").hidden = false;
@@ -545,5 +574,264 @@ function boot(){
   window.addEventListener("resize", queueRailSync);
   if (window.visualViewport) window.visualViewport.addEventListener("resize", queueRailSync);
 
+  loadFromHash();
   if (new URLSearchParams(location.search).has("test")) runSelfTests();
+}
+
+/* ==================================================================
+   렌즈 유형 설명 — 환자·상담 화면
+   ================================================================== */
+function dots(n, max){
+  const box = el("span", {cls:"dots", "aria-hidden":"true"});
+  for (let i = 0; i < (max || 3); i++) box.appendChild(el("i", {cls: i < n ? "on" : ""}));
+  return box;
+}
+function meter(level, labels){
+  return el("span", {cls:"meter"}, [ dots(level, 3), el("span", {cls:"mlabel", text: labels[level]}) ]);
+}
+
+function lensGuideCard(){
+  const t = L();
+  const tbl = el("table", {cls:"gloss guide"});
+  tbl.appendChild(el("thead", {}, el("tr", {}, [
+    el("th", {text: state.lang === "ko" ? "유형" : "Type"}),
+    el("th", {text: t.guideFar + " · " + t.guideInter + " · " + t.guideNear}),
+    el("th", {text: t.guideGlasses}),
+    el("th", {text: t.guideGlare}),
+    el("th", {text: t.guideContrast}),
+    el("th", {text: t.guideCost}),
+  ])));
+  const tb = el("tbody");
+  LENSES.forEach(l => {
+    const p = l.plain;
+    tb.appendChild(el("tr", {}, [
+      el("td", {}, [ el("b", {text: tx(l)}),
+                     el("small", {cls:"gsub", text: state.lang === "ko" ? l.koDesc : l.enDesc}) ]),
+      el("td", {}, defocusStrip(l)),
+      el("td", {}, meter(p.glasses, t.lvl)),
+      el("td", {}, meter(p.glare, t.lvl)),
+      el("td", {}, meter(p.contrast, t.lvlContrast)),
+      el("td", {}, meter(p.cost, t.lvlCost)),
+    ]));
+  });
+  tbl.appendChild(tb);
+  const body = el("div", {}, [
+    el("p", {cls:"hint", style:"padding:12px 18px 0", html:t.guideIntro}),
+    el("div", {cls:"tblwrap"}, tbl),
+  ]);
+  return card(t.guideTitle, null, null, body);
+}
+
+/* ==================================================================
+   환자 화면 — 진료 때 여쭤볼 것
+   ================================================================== */
+function patientAskCard(res){
+  const t = L();
+  const list = el("div", {cls:"tests"});
+  res.unknowns.forEach(k => list.appendChild(el("div", {cls:"test"}, [
+    ic(IC_ASK),
+    el("div", {}, el("span", {text: tx(CRITICAL_UNKNOWN[k]) + (state.lang === "ko" ? " — 검사 결과가 어떤지" : " — what the test showed")}))
+  ])));
+  res.tests.slice(0, 6).forEach(x => list.appendChild(el("div", {cls:"test"}, [
+    ic(IC_CHECK), el("div", {}, el("span", {text: tx(x)}))
+  ])));
+  const body = el("div", {}, [
+    el("p", {cls:"hint", style:"padding:12px 18px", text:t.askIntro}),
+    list,
+  ]);
+  return card(t.askTitle, null, null, body);
+}
+
+/* ==================================================================
+   상담직원 화면 — 선택 확인과 비용
+   비용은 이 브라우저(localStorage)에만 남습니다. 저장소에 커밋되지 않습니다.
+   ================================================================== */
+const COST_KEY = "iolnav-cost-v1";
+function loadCosts(){ try { return JSON.parse(localStorage.getItem(COST_KEY) || "{}"); } catch(e){ return {}; } }
+function saveCosts(o){ try { localStorage.setItem(COST_KEY, JSON.stringify(o)); } catch(e){} }
+const wonFmt = n => Number(n).toLocaleString(state.lang === "ko" ? "ko-KR" : "en-US");
+
+function decisionCard(res){
+  const t = L();
+  const costs = loadCosts();
+  const body = el("div", {cls:"card-b", style:"display:flex;flex-direction:column;gap:14px"});
+  body.appendChild(el("p", {cls:"hint", text:t.decisionHint}));
+
+  const sel = el("select", {id:"decisionSel", "aria-label":t.decisionPick});
+  sel.appendChild(el("option", {value:"", text:t.decisionNone}));
+  LENSES.forEach(l => {
+    const o = el("option", {value:l.id, text: tx(l)});
+    if (state.decision === l.id) o.selected = true;
+    sel.appendChild(o);
+  });
+  const field = el("div", {cls:"field"}, [ el("label", {for:"decisionSel", text:t.decisionPick}), sel ]);
+  body.appendChild(field);
+
+  const tcb = el("input", {type:"checkbox", id:"decisionToric"});
+  tcb.checked = !!state.toric;
+  tcb.addEventListener("change", () => { state.toric = tcb.checked; run({scroll:false}); });
+  body.appendChild(el("label", {cls:"chk", for:"decisionToric"}, [tcb, el("span", {text:t.decisionToric})]));
+
+  if (state.decision){
+    const picked = res.scored.find(x => x.id === state.decision);
+    if (picked){
+      if (picked.blocked)
+        body.appendChild(el("div", {cls:"finding lv-stop", style:"border-top:0;padding-left:0"}, [
+          el("div", {cls:"f-stripe"}),
+          el("div", {cls:"f-body"}, el("p", {cls:"f-why", text:t.decisionMismatch}))]));
+      else if (picked.cautions.length)
+        body.appendChild(el("div", {cls:"finding lv-caution", style:"border-top:0;padding-left:0"}, [
+          el("div", {cls:"f-stripe"}),
+          el("div", {cls:"f-body"}, [
+            el("p", {cls:"f-why", text:t.decisionCaution}),
+            el("div", {cls:"f-lens"}, picked.cautions.slice(0,5).map(c => el("span", {cls:"chip", text: tx(c.rule).t})))])]));
+
+      const c = costs[state.decision];
+      body.appendChild(el("div", {cls:"costrow"}, [
+        el("span", {cls:"eyebrow", text:t.costTitle}),
+        el("b", {cls:"mono", style:"font-size:16px",
+                 text: (c === undefined || c === "" || c === null) ? t.costEmpty : wonFmt(c) + " " + t.costUnit}),
+      ]));
+    }
+  }
+  sel.addEventListener("change", () => { state.decision = sel.value || null; run({scroll:false}); });
+
+  /* 비용 설정 */
+  const editor = el("div", {cls:"costgrid", hidden:true});
+  LENSES.forEach(l => {
+    const inp = el("input", {type:"number", min:0, step:10000, id:"cost_"+l.id, placeholder:t.costEmpty});
+    if (costs[l.id] !== undefined && costs[l.id] !== null) inp.value = costs[l.id];
+    editor.appendChild(el("label", {cls:"costitem", for:"cost_"+l.id}, [ el("span", {text: tx(l)}), inp ]));
+  });
+  const saveBtn = el("button", {type:"button", cls:"btn", text:t.costSave, onclick:() => {
+    const o = {};
+    LENSES.forEach(l => { const v = $("#cost_"+l.id).value; if (v !== "") o[l.id] = Number(v); });
+    saveCosts(o); run({scroll:false});
+  }});
+  const toggle = el("button", {type:"button", cls:"btn ghost", text:t.costEdit, onclick:() => {
+    editor.hidden = !editor.hidden; saveBtn.hidden = editor.hidden;
+  }});
+  saveBtn.hidden = true;
+  body.appendChild(el("p", {cls:"hint", text:t.costHint}));
+  body.appendChild(el("div", {cls:"btnrow"}, [toggle, saveBtn]));
+  body.appendChild(editor);
+
+  return card(t.decisionTitle, null, null, body);
+}
+
+/* ==================================================================
+   인계 코드 패널
+   ================================================================== */
+function syncRoleLabels(){
+  const t = L();
+  $("#role_patient").textContent   = t.rolePatient;
+  $("#role_counselor").textContent = t.roleCounselor;
+  $("#role_doctor").textContent    = t.roleDoctor;
+}
+
+let _copyTimer = null;
+function copyText(str, btn){
+  const done = () => {
+    const old = btn.dataset.label || btn.textContent;
+    btn.dataset.label = old;
+    btn.textContent = L().handoffCopied;
+    clearTimeout(_copyTimer);
+    _copyTimer = setTimeout(() => { btn.textContent = btn.dataset.label; }, 1600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(str).then(done, () => fallback());
+  } else fallback();
+  function fallback(){
+    const ta = el("textarea", {style:"position:fixed;opacity:0"});
+    ta.value = str; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch(e){}
+    ta.remove();
+  }
+}
+
+function openHandoff(){
+  const t = L();
+  const code = encodeHandoff(state.values);
+  const url  = handoffUrl(code);
+  const host = $("#handoffBody");
+  host.textContent = "";
+
+  host.appendChild(el("p", {cls:"hint", html:t.handoffDesc}));
+
+  host.appendChild(el("div", {cls:"field"}, [
+    el("span", {cls:"eyebrow", text:t.handoffCodeLabel}),
+    el("div", {cls:"codebox mono", id:"handoffCode", text:code}),
+  ]));
+
+  host.appendChild(el("div", {cls:"costrow"}, [
+    el("span", {cls:"eyebrow", text:t.handoffCheckLabel}),
+    el("b", {cls:"mono", style:"font-size:18px;letter-spacing:.12em", text: handoffCheckDigits(code)}),
+    el("span", {cls:"hint", text:t.handoffCheckHint}),
+  ]));
+
+  const bcopy = el("button", {type:"button", cls:"btn primary", text:t.handoffCopy});
+  bcopy.addEventListener("click", () => copyText(code, bcopy));
+  const blink = el("button", {type:"button", cls:"btn", text:t.handoffCopyLink});
+  blink.addEventListener("click", () => copyText(url, blink));
+  host.appendChild(el("div", {cls:"btnrow"}, [bcopy, blink]));
+
+  try {
+    host.appendChild(el("div", {cls:"qrbox"}, [
+      el("div", {html: qrSvg(url, 176)}),
+      el("p", {cls:"hint", text:t.handoffScan}),
+    ]));
+  } catch(e){
+    host.appendChild(el("p", {cls:"hint", text:t.qrFail}));
+  }
+
+  /* 코드 불러오기 */
+  const inp = el("input", {type:"text", id:"handoffIn", placeholder:t.handoffLoadPh, autocomplete:"off", spellcheck:"false"});
+  const msg = el("p", {cls:"hint", id:"handoffMsg"});
+  const load = () => {
+    const r = decodeHandoff(inp.value);
+    if (!r.ok){
+      msg.textContent = t.handoffErr[r.reason] || t.handoffErr.charset;
+      msg.style.color = "var(--stop)";
+      return;
+    }
+    applyHandoffValues(r.values);
+    msg.textContent = t.handoffLoaded;
+    msg.style.color = "var(--ok)";
+  };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); load(); } });
+  host.appendChild(el("div", {cls:"loadbox"}, [
+    el("span", {cls:"eyebrow", text:t.handoffLoadTitle}),
+    el("div", {cls:"loadrow"}, [inp, el("button", {type:"button", cls:"btn", text:t.handoffLoadBtn, onclick:load})]),
+    msg,
+  ]));
+
+  $("#handoffOvl").hidden = false;
+  document.body.style.overflow = "hidden";
+  bcopy.focus();
+}
+function closeHandoff(){
+  $("#handoffOvl").hidden = true;
+  document.body.style.overflow = "";
+}
+function applyHandoffValues(values){
+  state.values = Object.assign({}, values);
+  renderForm();
+  run({scroll:false});
+}
+function wireHandoff(){
+  $("#handoffClose").addEventListener("click", closeHandoff);
+  $("#handoffBackdrop").addEventListener("click", closeHandoff);
+  $("#handoffBtn").addEventListener("click", openHandoff);
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !$("#handoffOvl").hidden) closeHandoff();
+  });
+}
+/* 주소의 #h=... 로 열렸으면 값을 채웁니다 */
+function loadFromHash(){
+  const m = /[#&]h=([^&]+)/.exec(location.hash || "");
+  if (!m) return;
+  const r = decodeHandoff(decodeURIComponent(m[1]));
+  if (!r.ok) return;
+  applyHandoffValues(r.values);
+  run({scroll:false});
 }

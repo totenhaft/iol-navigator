@@ -142,7 +142,7 @@ function runSelfTests(){
   ];
   let invariantOk = true, invDetail = "";
   scenarios.forEach((s,i) => {
-    ["pro","patient"].forEach(m => {
+    ["patient","counselor","doctor"].forEach(m => {
       const rr = evaluate(baseInput(s), m);
       if (!rr.top){ invariantOk = false; invDetail = `#${i}/${m}: top 없음`; }
       if (blockedIds(rr).includes("mono")){ invariantOk = false; invDetail = `#${i}/${m}: 단초점이 제외됨`; }
@@ -154,6 +154,79 @@ function runSelfTests(){
   });
   ok("불변 조건: 항상 1순위 존재 · 단초점은 결코 배제되지 않음 · 점수 3–100 · 검사목록 비지 않음",
      invariantOk, invDetail);
+
+
+  /* --- 역할 --- */
+  ok("상담·의사 역할은 실측 데이터 모드(pro)로 동작",
+     ROLE_DATA_MODE.counselor === "pro" && ROLE_DATA_MODE.doctor === "pro" && ROLE_DATA_MODE.patient === "patient");
+
+  const counselorKeys = new Set();
+  SECTIONS_COUNSELOR.forEach(sec => sec.fields.forEach(f => {
+    if (f.type === "checks") f.items.forEach(i => counselorKeys.add(i.key)); else counselorKeys.add(f.key);
+  }));
+  ok("상담 화면에 판독·수술계획 항목을 두지 않음 (소대·불규칙난시·토릭계획)",
+     !counselorKeys.has("zonule") && !counselorKeys.has("irregularAstig") && !counselorKeys.has("toricPlanned"),
+     Array.from(counselorKeys).join(","));
+  ok("상담 화면에 계측 입력이 있음", counselorKeys.has("cylD") && counselorKeys.has("al"));
+
+  r = evaluate(baseInput({cylD:0.4, astigKnown:"lots"}), "counselor");
+  ok("계측 난시가 있으면 문진 서술로 덮어쓰지 않음", r.d.cylD === 0.4 && r.d.astigEstimated === false,
+     `cylD=${r.d.cylD} est=${r.d.astigEstimated}`);
+  r = evaluate(baseInput({cylD:null, astigKnown:"lots"}), "counselor");
+  ok("계측 전이면 환자 응답에서 추정하되 '추정'으로 표시", r.d.cylD === 2.0 && r.d.astigEstimated === true);
+
+  /* --- 인계 코드 --- */
+  const allKeys = new Set();
+  [SECTIONS_PATIENT, SECTIONS_COUNSELOR, SECTIONS_PRO].forEach(secs => secs.forEach(sec => sec.fields.forEach(f => {
+    if (f.type === "checks") f.items.forEach(i => allKeys.add(i.key)); else allKeys.add(f.key);
+  })));
+  const specKeys = new Set(HANDOFF_SPEC.map(f => f.key));
+  const missing = Array.from(allKeys).filter(k => !specKeys.has(k));
+  ok("모든 입력 항목이 인계 코드에 실린다 (빠지면 넘길 때 값이 조용히 사라짐)",
+     missing.length === 0, missing.join(","));
+
+  const rt = (vals) => {
+    const back = decodeHandoff(encodeHandoff(vals));
+    if (!back.ok) return "디코드 실패: " + back.reason;
+    const bad = [];
+    Object.entries(vals).forEach(([k,v]) => {
+      const got = back.values[k];
+      const same = (v === false || v === null || v === "" ) ? (got === undefined || got === false)
+                 : (typeof v === "number" ? Math.abs(got - v) < 1e-9 : String(got) === String(v));
+      if (!same) bad.push(`${k}: ${v} → ${got}`);
+    });
+    return bad.length ? bad.join(", ") : "";
+  };
+  ok("인계 왕복 — 빈 입력", rt({}) === "", rt({}));
+  const mid = {age:71, bilateral:"yes", macula:"amd_intermediate", astigKnown:"lots",
+               nightDriving:"3", nightWork:true, cylD:1.25, al:23.6, cornealSA:-0.12, hoaZone:"6"};
+  ok("인계 왕복 — 일반적인 입력", rt(mid) === "", rt(mid));
+  const edge = {age:105, cylD:12, cornealSA:2, cornealComa:3, hoaRMS:3, chordMu:2, chordAlpha:2,
+                pupPhotopic:9, pupMesopic:9, al:38, toricPlanned:true, ifis:true, uveitis:true};
+  ok("인계 왕복 — 경계값(최댓값)", rt(edge) === "", rt(edge));
+  const low = {age:18, cylD:0, cornealSA:-1, cornealComa:0, chordMu:0, pupPhotopic:1, pupMesopic:1, al:18};
+  ok("인계 왕복 — 경계값(최솟값)", rt(low) === "", rt(low));
+
+  const codeMid = encodeHandoff(mid);
+  ok("소문자·공백으로 옮겨 적어도 읽힌다",
+     decodeHandoff(" " + codeMid.toLowerCase().replace(/-/g, " ") + " ").ok);
+  ok("O/0, I/1 혼동을 바로잡는다",
+     decodeHandoff(codeMid.replace(/0/g, "O").replace(/1/g, "I")).ok);
+  ok("빈 항목은 기본값으로 채워지지 않는다",
+     decodeHandoff(encodeHandoff({age:71})).values.cylD === undefined);
+  ok("형식이 다른 코드는 조용히 잘못 읽지 않고 거부한다",
+     decodeHandoff("ZZZZ-ZZZZ-ZZZZ").ok === false && decodeHandoff("$$$$").reason === "charset");
+  ok("확인 번호는 4자리이고 코드마다 다르다",
+     /^\d{4}$/.test(handoffCheckDigits(codeMid)) && handoffCheckDigits(codeMid) !== handoffCheckDigits(encodeHandoff(edge)));
+  ok("인계 코드 길이가 QR 용량 안에 들어온다", encodeHandoff(edge).length < 60, String(encodeHandoff(edge).length));
+
+  /* --- 설명 표 데이터 --- */
+  const badPlain = LENSES.filter(l => !l.plain ||
+    ["glasses","glare","contrast","cost"].some(k => !Number.isInteger(l.plain[k]) || l.plain[k] < 0 || l.plain[k] > 3))
+    .map(l => l.id);
+  ok("모든 렌즈에 설명용 4단계 값이 0~3 범위로 있다", badPlain.length === 0, badPlain.join(","));
+  ok("설명 표의 단계 라벨이 4개씩 준비돼 있다",
+     ["ko","en"].every(l => STR[l].lvl.length === 4 && STR[l].lvlContrast.length === 4 && STR[l].lvlCost.length === 4));
 
   /* --- 데이터 정합성 --- */
   const badRef = [];
@@ -179,7 +252,7 @@ function runSelfTests(){
   const badBand = LENSES.filter(l => Math.abs(l.band.reduce((a,b)=>a+b,0) - 100) > 0.001).map(l => l.id);
   ok("모든 렌즈의 탈초점 글리프 합 = 100", badBand.length === 0, badBand.join(","));
 
-  const header = `IOL 내비게이터 · 자체 검증\n규칙 ${RULES.length}개 · 렌즈 유형 ${LENSES.length}개 · 문헌 ${Object.keys(REFS).length}건\n${"─".repeat(58)}`;
+  const header = `IOL 내비게이터 · 자체 검증\n규칙 ${RULES.length}개 · 렌즈 유형 ${LENSES.length}개 · 문헌 ${Object.keys(REFS).length}건 · 인계 항목 ${HANDOFF_SPEC.length}개\n${"─".repeat(58)}`;
   const footer = `${"─".repeat(58)}\n통과 ${pass} · 실패 ${fail}`;
   const text = [header, ...out, footer].join("\n");
 

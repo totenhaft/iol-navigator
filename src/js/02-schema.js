@@ -232,3 +232,47 @@ const SECTIONS_PATIENT = [
    ]},
  ]},
 ];
+
+/* ---- 상담직원 모드 ------------------------------------------------
+   상담직원은 진단을 내리지 않습니다. 하는 일은 세 가지뿐입니다.
+     1) 환자에게 같은 질문을 대신 물어 입력한다 (문구는 환자 모드와 동일)
+     2) 검사실에서 나온 계측 수치를 옮겨 적는다
+     3) 결과를 환자에게 설명하고 선택을 확인한다
+   그래서 '황반 상태'처럼 판독이 필요한 항목은 전문가용 문구가 아니라
+   환자용 문구(=환자가 들은 대로)를 그대로 씁니다. 판독 결과 입력은
+   의사 모드의 몫입니다. -------------------------------------------- */
+const findField = (secs, key) => {
+  for (const s of secs) for (const f of s.fields) if (f.key === key) return f;
+  throw new Error("스키마에 없는 항목: " + key);
+};
+const pf = k => findField(SECTIONS_PATIENT, k);   // 환자용 문구
+const rf = k => findField(SECTIONS_PRO, k);       // 전문가용 문구
+
+const SECTIONS_COUNSELOR = [
+ { id:"cbasics", ko:"접수 정보", en:"Intake", open:true, fields:[ pf("age"), pf("bilateral") ]},
+
+ { id:"cwant", ko:"환자가 원하는 시력 (대신 여쭤보세요)", en:"What the patient wants (ask on their behalf)", open:true,
+   fields:["specIndep","nearPriority","interPriority","nightDriving","dysphTolerance"].map(pf) },
+
+ { id:"cstyle", ko:"성향과 생활", en:"Temperament and lifestyle", open:true,
+   fields:["perfectionism","costSensitivity","lflags"].map(pf) },
+
+ { id:"ceye", ko:"눈 건강 문진 (환자가 아는 만큼만)", en:"Eye-health interview (as far as the patient knows)", open:true,
+   fields:["macula","glaucoma","dr","cornea","osd","priorRefSx","astigKnown","pflags"].map(pf) },
+
+ { id:"cmeasure", ko:"검사실 계측값", en:"Measurements from the exam room", open:true, fields:[
+   rf("cylD"), rf("pupPhotopic"), rf("pupMesopic"), rf("al"),
+   rf("cornealSA"), rf("cornealComa"), rf("hoaRMS"), rf("hoaZone"),
+   rf("chordMu"), rf("chordAlpha"),
+ ]},
+];
+
+/* 역할 → 입력 스키마 */
+const SECTIONS_BY_ROLE = {
+  patient:   SECTIONS_PATIENT,
+  counselor: SECTIONS_COUNSELOR,
+  doctor:    SECTIONS_PRO,
+};
+const ROLES = ["patient","counselor","doctor"];
+/* 역할 → 엔진이 쓰는 데이터 모드. 상담·의사는 실제 계측값을 다루므로 'pro'. */
+const ROLE_DATA_MODE = { patient:"patient", counselor:"pro", doctor:"pro", pro:"pro" };

@@ -15,9 +15,10 @@
       </div>
     </div>
 
-    <div class="seg" role="group" aria-label="입력 모드">
-      <button type="button" id="modePatient" aria-pressed="true" data-i18n="modePatient">환자 설문</button>
-      <button type="button" id="modePro" aria-pressed="false" data-i18n="modePro">전문가 정밀</button>
+    <div class="seg" role="group" aria-label="사용자 역할 / Role">
+      <button type="button" id="role_patient"   aria-pressed="true">환자</button>
+      <button type="button" id="role_counselor" aria-pressed="false">상담</button>
+      <button type="button" id="role_doctor"    aria-pressed="false">의사</button>
     </div>
     <div class="seg" role="group" aria-label="언어 / Language">
       <button type="button" id="langKo" aria-pressed="true">한국어</button>
@@ -44,6 +45,7 @@
       <div id="formSections"></div>
       <div class="actions" id="actions">
         <button type="button" class="btn primary" id="runBtn" data-i18n="runBtn">결과 보기</button>
+        <button type="button" class="btn" id="handoffBtn" data-i18n="handoffBtn">인계 코드</button>
         <button type="button" class="btn ghost" id="resetBtn" data-i18n="resetBtn">초기화</button>
         <span class="autohint" id="autoHint" hidden data-i18n="autoHint"></span>
       </div>
@@ -84,6 +86,20 @@
   <div class="card-h"><h3>Self-test</h3></div>
   <div id="testout"></div>
 </section>
+
+<!-- 인계 코드 패널 -->
+<div class="ovl" id="handoffOvl" hidden>
+  <div class="ovl-bd" id="handoffBackdrop"></div>
+  <section class="card ovl-card" role="dialog" aria-modal="true" aria-labelledby="handoffH">
+    <div class="card-h">
+      <h3 id="handoffH" data-i18n="handoffTitle">다음 단계로 넘기기</h3>
+      <button type="button" class="iconbtn" id="handoffClose" style="margin-left:auto" aria-label="닫기">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="card-b" id="handoffBody"></div>
+  </section>
+</div>
 
 <footer class="foot">
   <div class="wrap">

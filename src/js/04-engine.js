@@ -21,10 +21,14 @@ const CRITICAL_UNKNOWN = {
   bilateral:  {tests:[],                ko:"양안/단안 수술 계획", en:"Bilateral vs unilateral plan"},
 };
 
-/* 원시 입력 → 엔진 입력 정규화 */
+/* 원시 입력 → 엔진 입력 정규화
+   mode 에는 역할(patient·counselor·doctor) 또는 데이터 모드(patient·pro)가 들어옵니다.
+   d.role 은 화면 구성에, d.mode 는 임상 로직에 쓰입니다. */
 function normalize(raw, mode){
   const d = Object.assign({}, raw);
-  d.mode = mode;
+  const role = mode || "patient";
+  d.role = role;
+  d.mode = (typeof ROLE_DATA_MODE !== "undefined" && ROLE_DATA_MODE[role]) || "pro";
 
   ["age","cylD","cornealSA","cornealComa","hoaRMS","chordMu","chordAlpha","pupPhotopic","pupMesopic","al"]
     .forEach(k => { d[k] = num(d[k]); });
@@ -35,15 +39,16 @@ function normalize(raw, mode){
   ["opticNeuro","uveitis","vitrectomy","ifis","irregularAstig","toricPlanned","precisionNearWork","nightWork"]
     .forEach(k => { d[k] = d[k] === true || d[k] === "true"; });
 
-  // 환자 모드: 난시 서술 → 추정 난시량 (불확실 표시 유지)
-  if (mode === "patient"){
-    d.astigEstimated = false;
+  /* 난시: 실제 계측값(cylD)이 있으면 언제나 그것을 씁니다.
+     계측값이 없고 환자·상담 단계의 서술만 있으면 추정하되 '추정'임을 표시합니다.
+     (상담직원이 문진만 하고 계측 전이어도 환자 응답이 버려지지 않게 하려는 것) */
+  d.astigEstimated = false;
+  if (d.cylD === null && d.astigKnown && d.astigKnown !== "unknown"){
     if (d.astigKnown === "no")        d.cylD = 0;
     else if (d.astigKnown === "some"){ d.cylD = 1.0; d.astigEstimated = true; }
     else if (d.astigKnown === "lots"){ d.cylD = 2.0; d.astigEstimated = true; }
-    else d.cylD = null;
-    d.toricPlanned = false;   // 환자 모드에서는 계획을 알 수 없음
   }
+  if (d.mode === "patient") d.toricPlanned = false;   // 환자는 수술 계획을 알 수 없음
 
   // 'unknown' 은 규칙을 발동시키지 않음 (null 취급) — 대신 추가검사로 표시
   const unknowns = [];
@@ -111,7 +116,7 @@ function evaluate(raw, mode){
   // 기본 술전 검사 (AAO PPP 표준 평가)
   [T.OCT, T.TOPO, T.OSD, T.BIOM].forEach(addTest);
   // 미측정 항목 → 추가검사
-  if (mode === "pro"){
+  if (d.mode === "pro"){
     if (d.cornealSA === null || d.cornealComa === null || d.hoaRMS === null) addTest(T.ABERRO);
     if (d.chordMu === null && d.chordAlpha === null) addTest(T.KAPPA);
     if (d.pupMesopic === null || d.pupPhotopic === null) addTest(T.PUPIL);
