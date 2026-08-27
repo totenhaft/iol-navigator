@@ -412,13 +412,25 @@ footer.foot p + p{margin-top:9px}
 .mlabel{font-size:11.5px;color:var(--muted)}
 table.guide td{vertical-align:top}
 table.guide td:first-child{min-width:190px}
+table.guide td.gcost{white-space:nowrap;text-align:right}
+table.guide td.gcost b{font-size:12.5px}
+table.guide th:last-child{text-align:right}
 .gsub{display:block;color:var(--muted);font-size:11.5px;line-height:1.45;margin-top:3px;max-width:42ch;font-weight:400}
 
 /* ── 상담 화면: 선택 확인과 비용 ──────────────────────────── */
 .costrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.costgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.costbox{margin-top:6px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.costline{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 12px;font-size:13.5px;border-top:1px solid var(--line)}
+.costline:first-child{border-top:0}
+.costline b{font-size:15px}
+.costline.strong{background:var(--accent-wash)}
+.costline.sub{font-size:12px;color:var(--muted);background:var(--surface-2)}
+.costgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
 .costitem{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-2)}
-.costitem input{height:40px}
+.costpair{display:flex;align-items:center;gap:6px}
+.costpair .unit{white-space:nowrap}
+.costpair input{height:40px;min-height:40px;text-align:right}
+.rank-cost{font-family:var(--mono);font-size:10.5px;color:var(--accent-ink);letter-spacing:.02em;display:block;margin-top:2px}
 
 /* ── 인계 코드 패널 ──────────────────────────────────────── */
 .ovl{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:18px}

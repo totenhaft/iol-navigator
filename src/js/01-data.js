@@ -119,9 +119,9 @@ const REFS = {
 const LENSES = [
   { id:"mono",      ko:"단초점", en:"Standard monofocal",
     koSub:"Partial ROF · narrow", enSub:"Partial ROF · narrow",
-    cap:{far:3, inter:1,   near:0,   night:3,   contrast:3,   cost:3},
+    cap:{far:3, inter:1,   near:0,   night:3,   contrast:3},
     band:[78,18,4], base:20,
-    plain:{glasses:3, glare:0, contrast:3, cost:3},
+    plain:{glasses:3, glare:0, contrast:3},
     koPlain:"먼 곳 한 거리에 초점을 맞춥니다. 밤에 빛 번짐이 가장 적고 보이는 선명함이 가장 안정적인 대신, 책·휴대폰과 컴퓨터 거리는 안경이 필요합니다.",
     enPlain:"Focuses at one distance, usually far. The least night glare and the steadiest clarity, but reading and computer distance need glasses.",
     koDesc:"한 거리(대개 원거리)에만 초점. 대비감도와 야간 시질이 가장 안정적이며, 근거리·중간거리는 안경이 필요합니다.",
@@ -129,9 +129,9 @@ const LENSES = [
 
   { id:"monoBlend", ko:"단초점 + 미니모노비전", en:"Monofocal with mini-monovision",
     koSub:"blended vision · −0.75~−1.25 D", enSub:"blended vision · −0.75 to −1.25 D",
-    cap:{far:2.8, inter:2,  near:1.5, night:2.8, contrast:3,  cost:3},
+    cap:{far:2.8, inter:2,  near:1.5, night:2.8, contrast:3},
     band:[52,30,18], base:16,
-    plain:{glasses:2, glare:0, contrast:3, cost:3},
+    plain:{glasses:2, glare:0, contrast:3},
     koPlain:"한쪽 눈은 먼 곳, 다른 쪽 눈은 조금 가까운 곳에 맞춰 두 눈이 서로 보완하게 합니다. 밤 빛 번짐은 거의 없지만 두 눈이 익숙해지는 기간이 필요합니다.",
     enPlain:"One eye is set for distance and the other slightly nearer, so the two eyes complement each other. Almost no night glare, but the eyes need time to adapt.",
     koDesc:"주시안은 원거리, 반대눈은 약간 근시로 맞춰 초점 범위를 넓힙니다. 회절 광학을 쓰지 않아 야간 광학현상이 거의 없지만 양안시 적응이 필요합니다.",
@@ -139,9 +139,9 @@ const LENSES = [
 
   { id:"enhMono",   ko:"프리미엄 단초점 (enhanced monofocal)", en:"Enhanced monofocal (monofocal-plus)",
     koSub:"Partial ROF · enhanced", enSub:"Partial ROF · enhanced",
-    cap:{far:3, inter:2,   near:1,   night:3,   contrast:2.9, cost:2},
+    cap:{far:3, inter:2,   near:1,   night:3,   contrast:2.9},
     band:[62,30,8], base:18,
-    plain:{glasses:2, glare:0, contrast:3, cost:2},
+    plain:{glasses:2, glare:0, contrast:3},
     koPlain:"단초점을 개량해 컴퓨터·주방 정도의 중간 거리를 조금 더 편하게 보도록 만든 렌즈입니다. 밤 빛 번짐은 단초점과 같은 수준이고, 작은 글씨는 돋보기가 필요합니다.",
     enPlain:"An improved monofocal that makes computer and kitchen distance a little easier. Night glare is the same as a monofocal; small print still needs readers.",
     koDesc:"비회절 방식으로 중간거리를 약 1줄 넓힌 단초점. 광학현상 발생률은 단초점과 통계적으로 동등합니다. EDOF의 국제표준 초점심도 기준은 충족하지 않으므로 ‘연속초점’이 아닙니다.",
@@ -149,9 +149,9 @@ const LENSES = [
 
   { id:"edof",      ko:"연속초점 EDOF", en:"EDOF (continuous range)",
     koSub:"Partial ROF · extended · 비회절", enSub:"Partial ROF · extended · non-diffractive",
-    cap:{far:2.95, inter:2.8, near:1.7, night:2.4, contrast:2.5, cost:1.4},
+    cap:{far:2.95, inter:2.8, near:1.7, night:2.4, contrast:2.5},
     band:[46,36,18], base:15,
-    plain:{glasses:1, glare:1, contrast:2, cost:1},
+    plain:{glasses:1, glare:1, contrast:2},
     koPlain:"먼 곳부터 중간 거리까지 초점이 끊기지 않고 이어지는 렌즈입니다. 빛을 잘게 나누는 구조가 없어 밤 빛 번짐이 적은 편이고, 아주 작은 글씨에는 돋보기가 필요할 수 있습니다.",
     enPlain:"Focus runs continuously from far into the intermediate range. Without a light-splitting ring structure there is less night glare; very small print may still need readers.",
     koDesc:"파면 조절·구면수차 확장 방식으로 초점을 연속적으로 늘립니다. 회절 링이 없어 헤일로가 상대적으로 적고, 아주 작은 글씨에는 대개 돋보기가 일부 필요합니다.",
@@ -159,9 +159,9 @@ const LENSES = [
 
   { id:"lentis",    ko:"굴절형 분절 이중초점 (렌티스)", en:"Refractive segmented bifocal (LENTIS)",
     koSub:"회전비대칭 굴절형 · add +2.0/+3.0 D", enSub:"rotationally asymmetric refractive · +2.0/+3.0 D add",
-    cap:{far:2.8, inter:2.4, near:2.6, night:2.0, contrast:2.2, cost:1.2},
+    cap:{far:2.8, inter:2.4, near:2.6, night:2.0, contrast:2.2},
     band:[40,28,32], base:12,
-    plain:{glasses:1, glare:2, contrast:2, cost:1},
+    plain:{glasses:1, glare:2, contrast:2},
     koPlain:"렌즈 아래쪽에 가까운 곳을 보는 구역을 따로 둔 방식입니다. 빛을 잘게 나누지 않아 선명함 손실이 덜하고, 각막에 굴곡이 있는 눈에도 비교적 잘 맞습니다. 밤에는 불빛이 한쪽으로 번져 보일 수 있습니다.",
     enPlain:"A separate near-vision zone sits in the lower part of the lens. It does not split light into fine rings, so less clarity is lost, and it suits an unevenly shaped cornea reasonably well. At night, lights may smear to one side.",
     koDesc:"아래쪽에 부채꼴 근거리 구역을 둔 굴절형 이중초점입니다. 회절 링이 없어 빛 손실과 대비감도 저하가 회절형보다 적고, 각막 고위수차(특히 코마)가 있는 눈에서 회절형보다 견딜 만하다고 보아 씁니다. 대신 광학이 비대칭이라 중심화·기울어짐에 민감하고, 야간 광원이 한쪽으로 번지는 형태의 현상이 생길 수 있습니다.",
@@ -169,14 +169,48 @@ const LENSES = [
 
   { id:"trifocal",  ko:"다초점 · 삼중초점 (전 시야범위)", en:"Multifocal / trifocal (full range of vision)",
     koSub:"Full ROF · MIOL/FVR", enSub:"Full ROF · MIOL/FVR",
-    cap:{far:2.8, inter:3,  near:3,   night:1,   contrast:1.6, cost:1},
+    cap:{far:2.8, inter:3,  near:3,   night:1,   contrast:1.6},
     band:[34,32,34], base:11,
-    plain:{glasses:0, glare:3, contrast:0, cost:0},
+    plain:{glasses:0, glare:3, contrast:0},
     koPlain:"먼 곳·중간 거리·가까운 곳에 동시에 초점을 나눕니다. 안경을 가장 적게 쓰게 되지만, 밤에 불빛 번짐이 가장 많고 보이는 선명함이 다소 떨어집니다.",
     enPlain:"Splits focus between far, intermediate and near at the same time. You will need glasses least often, but night glare is greatest and clarity is somewhat reduced.",
     koDesc:"원·중간·근거리에 동시에 초점을 나눕니다. 안경 의존도를 가장 크게 줄이지만(RR 0.63) 헤일로 위험이 가장 높고(RR 3.58) 대비감도가 떨어집니다.",
     enDesc:"Splits light across distance, intermediate and near. Largest reduction in spectacle dependence (RR 0.63) but the highest halo risk (RR 3.58) and lowest contrast." }
 ];
+
+/* ------------------------------------------------------------------
+   비급여 비용 — 연세솔안과 기준, **단안**, 환자 부담 (단위: 만원)
+
+   예전에는 렌즈마다 0~3 짜리 '비용' 척도를 손으로 매겨 두고 그것으로
+   감점했다. 실제 금액을 알게 된 이상 그 척도는 두 개의 진실을 만들 뿐이라
+   없앴다. 점수도, 화면에 찍히는 금액도 모두 이 표 하나에서 나온다.
+
+   · 토릭은 별개의 축이라 렌즈 종류마다 더해지는 고정 금액으로 다룬다
+     (토릭 단초점 100 − 논토릭 단초점 25 = 75).
+   · 미니모노비전은 단초점 두 개를 쓰는 것이므로 단안 기준 금액이 같다.
+   · 병원이 상담 화면에서 고치면 이 값 대신 그 값이 쓰인다(브라우저에만 저장).
+   · 금액은 낡는다. 바뀌면 여기와 상담 화면 둘 중 하나만 고쳐도 되지만,
+     저장소 값을 고치는 편이 모든 기기에 반영된다.
+   ------------------------------------------------------------------ */
+const COST_DEFAULT_MAN = {
+  mono:      {min:25,  max:25},
+  monoBlend: {min:25,  max:25},
+  enhMono:   {min:100, max:150},
+  edof:      {min:200, max:200},
+  lentis:    {min:250, max:300},
+  trifocal:  {min:350, max:400},
+};
+const TORIC_ADD_MAN = 75;
+
+/* 실제로 쓰이는 금액표. 병원이 값을 바꾸면 UI 가 이 객체를 갈아끼운다. */
+let COST_MAN = JSON.parse(JSON.stringify(COST_DEFAULT_MAN));
+function setCostTable(o){ COST_MAN = Object.assign(JSON.parse(JSON.stringify(COST_DEFAULT_MAN)), o || {}); }
+/* 점수 계산에는 범위의 중앙값을 쓴다 */
+function costMid(id){
+  const c = COST_MAN[id];
+  return c ? (Number(c.min) + Number(c.max)) / 2 : null;
+}
+
 const LENS_BY_ID = Object.fromEntries(LENSES.map(l => [l.id, l]));
 const ALL_PRESBY  = ["enhMono","edof","lentis","trifocal"];
 /* 빛을 여러 초점으로 '나누는' 광학 — 대비감도 손실이 구조적으로 따라옵니다.

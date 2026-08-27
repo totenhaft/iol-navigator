@@ -97,20 +97,30 @@ function normalize(raw, mode){
 
    근거리·중간거리·탈안경 요구는 그대로 가산으로 둔다 — 이것들은 환자가 명시적으로
    고른 값이고, 렌즈 선택을 움직여야 하는 신호다. */
-function prefBreakdown(d, cap){
+function prefBreakdown(d, lens, cost){
+  const cap = lens.cap;
   const nightPressure = Math.max(0, d.nightDriving - 1);            // 0..2
   const glarePressure = Math.max(0, (3 - d.dysphTolerance) - 1);    // 0..2
-  const costPressure  = Math.max(0, d.costSensitivity - 1);         // 0..2
   const nightWeak = Math.max(0, 2.6 - cap.night) / 1.6;             // 0(야간 안정) .. 1(취약)
+
+  /* 비용은 실제 금액에서 계산한다. 가장 싼 선택지와의 차이를 가장 비싼 선택지와의
+     차이로 나눈 값(0~1)에 비용 민감도를 곱한다.
+     야간·빛번짐과 달리 한 칸을 빼지 않는 이유: 이 척도는 '상관없다'가 0번이라
+     0 이 이미 '요구 없음'이다. 야간·빛번짐 척도는 중립 지점이 가운데에 있어
+     한 칸을 빼야 같은 뜻이 된다. */
+  const price = costMid(lens.id);
+  const rel = (price === null || !cost || cost.span <= 0)
+    ? 0 : Math.max(0, Math.min(1, (price - cost.floor) / cost.span));
+
   const items = [
     {k:"near",  v:  d.nearPriority  * (cap.near  / 3) * 2.2},
     {k:"inter", v:  d.interPriority * (cap.inter / 3) * 1.7},
     {k:"spec",  v:  d.specIndep     * ((cap.near + cap.inter) / 6) * 2.6},
     {k:"night", v: -nightPressure * nightWeak * 2.4},
     {k:"dysph", v: -glarePressure * nightWeak * 2.0},
-    {k:"cost",  v: -costPressure * ((3 - cap.cost) / 3) * 1.6},
+    {k:"cost",  v: -d.costSensitivity * rel * 2.4},
   ];
-  return {items, total: items.reduce((s,i) => s + i.v, 0)};
+  return {items, total: items.reduce((s,i) => s + i.v, 0), price, costRel: rel};
 }
 
 function evaluate(raw, mode){
@@ -167,15 +177,22 @@ function evaluate(raw, mode){
   }
   d._unknowns.forEach(k => (CRITICAL_UNKNOWN[k].tests || []).forEach(tk => addTest(T[tk])));
 
+  /* 비용 척도의 양 끝 — 토릭은 모든 후보에 같은 금액이 더해지므로 렌즈 사이의
+     상대적 부담을 바꾸지 않는다. 그래서 점수에는 토릭을 뺀 본체 금액만 쓰고,
+     토릭 추가금은 화면에 금액을 보여줄 때만 더한다. */
+  const _prices = LENSES.map(l => costMid(l.id)).filter(v => v !== null);
+  const costFloor = _prices.length ? Math.min(..._prices) : 0;
+  const costSpan  = _prices.length ? Math.max(..._prices) - costFloor : 0;
+
   // 점수
   const scored = LENSES.map(l => {
     const st = state[l.id];
-    const pb = prefBreakdown(d, l.cap);
+    const pb = prefBreakdown(d, l, {floor:costFloor, span:costSpan});
     const blocked = st.stops.length > 0;
     const score = blocked ? 0 : clamp(
       Math.round(l.base + 30 + pb.total * 3.5 - st.penalty * 7 + st.boost * 5), 3, 100);
     return {
-      id:l.id, lens:l, score, blocked,
+      id:l.id, lens:l, score, blocked, price:pb.price,
       stops:st.stops, cautions:st.cautions.slice().sort((a,b)=>b.w-a.w), boosts:st.boosts,
       penalty:st.penalty, pref:pb
     };
@@ -200,6 +217,8 @@ function evaluate(raw, mode){
     tests: Array.from(testSet.values()),
     unknowns: d._unknowns,
     prefUnanswered: d._prefUnanswered,
+    /* 토릭이 붙을 가능성이 높은가 — 금액 표시에만 쓴다 (점수에는 영향 없음) */
+    toricLikely: d.toricPlanned === true || (num(d.cylD) !== null && d.cylD >= 1.0),
     allStopRules: Array.from(new Set([].concat(...scored.map(s => s.stops)))),
     allCautionRules: (() => {
       const m = new Map();

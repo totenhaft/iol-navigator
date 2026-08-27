@@ -70,10 +70,14 @@ const STR = {
   /* 렌즈 설명 */
   guideTitle:"렌즈 유형 한눈에 보기",
   guideIntro:"거리별로 얼마나 잘 보이는지, 안경이 얼마나 필요한지, 밤에 빛번짐이 얼마나 생기는지를 유형별로 비교한 표입니다. 개별 제품이 아니라 <b>유형</b>의 특성입니다.",
-  guideGlasses:"안경 필요", guideGlare:"야간 빛번짐", guideContrast:"대비(선명함)", guideCost:"비용",
+  guideGlasses:"안경 필요", guideGlare:"야간 빛번짐", guideContrast:"대비(선명함)", guideCost:"본인부담 (단안)",
   lvl:["없음","조금","보통","많음"],
   lvlContrast:["많이 낮음","다소 낮음","거의 유지","가장 안정"],
-  lvlCost:["가장 높음","높은 편","중간","보험 범위"],
+  manWon:"만원",
+  costPerEye:"단안 기준", costBoth:"양안", costWithToric:"토릭 포함",
+  costToricAdd:"난시교정(토릭) 추가",
+  costMinLabel:"최소", costMaxLabel:"최대", costReset:"기본값으로",
+  costStale:"연세솔안과 기준 금액입니다. 바뀌면 여기서 고쳐 주세요 — 이 브라우저에만 저장되고 어디로도 전송되지 않습니다.",
   guideNear:"가까운 곳", guideInter:"중간 거리", guideFar:"먼 곳",
 
   /* 상담 확인 */
@@ -84,7 +88,7 @@ const STR = {
   decisionMismatch:"이 유형은 현재 입력 기준으로 금기에 해당합니다. 반드시 담당의와 다시 확인하세요.",
   decisionCaution:"이 유형에는 아래 ‘주의’ 항목이 함께 붙습니다. 환자에게 설명하셨는지 확인하세요.",
   costTitle:"비급여 비용",
-  costHint:"원장님이 직접 입력하는 값입니다. 이 브라우저에만 저장되고 서버나 저장소로 전송되지 않습니다.",
+  costHint:"아래 금액은 상담과 결과지, 그리고 비용 민감도 점수에 함께 쓰입니다.",
   costEdit:"비용 설정", costSave:"저장", costUnit:"원", costEmpty:"미설정",
   summaryBtn:"상담 요약 인쇄",
 
@@ -160,10 +164,14 @@ const STR = {
   /* lens guide */
   guideTitle:"Lens types at a glance",
   guideIntro:"How well each type sees at each distance, how much you still need glasses, and how much night glare it adds. These are properties of the <b>type</b>, not of any single product.",
-  guideGlasses:"Glasses still needed", guideGlare:"Night glare / halo", guideContrast:"Contrast", guideCost:"Cost",
+  guideGlasses:"Glasses still needed", guideGlare:"Night glare / halo", guideContrast:"Contrast", guideCost:"Out-of-pocket (per eye)",
   lvl:["None","A little","Moderate","A lot"],
   lvlContrast:["Much reduced","Somewhat reduced","Largely kept","Most stable"],
-  lvlCost:["Highest","High","Middle","Covered"],
+  manWon:"",
+  costPerEye:"per eye", costBoth:"both eyes", costWithToric:"incl. toric",
+  costToricAdd:"toric surcharge",
+  costMinLabel:"from", costMaxLabel:"to", costReset:"Restore defaults",
+  costStale:"These are this clinic's figures. Update them here if they change — stored only in this browser and never transmitted.",
   guideNear:"Near", guideInter:"Intermediate", guideFar:"Distance",
 
   /* counselling confirmation */
@@ -174,7 +182,7 @@ const STR = {
   decisionMismatch:"With the current inputs this type is contraindicated. Confirm with the surgeon before proceeding.",
   decisionCaution:"This type carries the cautions listed below. Check that they were explained to the patient.",
   costTitle:"Out-of-pocket cost",
-  costHint:"Entered by the practice. Stored only in this browser; never transmitted.",
+  costHint:"These figures feed the counselling screen, the printed handout and the cost-sensitivity scoring.",
   costEdit:"Set costs", costSave:"Save", costUnit:"KRW", costEmpty:"not set",
   summaryBtn:"Print counselling summary",
 

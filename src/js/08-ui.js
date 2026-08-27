@@ -289,6 +289,8 @@ function renderResults(res){
     const nm = el("div", {cls:"rank-nm"}, [
       el("b", {text: tx(s.lens)}),
       el("small", {text: tx({ko:s.lens.koSub, en:s.lens.enSub})}),
+      state.role === "patient" ? null
+        : el("small", {cls:"rank-cost", text: costText(s.id, {toric:res.toricLikely}) + (res.toricLikely ? " · " + t.costWithToric : "")}),
     ]);
     if (!blocked) nm.appendChild(defocusStrip(s.lens));
     row.appendChild(nm);
@@ -546,6 +548,7 @@ function setLang(l){
 }
 
 function boot(){
+  initCostTable();
   applyI18n();
   renderForm();
   renderTaxonomy();
@@ -621,7 +624,7 @@ function lensGuideCard(){
       el("td", {}, meter(p.glasses, t.lvl)),
       el("td", {}, meter(p.glare, t.lvl)),
       el("td", {}, meter(p.contrast, t.lvlContrast)),
-      el("td", {}, meter(p.cost, t.lvlCost)),
+      el("td", {cls:"gcost"}, el("b", {cls:"mono", text: costText(l.id)})),
     ]));
   });
   tbl.appendChild(tb);
@@ -656,26 +659,57 @@ function patientAskCard(res){
    상담직원 화면 — 선택 확인과 비용
    비용은 이 브라우저(localStorage)에만 남습니다. 저장소에 커밋되지 않습니다.
    ================================================================== */
-const COST_KEY = "iolnav-cost-v1";
-function loadCosts(){ try { return JSON.parse(localStorage.getItem(COST_KEY) || "{}"); } catch(e){ return {}; } }
-function saveCosts(o){ try { localStorage.setItem(COST_KEY, JSON.stringify(o)); } catch(e){} }
-const wonFmt = n => Number(n).toLocaleString(state.lang === "ko" ? "ko-KR" : "en-US");
+/* 비용은 만원 단위 {min,max} 로 다룬다. v1 은 원 단위 단일값이라 형식이 달라
+   키를 v2 로 올렸다 — 예전 값을 잘못 읽느니 기본값에서 다시 시작하는 편이 낫다. */
+const COST_KEY = "iolnav-cost-v2";
+function loadCostTable(){
+  try {
+    const o = JSON.parse(localStorage.getItem(COST_KEY) || "{}");
+    return (o && typeof o === "object") ? o : {};
+  } catch(e){ return {}; }
+}
+function saveCostTable(o){
+  try { localStorage.setItem(COST_KEY, JSON.stringify(o)); } catch(e){}
+  setCostTable(o);
+}
+/* 저장된 값이 있으면 엔진이 쓰는 금액표에 반영한다 (점수에도 그대로 들어간다) */
+function initCostTable(){ setCostTable(loadCostTable()); }
+
+const numFmt = n => Number(n).toLocaleString(state.lang === "ko" ? "ko-KR" : "en-US");
+
+/* 만원 단위 범위를 언어에 맞게 적는다. 한국어는 "350–400만원",
+   영어는 원화 단위를 모르는 독자를 위해 "₩3.5M–4.0M". */
+function costRangeMan(id, opts){
+  const c = COST_MAN[id];
+  if (!c) return null;
+  const add   = (opts && opts.toric) ? TORIC_ADD_MAN : 0;
+  const mult  = (opts && opts.bothEyes) ? 2 : 1;
+  return { min:(Number(c.min) + add) * mult, max:(Number(c.max) + add) * mult };
+}
+function costText(id, opts){
+  const r = costRangeMan(id, opts);
+  if (!r) return L().costEmpty;
+  if (state.lang === "ko"){
+    const body = r.min === r.max ? numFmt(r.min) : numFmt(r.min) + "–" + numFmt(r.max);
+    return body + L().manWon;
+  }
+  const m = v => "₩" + (v / 100).toFixed(v % 100 === 0 ? 1 : 2) + "M";
+  return r.min === r.max ? m(r.min) : m(r.min) + "–" + m(r.max);
+}
 
 function decisionCard(res){
-  const t = L();
-  const costs = loadCosts();
+  const t = L(), ko = state.lang === "ko";
   const body = el("div", {cls:"card-b", style:"display:flex;flex-direction:column;gap:14px"});
   body.appendChild(el("p", {cls:"hint", text:t.decisionHint}));
 
   const sel = el("select", {id:"decisionSel", "aria-label":t.decisionPick});
   sel.appendChild(el("option", {value:"", text:t.decisionNone}));
   LENSES.forEach(l => {
-    const o = el("option", {value:l.id, text: tx(l)});
+    const o = el("option", {value:l.id, text: tx(l) + " · " + costText(l.id)});
     if (state.decision === l.id) o.selected = true;
     sel.appendChild(o);
   });
-  const field = el("div", {cls:"field"}, [ el("label", {for:"decisionSel", text:t.decisionPick}), sel ]);
-  body.appendChild(field);
+  body.appendChild(el("div", {cls:"field"}, [ el("label", {for:"decisionSel", text:t.decisionPick}), sel ]));
 
   const tcb = el("input", {type:"checkbox", id:"decisionToric"});
   tcb.checked = !!state.toric;
@@ -696,34 +730,68 @@ function decisionCard(res){
             el("p", {cls:"f-why", text:t.decisionCaution}),
             el("div", {cls:"f-lens"}, picked.cautions.slice(0,5).map(c => el("span", {cls:"chip", text: tx(c.rule).t})))])]));
 
-      const c = costs[state.decision];
-      body.appendChild(el("div", {cls:"costrow"}, [
-        el("span", {cls:"eyebrow", text:t.costTitle}),
-        el("b", {cls:"mono", style:"font-size:16px",
-                 text: (c === undefined || c === "" || c === null) ? t.costEmpty : wonFmt(c) + " " + t.costUnit}),
+      /* 금액 — 토릭 병용과 양안 여부를 반영해 상담에서 그대로 읽을 수 있게 */
+      const withToric = !!state.toric || res.toricLikely;
+      const both = res.d.bilateral === "yes";
+      const lines = el("div", {cls:"costbox"});
+      lines.appendChild(el("div", {cls:"costline"}, [
+        el("span", {text: (ko ? "한 눈" : "Per eye") + (withToric ? " · " + t.costWithToric : "")}),
+        el("b", {cls:"mono", text: costText(state.decision, {toric:withToric})}),
       ]));
+      if (both) lines.appendChild(el("div", {cls:"costline strong"}, [
+        el("span", {text:t.costBoth}),
+        el("b", {cls:"mono", text: costText(state.decision, {toric:withToric, bothEyes:true})}),
+      ]));
+      if (withToric) lines.appendChild(el("div", {cls:"costline sub"}, [
+        el("span", {text:t.costToricAdd}),
+        el("span", {cls:"mono", text: "+" + (ko ? numFmt(TORIC_ADD_MAN) + t.manWon : "₩" + (TORIC_ADD_MAN/100).toFixed(2) + "M") + (both ? " ×2" : "")}),
+      ]));
+      body.appendChild(el("div", {}, [ el("span", {cls:"eyebrow", text:t.costTitle + " · " + t.costPerEye}), lines ]));
     }
   }
   sel.addEventListener("change", () => { state.decision = sel.value || null; run({scroll:false}); });
 
-  /* 비용 설정 */
+  /* 금액 설정 — 만원 단위 최소/최대. 여기 값이 점수(비용 민감도)에도 그대로 쓰인다. */
+  const saved = loadCostTable();
   const editor = el("div", {cls:"costgrid", hidden:true});
   LENSES.forEach(l => {
-    const inp = el("input", {type:"number", min:0, step:10000, id:"cost_"+l.id, placeholder:t.costEmpty});
-    if (costs[l.id] !== undefined && costs[l.id] !== null) inp.value = costs[l.id];
-    editor.appendChild(el("label", {cls:"costitem", for:"cost_"+l.id}, [ el("span", {text: tx(l)}), inp ]));
+    const cur = COST_MAN[l.id] || {min:"", max:""};
+    const mk = which => {
+      const inp = el("input", {type:"number", min:0, step:5, id:"cost_"+which+"_"+l.id,
+                               "aria-label": tx(l) + " " + (which === "min" ? t.costMinLabel : t.costMaxLabel)});
+      inp.value = cur[which];
+      return inp;
+    };
+    editor.appendChild(el("label", {cls:"costitem"}, [
+      el("span", {text: tx(l)}),
+      el("div", {cls:"costpair"}, [ mk("min"), el("span", {cls:"unit", text:"–"}), mk("max"),
+                                    el("span", {cls:"unit", text: ko ? t.manWon : "×10k"}) ]),
+    ]));
   });
-  const saveBtn = el("button", {type:"button", cls:"btn", text:t.costSave, onclick:() => {
+  const saveBtn = el("button", {type:"button", cls:"btn primary", text:t.costSave, onclick:() => {
     const o = {};
-    LENSES.forEach(l => { const v = $("#cost_"+l.id).value; if (v !== "") o[l.id] = Number(v); });
-    saveCosts(o); run({scroll:false});
+    LENSES.forEach(l => {
+      const lo = $("#cost_min_" + l.id).value, hi = $("#cost_max_" + l.id).value;
+      if (lo !== "" || hi !== ""){
+        const a = lo === "" ? Number(hi) : Number(lo);
+        const b = hi === "" ? a : Number(hi);
+        o[l.id] = {min: Math.min(a,b), max: Math.max(a,b)};
+      }
+    });
+    saveCostTable(o); run({scroll:false});
+  }});
+  const resetBtn = el("button", {type:"button", cls:"btn", text:t.costReset, onclick:() => {
+    try { localStorage.removeItem(COST_KEY); } catch(e){}
+    setCostTable({}); run({scroll:false});
   }});
   const toggle = el("button", {type:"button", cls:"btn ghost", text:t.costEdit, onclick:() => {
-    editor.hidden = !editor.hidden; saveBtn.hidden = editor.hidden;
+    const open = editor.hidden;
+    editor.hidden = !open; saveBtn.hidden = !open; resetBtn.hidden = !open;
   }});
-  saveBtn.hidden = true;
+  saveBtn.hidden = true; resetBtn.hidden = true;
   body.appendChild(el("p", {cls:"hint", text:t.costHint}));
-  body.appendChild(el("div", {cls:"btnrow"}, [toggle, saveBtn]));
+  body.appendChild(el("p", {cls:"hint", text:t.costStale + (Object.keys(saved).length ? "" : "")}));
+  body.appendChild(el("div", {cls:"btnrow"}, [toggle, saveBtn, resetBtn]));
   body.appendChild(editor);
 
   return card(t.decisionTitle, null, null, body);
@@ -899,12 +967,16 @@ function buildA5(res){
   ]));
   root.appendChild(pick);
 
-  /* 비용 — 원장이 입력해 둔 값이 있을 때만 */
-  const cost = loadCosts()[lens.id];
-  if (cost !== undefined && cost !== null && cost !== ""){
+  /* 비용 — 토릭이 붙을 것 같으면 포함해서, 양안 수술이면 합계도 */
+  const withToric = res.toricLikely || state.toric;
+  const both = res.d.bilateral === "yes";
+  if (costRangeMan(lens.id)){
     pick.appendChild(el("div", {cls:"a5-cost"}, [
-      el("span", {text: t.costTitle}),
-      el("b", {cls:"mono", text: wonFmt(cost) + " " + t.costUnit}),
+      el("span", {text: t.costTitle + (withToric ? " (" + t.costWithToric + ")" : "")}),
+      el("b", {cls:"mono"}, [
+        el("span", {text: costText(lens.id, {toric:withToric}) + " / " + (ko ? "한 눈" : "eye")}),
+        both ? el("span", {style:"color:#555;font-weight:400", text: "  ·  " + t.costBoth + " " + costText(lens.id, {toric:withToric, bothEyes:true})}) : null,
+      ]),
     ]));
   }
 

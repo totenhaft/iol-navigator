@@ -271,11 +271,53 @@ function runSelfTests(){
 
   /* --- 설명 표 데이터 --- */
   const badPlain = LENSES.filter(l => !l.plain ||
-    ["glasses","glare","contrast","cost"].some(k => !Number.isInteger(l.plain[k]) || l.plain[k] < 0 || l.plain[k] > 3))
+    ["glasses","glare","contrast"].some(k => !Number.isInteger(l.plain[k]) || l.plain[k] < 0 || l.plain[k] > 3))
     .map(l => l.id);
   ok("모든 렌즈에 설명용 4단계 값이 0~3 범위로 있다", badPlain.length === 0, badPlain.join(","));
   ok("설명 표의 단계 라벨이 4개씩 준비돼 있다",
-     ["ko","en"].every(l => STR[l].lvl.length === 4 && STR[l].lvlContrast.length === 4 && STR[l].lvlCost.length === 4));
+     ["ko","en"].every(l => STR[l].lvl.length === 4 && STR[l].lvlContrast.length === 4));
+
+  /* --- 비용 (실제 금액 기준) --- */
+  const noPrice = LENSES.filter(l => costMid(l.id) === null).map(l => l.id);
+  ok("모든 렌즈에 비급여 금액이 있다", noPrice.length === 0, noPrice.join(","));
+  ok("금액이 싼 순서가 단초점 → 프리미엄 단초점 → 연속초점 → 렌티스 → 다초점",
+     costMid("mono") < costMid("enhMono") && costMid("enhMono") < costMid("edof") &&
+     costMid("edof") < costMid("lentis") && costMid("lentis") < costMid("trifocal"));
+  ok("미니모노비전은 단초점 두 개이므로 단안 금액이 단초점과 같다",
+     costMid("monoBlend") === costMid("mono"));
+
+  const rankOf = (id, rr) => rr.viable.findIndex(v => v.id === id);
+  const wantSpecs = {specIndep:"3", nearPriority:"2", interPriority:"2", toricPlanned:true};
+  const byCost = c => G(Object.assign({}, wantSpecs, {costSensitivity:c}));
+  const c0 = byCost("0"), c1 = byCost("1"), c2 = byCost("2"), c3 = byCost("3");
+  ok("비용이 상관없으면 삼중초점이 1순위", c0.top.id === "trifocal", "top=" + c0.top.id);
+  ok("비용 민감도가 올라갈수록 삼중초점 점수가 단조롭게 내려간다",
+     c0.scored.find(x=>x.id==="trifocal").score > c1.scored.find(x=>x.id==="trifocal").score &&
+     c1.scored.find(x=>x.id==="trifocal").score > c2.scored.find(x=>x.id==="trifocal").score &&
+     c2.scored.find(x=>x.id==="trifocal").score > c3.scored.find(x=>x.id==="trifocal").score,
+     [c0,c1,c2,c3].map(r=>r.scored.find(x=>x.id==="trifocal").score).join(">"));
+  ok("비용이 매우 큰 문제면 가장 싼 선택지가 1순위로 올라온다",
+     c3.top.id === "monoBlend" || c3.top.id === "mono", "top=" + c3.top.id);
+  ok("비용 민감도는 싼 렌즈의 점수를 올리지는 않는다 (감점 전용)",
+     c0.scored.find(x=>x.id==="mono").score === c3.scored.find(x=>x.id==="mono").score);
+  ok("비용 순위가 점수 순위를 뒤집을 만큼만 작동한다 (탈안경 요구는 여전히 반영)",
+     rankOf("mono", c3) > rankOf("edof", c3), "단초점 순위=" + rankOf("mono", c3));
+
+  /* 토릭은 모든 후보에 같은 금액이 더해지므로 상대 순위를 바꾸지 않아야 한다 */
+  const toricBase = {specIndep:"3", nearPriority:"2", interPriority:"2", costSensitivity:"2"};
+  const noToric  = G(Object.assign({}, toricBase, {cylD:0.2}));
+  const yesToric = G(Object.assign({}, toricBase, {cylD:2.0, toricPlanned:true}));
+  ok("토릭 추가금은 렌즈 사이의 순위를 바꾸지 않는다",
+     JSON.stringify(noToric.viable.map(v=>v.id)) === JSON.stringify(yesToric.viable.map(v=>v.id)),
+     noToric.viable.map(v=>v.id).join(">") + "  vs  " + yesToric.viable.map(v=>v.id).join(">"));
+  ok("난시가 크면 토릭이 붙을 것으로 표시한다", yesToric.toricLikely === true && noToric.toricLikely === false);
+
+  /* 병원이 금액을 바꾸면 점수도 따라 움직여야 한다 */
+  const before = G(Object.assign({}, wantSpecs, {costSensitivity:"3"})).scored.find(x=>x.id==="trifocal").score;
+  setCostTable({trifocal:{min:25, max:25}});
+  const after = G(Object.assign({}, wantSpecs, {costSensitivity:"3"})).scored.find(x=>x.id==="trifocal").score;
+  setCostTable({});
+  ok("금액표를 바꾸면 점수가 따라 바뀐다", after > before, before + " → " + after);
 
   /* --- 데이터 정합성 --- */
   const badRef = [];
