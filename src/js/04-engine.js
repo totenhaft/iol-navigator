@@ -172,6 +172,21 @@ function prefBreakdown(d, lens, cost){
   return {items, total: items.reduce((s,i) => s + i.v, 0), price, budgetTarget: target};
 }
 
+/* 순위 비교자.
+   화면에 보이는 점수는 raw 를 반올림하고 3~100 으로 자른 값이다. raw 로만 줄을
+   세우면 54.4 와 53.8 이 화면에는 똑같이 '54' 인데 순서만 갈리고, 상담 중에
+   "왜 같은 점수인데 이게 위에 있나요"에 답할 수가 없다. 그래서 먼저 표시 점수로
+   묶고, 동점 안에서 비용 답에 따라 방향을 정한다.
+     · 비용 '상관없다/조금'(또는 무응답) → 더 비싼(=기능 범위가 넓은) 렌즈를 위로
+     · 비용 '꽤/매우 크다'              → 더 싼 렌즈를 위로
+   값이 같은 단초점과 마이크로 모노비전처럼 가격까지 같으면 raw 로 가른다. */
+function rankCompare(d){
+  const cheapFirst = Number(d.costSensitivity) >= 2;
+  return (a, b) => (b.score - a.score)
+                || (cheapFirst ? (a.price - b.price) : (b.price - a.price))
+                || (b.raw - a.raw);
+}
+
 function evaluate(raw, mode){
   const d = normalize(raw, mode);
 
@@ -249,7 +264,8 @@ function evaluate(raw, mode){
     };
   });
 
-  const viable = scored.filter(s => !s.blocked).sort((a,b) => b.raw - a.raw);
+  const cmp = rankCompare(d);
+  const viable = scored.filter(s => !s.blocked).sort(cmp);
   const blockedList = scored.filter(s => s.blocked)
     .sort((a,b) => b.stops.length - a.stops.length);
 
@@ -264,7 +280,7 @@ function evaluate(raw, mode){
 
   return {
     d, top, alternatives, viable, blocked:blockedList, avoid, notes, fired,
-    scored: scored.slice().sort((a,b) => (b.blocked ? -1 : b.raw) - (a.blocked ? -1 : a.raw)),
+    scored: scored.slice().sort((a,b) => (a.blocked === b.blocked) ? cmp(a,b) : (a.blocked ? 1 : -1)),
     tests: Array.from(testSet.values()),
     unknowns: d._unknowns,
     prefUnanswered: d._prefUnanswered,

@@ -1867,6 +1867,21 @@ function prefBreakdown(d, lens, cost){
   return {items, total: items.reduce((s,i) => s + i.v, 0), price, budgetTarget: target};
 }
 
+/* 순위 비교자.
+   화면에 보이는 점수는 raw 를 반올림하고 3~100 으로 자른 값이다. raw 로만 줄을
+   세우면 54.4 와 53.8 이 화면에는 똑같이 '54' 인데 순서만 갈리고, 상담 중에
+   "왜 같은 점수인데 이게 위에 있나요"에 답할 수가 없다. 그래서 먼저 표시 점수로
+   묶고, 동점 안에서 비용 답에 따라 방향을 정한다.
+     · 비용 '상관없다/조금'(또는 무응답) → 더 비싼(=기능 범위가 넓은) 렌즈를 위로
+     · 비용 '꽤/매우 크다'              → 더 싼 렌즈를 위로
+   값이 같은 단초점과 마이크로 모노비전처럼 가격까지 같으면 raw 로 가른다. */
+function rankCompare(d){
+  const cheapFirst = Number(d.costSensitivity) >= 2;
+  return (a, b) => (b.score - a.score)
+                || (cheapFirst ? (a.price - b.price) : (b.price - a.price))
+                || (b.raw - a.raw);
+}
+
 function evaluate(raw, mode){
   const d = normalize(raw, mode);
 
@@ -1944,7 +1959,8 @@ function evaluate(raw, mode){
     };
   });
 
-  const viable = scored.filter(s => !s.blocked).sort((a,b) => b.raw - a.raw);
+  const cmp = rankCompare(d);
+  const viable = scored.filter(s => !s.blocked).sort(cmp);
   const blockedList = scored.filter(s => s.blocked)
     .sort((a,b) => b.stops.length - a.stops.length);
 
@@ -1959,7 +1975,7 @@ function evaluate(raw, mode){
 
   return {
     d, top, alternatives, viable, blocked:blockedList, avoid, notes, fired,
-    scored: scored.slice().sort((a,b) => (b.blocked ? -1 : b.raw) - (a.blocked ? -1 : a.raw)),
+    scored: scored.slice().sort((a,b) => (a.blocked === b.blocked) ? cmp(a,b) : (a.blocked ? 1 : -1)),
     tests: Array.from(testSet.values()),
     unknowns: d._unknowns,
     prefUnanswered: d._prefUnanswered,
@@ -4195,9 +4211,15 @@ function runSelfTests(){
   const plainEye = v => evaluate(baseInput({
       specIndep:"0", nearPriority:"0", interPriority:"1", costSensitivity:"1",
       nightDriving:"1", dysphTolerance:"1", astigKnown:v}), "patient");
-  ok("탈안경 요구가 없으면 난시가 있어도 단초점이 1순위",
-     plainEye("lots").top.id === "mono" && plainEye("no").top.id === "mono",
+  /* 이 검사의 목적은 '난시 여부가 순위를 바꾸지 않는다' 이다. 어떤 렌즈가 1순위인지가
+     아니라, 난시를 넣기 전과 후의 1순위가 같은지를 본다. (동점 시 고가 우선 규칙이
+     들어오면서 1순위 자체는 단초점 계열 안에서 달라질 수 있다) */
+  ok("탈안경 요구가 없으면 난시가 있어도 단초점 계열이 1순위",
+     ["mono","monoBlend","enhMono"].includes(plainEye("lots").top.id),
      plainEye("lots").top.id);
+  ok("난시 여부가 1순위를 바꾸지 않는다",
+     plainEye("lots").top.id === plainEye("no").top.id,
+     plainEye("lots").top.id + " vs " + plainEye("no").top.id);
   ok("그 경우 토릭 병용으로 표시된다", plainEye("lots").toricLikely === true);
   r = G({cylD:1.5}); ok("난시 1.5D → 토릭 적응증 권고", fired(r,"toric_indicated"));
   r = G({cylD:0.5}); ok("난시 0.5D → 토릭 권고 미발동", !fired(r,"toric_indicated"));
@@ -4411,16 +4433,24 @@ function runSelfTests(){
   ok("예산 감점은 예산대 안쪽 렌즈를 건드리지 않는다",
      c2.scored.find(x=>x.id==="mono").score === c3.scored.find(x=>x.id==="mono").score,
      c2.scored.find(x=>x.id==="mono").score + " vs " + c3.scored.find(x=>x.id==="mono").score);
-  ok("점수가 100에서 잘려도 순위는 자르기 전 값으로 매긴다",
-     c0.viable[0].raw >= c0.viable[1].raw,
-     c0.viable.slice(0,2).map(v => v.id + ":" + v.raw.toFixed(1)).join(" > "));
+  /* 점수가 100에서 잘려 동점이 되어도 렌즈 배열 순서(=싼 것부터)로 갈리면 안 된다.
+     비용이 문제가 아니라고 답했으므로 동점이면 더 비싼 쪽이 위로 온다. */
+  ok("점수가 잘려 동점이 되어도 배열 순서로 갈리지 않는다",
+     c0.viable[0].score > c0.viable[1].score || c0.viable[0].price >= c0.viable[1].price,
+     c0.viable.slice(0,2).map(v => `${v.id}:${v.score}[${v.price}]`).join(" > "));
 
   /* 예산대는 '넘는 쪽'으로만 작동해야 한다. 예산보다 싼 것은 벌점 대상이 아니다 —
      양쪽으로 벌점을 주면 요구가 없는 환자에게 25만원 단초점 대신 125만원
      프리미엄 단초점이 올라온다. */
   const plainWish = c => G({specIndep:"0", nearPriority:"0", interPriority:"1", costSensitivity:c, toricPlanned:true});
+  const plainMono = c => plainWish(c).scored.find(x => x.id === "mono").raw;
+  /* 예산보다 싼 렌즈는 어떤 비용 답에서도 점수가 흔들리지 않아야 한다.
+     (1순위가 무엇인지로 보면 동점 시 고가 우선 규칙에 가려지므로 점수로 본다) */
   ok("예산대는 한쪽으로만 작동한다 (예산보다 싸다고 감점하지 않는다)",
-     ["0","1","2","3"].every(c => plainWish(c).top.id === "mono"),
+     ["1","2","3"].every(c => Math.abs(plainMono(c) - plainMono("0")) < 1e-9),
+     ["0","1","2","3"].map(c => c + ":" + plainMono(c).toFixed(2)).join(" "));
+  ok("요구가 없으면 어떤 비용 답에서도 단초점 계열이 1순위",
+     ["0","1","2","3"].every(c => ["mono","monoBlend","enhMono"].includes(plainWish(c).top.id)),
      ["0","1","2","3"].map(c => c + ":" + plainWish(c).top.id).join(" "));
 
   /* '꽤'에서는 예산대를 넘는 유형만큼 순위가 내려간다 */
@@ -4428,6 +4458,48 @@ function runSelfTests(){
   ok("'꽤'에서는 가장 비싼 유형이 1순위가 아니다", midBudget.top.id !== "trifocal", "top=" + midBudget.top.id);
   ok("'꽤'에서 프리미엄 단초점이 가장 비싼 유형보다 위에 온다",
      rankOf("enhMono", midBudget) < rankOf("trifocal", midBudget), midBudget.viable.map(v=>v.id).join(">"));
+
+  /* --- 동점일 때의 순서 ---
+     화면 점수는 raw 를 반올림한 값이라, 54.4 와 53.8 이 둘 다 '54' 로 보인다.
+     그때 순서가 갈리면 상담 중에 설명할 수 없다. 비용이 문제가 아니라고 답했으면
+     비싼 쪽을, 비용이 부담이라고 답했으면 싼 쪽을 위에 둔다. */
+  const tieAt = c => {
+    const rr = G({specIndep:"0", nearPriority:"0", interPriority:"1", nightDriving:"1",
+                  dysphTolerance:"1", costSensitivity:c});
+    const v = rr.viable;
+    const pairs = [];
+    for (let i = 0; i + 1 < v.length; i++) if (v[i].score === v[i+1].score) pairs.push([v[i], v[i+1]]);
+    return pairs;
+  };
+  ok("비용 '상관없다'에서 동점이면 비싼 쪽이 위에 온다",
+     tieAt("0").every(([a,b]) => a.price >= b.price),
+     tieAt("0").map(([a,b]) => `${a.id}[${a.price}]>${b.id}[${b.price}]`).join(" ") || "동점 없음");
+  ok("비용 '조금'에서도 동점이면 비싼 쪽이 위에 온다",
+     tieAt("1").every(([a,b]) => a.price >= b.price),
+     tieAt("1").map(([a,b]) => `${a.id}[${a.price}]>${b.id}[${b.price}]`).join(" ") || "동점 없음");
+  ok("비용 '꽤'에서는 동점이면 싼 쪽이 위에 온다",
+     tieAt("2").every(([a,b]) => a.price <= b.price),
+     tieAt("2").map(([a,b]) => `${a.id}[${a.price}]>${b.id}[${b.price}]`).join(" ") || "동점 없음");
+  ok("비용 '매우 크다'에서도 동점이면 싼 쪽이 위에 온다",
+     tieAt("3").every(([a,b]) => a.price <= b.price),
+     tieAt("3").map(([a,b]) => `${a.id}[${a.price}]>${b.id}[${b.price}]`).join(" ") || "동점 없음");
+
+  /* 사용자가 보고한 실제 사례: 비용 '상관없다' + 요구 없음에서
+     단초점과 프리미엄 단초점이 같은 점수인데 단초점이 1순위로 올라왔다. */
+  {
+    const rr = G({specIndep:"0", nearPriority:"0", interPriority:"1", nightDriving:"1",
+                  dysphTolerance:"1", costSensitivity:"0"});
+    const m = rr.scored.find(x => x.id === "mono"), e = rr.scored.find(x => x.id === "enhMono");
+    ok("단초점과 프리미엄 단초점이 같은 점수면 프리미엄이 위에 온다",
+       m.score !== e.score || rankOf("enhMono", rr) < rankOf("mono", rr),
+       `mono:${m.score} enhMono:${e.score} → ` + rr.viable.map(v=>v.id).join(">"));
+  }
+  ok("동점이 아니면 점수가 높은 쪽이 그대로 1순위다 (가격이 순위를 뒤집지 않는다)",
+     (() => {
+       const rr = G({specIndep:"0", nearPriority:"0", interPriority:"0",
+                     nightDriving:"3", dysphTolerance:"0", costSensitivity:"0"});
+       return rr.viable.every((v,i,a) => i === 0 || a[i-1].score >= v.score);
+     })());
 
   /* 재정 제약이 없을 때의 가산 — 두 조건이 함께여야만 붙는다 */
   const affordBase = {nearPriority:"1", interPriority:"1", nightDriving:"1", dysphTolerance:"1", toricPlanned:true};
@@ -4441,8 +4513,8 @@ function runSelfTests(){
   ok("탈안경 의지가 약하면(1) 비용이 상관없어도 밀어주지 않는다",
      A({costSensitivity:"0", specIndep:"1"}).top.id !== "trifocal",
      "top=" + A({costSensitivity:"0", specIndep:"1"}).top.id);
-  ok("탈안경 의지가 없으면(0) 비용이 상관없어도 단초점이 남는다",
-     A({costSensitivity:"0", specIndep:"0", nearPriority:"0"}).top.id === "mono",
+  ok("탈안경 의지가 없으면(0) 비용이 상관없어도 단초점 계열이 남는다",
+     ["mono","monoBlend","enhMono"].includes(A({costSensitivity:"0", specIndep:"0", nearPriority:"0"}).top.id),
      "top=" + A({costSensitivity:"0", specIndep:"0", nearPriority:"0"}).top.id);
   /* 이 가산이 '비싸서 밀어주는 것'이 아님을 금액표를 뒤집어 확인한다.
      금액에 비례했다면 순위가 따라 뒤집혔을 것이다. */
