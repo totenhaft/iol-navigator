@@ -81,6 +81,10 @@ function normalize(raw, mode){
      다루면 난시가 있다는 이유만으로 프리미엄 렌즈가 통째로 감점된다. */
   d.toricPlanKnown = (role === "doctor" || role === "pro");   // "pro" 는 의사 화면의 옛 이름
 
+  /* 토릭이 붙을 가능성이 높은가. 금액 표시와 예산대 계산에 함께 쓴다.
+     렌즈 종류의 순위를 바꾸지는 않는다 — 토릭은 모든 유형에 같은 금액이 더해진다. */
+  d.toricLikely = d.toricPlanned === true || (num(d.cylD) !== null && d.cylD >= 1.0);
+
   // 'unknown' 은 규칙을 발동시키지 않음 (null 취급) — 대신 추가검사로 표시
   const unknowns = [];
   Object.keys(CRITICAL_UNKNOWN).forEach(k => {
@@ -103,6 +107,14 @@ function normalize(raw, mode){
 
    근거리·중간거리·탈안경 요구는 그대로 가산으로 둔다 — 이것들은 환자가 명시적으로
    고른 값이고, 렌즈 선택을 움직여야 하는 신호다. */
+/* 비용 답이 가리키는 예산대(만원, 단안). null 이면 상한이 없다는 뜻.
+   0 상관없다 / 1 조금 → 상한 없음
+   2 꽤            → 프리미엄 단초점·토릭 단초점 대(125만원 근처)
+   3 매우 크다      → 가장 저렴한 대(25만원, 논토릭 단초점)
+   난시가 있으면 모든 유형에 토릭 금액이 똑같이 더해지므로, 그때는 토릭 단초점
+   (25+75=100)이 '꽤'의 목표대에 자연스럽게 들어온다. */
+const BUDGET_TARGET_MAN = [null, null, 125, 25];
+
 function prefBreakdown(d, lens, cost){
   const cap = lens.cap;
   const nightPressure = Math.max(0, d.nightDriving - 1);            // 0..2
@@ -114,14 +126,39 @@ function prefBreakdown(d, lens, cost){
   const glarePressure = GLARE[Math.max(0, Math.min(3, Math.round(d.dysphTolerance)))];
   const nightWeak = Math.max(0, 2.6 - cap.night) / 1.6;             // 0(야간 안정) .. 1(취약)
 
-  /* 비용은 실제 금액에서 계산한다. 가장 싼 선택지와의 차이를 가장 비싼 선택지와의
-     차이로 나눈 값(0~1)에 비용 민감도를 곱한다.
-     야간·빛번짐과 달리 한 칸을 빼지 않는 이유: 이 척도는 '상관없다'가 0번이라
-     0 이 이미 '요구 없음'이다. 야간·빛번짐 척도는 중립 지점이 가운데에 있어
-     한 칸을 빼야 같은 뜻이 된다. */
-  const price = costMid(lens.id);
-  const rel = (price === null || !cost || cost.span <= 0)
-    ? 0 : Math.max(0, Math.min(1, (price - cost.floor) / cost.span));
+  /* ── 비용 ────────────────────────────────────────────────────────────
+     비용 답을 '얼마나 싫어하는가'가 아니라 '어느 예산대인가'로 읽는다.
+     · 상한이 없는 답(상관없다·조금)에서는 감점이 없고, 대신 초점 범위가 넓은
+       쪽을 밀어 준다. **금액이 아니라 초점 범위에 비례시킨다** — 가격 자체가
+       추천 사유가 되면 환자도 보는 화면에서 '비싸서 골랐다'가 되기 때문이다.
+       탈안경 의지가 없는 환자에게까지 밀어 올리지 않도록 조건을 함께 건다.
+     · 상한이 있는 답(꽤·매우 크다)에서는 목표 예산대에서 멀어질수록 감점한다.
+       '매우 크다'의 목표가 최저가이므로 결과적으로 금액에 비례한 감점이 된다.
+     토릭은 모든 후보에 같은 금액이 더해져 서로의 거리를 바꾸지 않지만,
+     목표대와의 거리는 바꾸므로 여기서는 더해서 계산한다. */
+  const lv = Math.max(0, Math.min(3, Math.round(d.costSensitivity)));
+  const target = BUDGET_TARGET_MAN[lv];
+  const priceBase = costMid(lens.id);
+  const price = priceBase === null ? null : priceBase + (d.toricLikely ? TORIC_ADD_MAN : 0);
+  const span = (cost && cost.span > 0) ? cost.span : 0;
+
+  /* 예산대를 '넘는' 만큼만 감점한다. 한쪽으로만 작동하는 것이 중요하다 —
+     예산보다 싼 것은 아무 문제가 아닌데 양쪽으로 벌점을 주면 "안경 써도 괜찮다"
+     고 답한 환자에게 25만원 단초점 대신 125만원 프리미엄 단초점이 올라온다.
+     '매우 크다'는 '꽤'보다 훨씬 세게 작동한다 — 상한이 빡빡할수록 예산이 임상
+     선호를 이길 수 있어야 하기 때문이다. */
+  const BAND_W = [0, 0, 4.0, 6.5];
+  let costTerm = 0;
+  if (price !== null && span > 0 && target !== null){
+    const aim = target + (d.toricLikely ? TORIC_ADD_MAN : 0);
+    costTerm = -(Math.min(1, Math.max(0, price - aim) / span)) * BAND_W[lv];
+  }
+
+  /* 예산 상한이 없을 때의 가산. 비용을 답하지 않은 것은 '상관없다'가 아니라
+     '아직 모름'이므로 제외한다. */
+  const noCeiling = (target === null) && !(d._prefUnanswered || []).includes("costSensitivity");
+  const affordW = lv === 0 ? 2.4 : 1.2;
+  const afford = (noCeiling && d.specIndep >= 2) ? ((cap.near + cap.inter) / 6) * affordW : 0;
 
   const items = [
     {k:"near",  v:  d.nearPriority  * (cap.near  / 3) * 2.2},
@@ -129,20 +166,10 @@ function prefBreakdown(d, lens, cost){
     {k:"spec",  v:  d.specIndep     * ((cap.near + cap.inter) / 6) * 2.6},
     {k:"night", v: -nightPressure * nightWeak * 2.4},
     {k:"dysph", v: -glarePressure * nightWeak * 2.0},
-    {k:"cost",  v: -d.costSensitivity * rel * 2.4},
-    /* 재정 제약이 없고 탈안경 의지가 뚜렷하면 초점 범위가 넓은 쪽을 더 적극적으로
-       올려 준다. 두 조건을 함께 요구하는 것이 핵심이다 —
-       · '비용 상관없다'만으로는 올리지 않는다. 탈안경을 원하지 않는다고 답한
-         환자에게 비싼 렌즈를 권하는 셈이 되기 때문이다.
-       · 금액이 아니라 초점 범위(cap.near + cap.inter)에 비례시킨다. 가격 자체가
-         추천 사유가 되면, 환자도 보는 화면에서 '비싸서 골랐다'가 된다.
-       · 비용을 답하지 않은 경우는 '상관없다'가 아니라 '아직 모름'이라 제외한다. */
-    {k:"afford", v: (d.costSensitivity === 0
-                     && !(d._prefUnanswered || []).includes("costSensitivity")
-                     && d.specIndep >= 2)
-                    ? ((cap.near + cap.inter) / 6) * 2.4 : 0},
+    {k:"cost",  v: costTerm},
+    {k:"afford", v: afford},
   ];
-  return {items, total: items.reduce((s,i) => s + i.v, 0), price, costRel: rel};
+  return {items, total: items.reduce((s,i) => s + i.v, 0), price, budgetTarget: target};
 }
 
 function evaluate(raw, mode){
@@ -211,16 +238,18 @@ function evaluate(raw, mode){
     const st = state[l.id];
     const pb = prefBreakdown(d, l, {floor:costFloor, span:costSpan});
     const blocked = st.stops.length > 0;
-    const score = blocked ? 0 : clamp(
-      Math.round(l.base + 30 + pb.total * 3.5 - st.penalty * 7 + st.boost * 5), 3, 100);
+    /* 자르기 전 원점수를 함께 들고 다닌다. 100 에서 잘린 뒤에 정렬하면 서로 다른
+       점수가 동점이 되고, 그때 순서가 렌즈 배열 순서(=싼 것부터)로 갈려 버린다. */
+    const raw = l.base + 30 + pb.total * 3.5 - st.penalty * 7 + st.boost * 5;
+    const score = blocked ? 0 : clamp(Math.round(raw), 3, 100);
     return {
-      id:l.id, lens:l, score, blocked, price:pb.price,
+      id:l.id, lens:l, score, raw, blocked, price:pb.price,
       stops:st.stops, cautions:st.cautions.slice().sort((a,b)=>b.w-a.w), boosts:st.boosts,
       penalty:st.penalty, pref:pb
     };
   });
 
-  const viable = scored.filter(s => !s.blocked).sort((a,b) => b.score - a.score);
+  const viable = scored.filter(s => !s.blocked).sort((a,b) => b.raw - a.raw);
   const blockedList = scored.filter(s => s.blocked)
     .sort((a,b) => b.stops.length - a.stops.length);
 
@@ -235,12 +264,16 @@ function evaluate(raw, mode){
 
   return {
     d, top, alternatives, viable, blocked:blockedList, avoid, notes, fired,
-    scored: scored.slice().sort((a,b) => (b.blocked?-1:b.score) - (a.blocked?-1:a.score)),
+    scored: scored.slice().sort((a,b) => (b.blocked ? -1 : b.raw) - (a.blocked ? -1 : a.raw)),
     tests: Array.from(testSet.values()),
     unknowns: d._unknowns,
     prefUnanswered: d._prefUnanswered,
-    /* 토릭이 붙을 가능성이 높은가 — 금액 표시에만 쓴다 (점수에는 영향 없음) */
-    toricLikely: d.toricPlanned === true || (num(d.cylD) !== null && d.cylD >= 1.0),
+    toricLikely: d.toricLikely,
+    /* 비용 답이 가리키는 예산대(만원, 토릭 포함). null 이면 상한 없음 — 화면 설명에 쓴다. */
+    budgetAim: (() => {
+      const t = BUDGET_TARGET_MAN[Math.max(0, Math.min(3, Math.round(d.costSensitivity)))];
+      return t === null ? null : t + (d.toricLikely ? TORIC_ADD_MAN : 0);
+    })(),
     allStopRules: Array.from(new Set([].concat(...scored.map(s => s.stops)))),
     allCautionRules: (() => {
       const m = new Map();

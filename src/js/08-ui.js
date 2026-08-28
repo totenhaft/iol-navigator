@@ -313,7 +313,11 @@ function renderResults(res){
     el("span", {cls:"lg"}, [el("i", {cls:"sw", style:"background:color-mix(in srgb,var(--accent-soft) 30%, var(--sunken))"}), el("span",{text:L().bandNear})]),
   ]);
   host.appendChild(card(t.rankTitle, null, null, el("div", {},
-    [ toricOn ? el("p", {cls:"hint", style:"padding:11px 18px 0", text:t.toricAssumed}) : null, legend, rank ])));
+    [ res.budgetAim !== null
+        ? el("p", {cls:"hint", style:"padding:11px 18px 0",
+                   html: t.budgetNote.replace("{aim}", costManText(res.budgetAim))}) : null,
+      toricOn ? el("p", {cls:"hint", style:"padding:11px 18px 0", text:t.toricAssumed}) : null,
+      legend, rank ])));
 
   /* 렌즈 유형 설명 — 환자·상담 화면에서 설명 자료로 씁니다 */
   if (state.role !== "doctor") host.appendChild(lensGuideCard());
@@ -688,6 +692,11 @@ function costRangeMan(id, opts){
   const add   = (opts && opts.toric) ? TORIC_ADD_MAN : 0;
   const mult  = (opts && opts.bothEyes) ? 2 : 1;
   return { min:(Number(c.min) + add) * mult, max:(Number(c.max) + add) * mult };
+}
+/* 만원 값 하나를 언어에 맞게 적는다 */
+function costManText(man){
+  return state.lang === "ko" ? numFmt(man) + L().manWon
+                             : "₩" + (man / 100).toFixed(man % 100 === 0 ? 1 : 2) + "M";
 }
 function costText(id, opts){
   const r = costRangeMan(id, opts);

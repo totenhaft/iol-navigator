@@ -317,23 +317,45 @@ function runSelfTests(){
   ok("미니모노비전은 단초점 두 개이므로 단안 금액이 단초점과 같다",
      costMid("monoBlend") === costMid("mono"));
 
+  /* --- 비용 답 = 예산대 --------------------------------------------
+     0 상관없다 / 1 조금 → 상한 없음, 2 꽤 → 125만원대, 3 매우 크다 → 25만원대 */
   const rankOf = (id, rr) => rr.viable.findIndex(v => v.id === id);
   const wantSpecs = {specIndep:"3", nearPriority:"2", interPriority:"2", toricPlanned:true};
   const byCost = c => G(Object.assign({}, wantSpecs, {costSensitivity:c}));
   const c0 = byCost("0"), c1 = byCost("1"), c2 = byCost("2"), c3 = byCost("3");
-  ok("비용이 상관없으면 삼중초점이 1순위", c0.top.id === "trifocal", "top=" + c0.top.id);
-  ok("비용 민감도가 올라갈수록 삼중초점 점수가 단조롭게 내려간다",
-     c0.scored.find(x=>x.id==="trifocal").score > c1.scored.find(x=>x.id==="trifocal").score &&
-     c1.scored.find(x=>x.id==="trifocal").score > c2.scored.find(x=>x.id==="trifocal").score &&
-     c2.scored.find(x=>x.id==="trifocal").score > c3.scored.find(x=>x.id==="trifocal").score,
+  ok("비용 상관없음·조금 → 예산 상한이 없다", c0.budgetAim === null && c1.budgetAim === null);
+  ok("비용 꽤 → 프리미엄 단초점 대(125만원)가 기준", c2.budgetAim === 125 + TORIC_ADD_MAN,
+     String(c2.budgetAim));
+  ok("비용 매우 큼 → 가장 저렴한 대(25만원)가 기준", c3.budgetAim === 25 + TORIC_ADD_MAN,
+     String(c3.budgetAim));
+  ok("상관없음·조금에서는 탈안경 요구가 강하면 가장 비싼 유형이 1순위",
+     c0.top.id === "trifocal" && c1.top.id === "trifocal", c0.top.id + "/" + c1.top.id);
+  ok("비용 민감도가 올라갈수록 가장 비싼 유형의 점수가 단조롭게 내려간다",
+     [c0,c1,c2,c3].map(r=>r.scored.find(x=>x.id==="trifocal").score)
+       .every((v,i,a) => i === 0 || a[i-1] > v),
      [c0,c1,c2,c3].map(r=>r.scored.find(x=>x.id==="trifocal").score).join(">"));
   ok("비용이 매우 큰 문제면 가장 싼 선택지가 1순위로 올라온다",
      c3.top.id === "monoBlend" || c3.top.id === "mono", "top=" + c3.top.id);
-  ok("비용 감점은 가장 싼 렌즈의 점수를 건드리지 않는다 (감점 전용)",
-     c1.scored.find(x=>x.id==="mono").score === c3.scored.find(x=>x.id==="mono").score,
-     c1.scored.find(x=>x.id==="mono").score + " vs " + c3.scored.find(x=>x.id==="mono").score);
-  ok("비용 순위가 점수 순위를 뒤집을 만큼만 작동한다 (탈안경 요구는 여전히 반영)",
-     rankOf("mono", c3) > rankOf("edof", c3), "단초점 순위=" + rankOf("mono", c3));
+  ok("예산 감점은 예산대 안쪽 렌즈를 건드리지 않는다",
+     c2.scored.find(x=>x.id==="mono").score === c3.scored.find(x=>x.id==="mono").score,
+     c2.scored.find(x=>x.id==="mono").score + " vs " + c3.scored.find(x=>x.id==="mono").score);
+  ok("점수가 100에서 잘려도 순위는 자르기 전 값으로 매긴다",
+     c0.viable[0].raw >= c0.viable[1].raw,
+     c0.viable.slice(0,2).map(v => v.id + ":" + v.raw.toFixed(1)).join(" > "));
+
+  /* 예산대는 '넘는 쪽'으로만 작동해야 한다. 예산보다 싼 것은 벌점 대상이 아니다 —
+     양쪽으로 벌점을 주면 요구가 없는 환자에게 25만원 단초점 대신 125만원
+     프리미엄 단초점이 올라온다. */
+  const plainWish = c => G({specIndep:"0", nearPriority:"0", interPriority:"1", costSensitivity:c, toricPlanned:true});
+  ok("예산대는 한쪽으로만 작동한다 (예산보다 싸다고 감점하지 않는다)",
+     ["0","1","2","3"].every(c => plainWish(c).top.id === "mono"),
+     ["0","1","2","3"].map(c => c + ":" + plainWish(c).top.id).join(" "));
+
+  /* '꽤'에서는 예산대를 넘는 유형만큼 순위가 내려간다 */
+  const midBudget = G({specIndep:"1", nearPriority:"1", interPriority:"1", costSensitivity:"2", toricPlanned:true});
+  ok("'꽤'에서는 가장 비싼 유형이 1순위가 아니다", midBudget.top.id !== "trifocal", "top=" + midBudget.top.id);
+  ok("'꽤'에서 프리미엄 단초점이 가장 비싼 유형보다 위에 온다",
+     rankOf("enhMono", midBudget) < rankOf("trifocal", midBudget), midBudget.viable.map(v=>v.id).join(">"));
 
   /* 재정 제약이 없을 때의 가산 — 두 조건이 함께여야만 붙는다 */
   const affordBase = {nearPriority:"1", interPriority:"1", nightDriving:"1", dysphTolerance:"1", toricPlanned:true};
