@@ -25,11 +25,13 @@ function saveSettings(o){
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(o)); } catch(e){}
   applySettings();
 }
-/* 저장된 값을 엔진에 반영한다. 금액과 조정값 모두 여기를 지난다. */
+/* 저장된 값을 엔진에 반영한다. 금액과 조정값 모두 여기를 지난다.
+   겹치면  코드 기본값 < config.json(병원 확정값) < 이 기기 설정  순으로 덮는다. */
 function applySettings(){
   const s = loadSettings();
-  setCostTable(s.costs || {});
-  setTuning(s.tuning || {});
+  const rc = (typeof REMOTE_CONFIG === "object" && REMOTE_CONFIG) ? REMOTE_CONFIG : {costs:{}, tuning:{}};
+  setCostTable(Object.assign({}, rc.costs || {}, s.costs || {}));
+  setTuning(Object.assign({}, rc.tuning || {}, s.tuning || {}));
 }
 
 /* ---------- 비밀번호 ----------
@@ -214,6 +216,31 @@ function openSettings(){
   }});
   host.appendChild(el("div", {cls:"btnrow"}, [save, reset]));
   host.appendChild(msg);
+
+  /* 4-b) 병원 공통 설정 — config.json */
+  const cfgSec = el("section", {cls:"setsec"}, [ el("h4", {text:t.setCfgTitle}) ]);
+  if (REMOTE_CONFIG.loaded){
+    cfgSec.appendChild(el("p", {cls:"hint", style:"color:var(--ok)", text:
+      t.setCfgLoaded.replace("{v}", String(REMOTE_CONFIG.version))
+                    .replace("{c}", String(Object.keys(REMOTE_CONFIG.costs).length))
+                    .replace("{t}", String(Object.keys(REMOTE_CONFIG.tuning).length))}));
+  } else {
+    cfgSec.appendChild(el("p", {cls:"hint", text:t.setCfgNone}));
+  }
+  cfgSec.appendChild(el("p", {cls:"hint", text:t.setCfgHint}));
+  const cfgTa  = el("textarea", {id:"setCfgJson", rows:6, spellcheck:"false", readonly:"readonly",
+                                 "aria-label":t.setCfgTitle});
+  const cfgMsg = el("p", {cls:"hint"});
+  cfgSec.appendChild(el("div", {cls:"btnrow"}, [
+    el("button", {type:"button", cls:"btn", id:"setCfgBtn", text:t.setCfgMake, onclick:() => {
+      cfgTa.value = buildConfigJson();
+      cfgMsg.textContent = t.setCfgMade; cfgMsg.style.color = "var(--ok)";
+      cfgTa.focus(); cfgTa.select();
+    }}),
+  ]));
+  cfgSec.appendChild(cfgTa);
+  cfgSec.appendChild(cfgMsg);
+  host.appendChild(cfgSec);
 
   const ta = el("textarea", {id:"setJson", rows:4, spellcheck:"false", "aria-label":t.setMoveTitle});
   ta.value = JSON.stringify(collectSettingsForm());

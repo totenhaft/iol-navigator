@@ -44,7 +44,7 @@ ${head.trim()}
 ${body.trim()}
 <script>
 ${js}
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 </script>
 </body>
 </html>
@@ -54,6 +54,14 @@ writeFileSync(join(root, "index.html"), html);
 mkdirSync(join(root, "dist"), { recursive: true });
 writeFileSync(join(root, "dist", "index.html"), html);
 writeFileSync(join(root, "dist", ".nojekyll"), "");
+
+/* 병원 공통 설정. 앱이 켜질 때 이 파일을 읽어 모든 기기에 같은 값을 씁니다.
+   없어도 앱은 코드 기본값으로 정상 동작하므로, 파일이 없으면 빈 것을 하나 만들어 둡니다. */
+let configText;
+try { configText = read("config.json"); }
+catch (e) { configText = JSON.stringify({ version: 0, costs: {}, tuning: {} }, null, 2) + "\n"; }
+JSON.parse(configText);   // 깨진 JSON 이 배포되면 설정이 조용히 무시된다 — 여기서 먼저 막는다
+writeFileSync(join(root, "dist", "config.json"), configText);
 
 const kb = (html.length / 1024).toFixed(0);
 console.log(`빌드 완료  index.html  ${kb} KB  (자바스크립트 ${jsFiles.length}개 파일: ${jsFiles.join(", ")})`);
