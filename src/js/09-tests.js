@@ -300,6 +300,10 @@ function runSelfTests(){
      /^\d{4}$/.test(handoffCheckDigits(codeMid)) && handoffCheckDigits(codeMid) !== handoffCheckDigits(encodeHandoff(edge)));
   ok("인계 코드 길이가 QR 용량 안에 들어온다", encodeHandoff(edge).length < 60, String(encodeHandoff(edge).length));
 
+  /* --- 금액 노출 --- */
+  ok("금액표는 점수 계산에 그대로 쓰인다 (감추는 것은 표시뿐)",
+     costMid("trifocal") > costMid("mono"));
+
   /* --- 설명 표 데이터 --- */
   const badPlain = LENSES.filter(l => !l.plain ||
     ["glasses","glare","contrast"].some(k => !Number.isInteger(l.plain[k]) || l.plain[k] < 0 || l.plain[k] > 3))

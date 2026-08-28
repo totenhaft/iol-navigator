@@ -6,6 +6,7 @@ const state = {
   role:"patient",          // patient | counselor | doctor
   values:{},
   last:null,
+  roleLocked:false,        // ?patient 로 열었을 때 역할 전환을 막는다
   decision:null,           // 상담에서 환자와 확인한 렌즈 유형 (id)
   toric:false,             // 토릭 병용 여부
 };
@@ -315,7 +316,9 @@ function renderResults(res){
   host.appendChild(card(t.rankTitle, null, null, el("div", {},
     [ res.budgetAim !== null
         ? el("p", {cls:"hint", style:"padding:11px 18px 0",
-                   html: t.budgetNote.replace("{aim}", costManText(res.budgetAim))}) : null,
+                   html: costVisible()
+                     ? t.budgetNote.replace("{aim}", costManText(res.budgetAim))
+                     : t.budgetNotePatient}) : null,
       toricOn ? el("p", {cls:"hint", style:"padding:11px 18px 0", text:t.toricAssumed}) : null,
       legend, rank ])));
 
@@ -537,6 +540,7 @@ function run(opts){
 }
 
 function setRole(r){
+  if (state.roleLocked) r = "patient";     // 환자에게 건넨 화면에서는 역할을 바꿀 수 없다
   if (!ROLES.includes(r)) r = "patient";
   state.role = r;
   ROLES.forEach(x => $("#role_" + x).setAttribute("aria-pressed", String(x === r)));
@@ -561,6 +565,13 @@ function boot(){
   renderTaxonomy();
   renderRefs();
 
+  /* 주소에 ?patient 가 붙어 있으면 환자 화면으로 잠근다.
+     대기실 태블릿을 건넬 때 쓰라고 만든 것이다 — 역할을 바꾸면 금액이 보인다. */
+  if (new URLSearchParams(location.search).has("patient")){
+    state.roleLocked = true;
+    state.role = "patient";
+    $("#roleSeg").hidden = true;
+  }
   ROLES.forEach(r => $("#role_" + r).addEventListener("click", () => setRole(r)));
   syncRoleLabels();
   setRole(state.role);
@@ -619,8 +630,8 @@ function lensGuideCard(){
     el("th", {text: t.guideGlasses}),
     el("th", {text: t.guideGlare}),
     el("th", {text: t.guideContrast}),
-    el("th", {text: t.guideCost}),
-  ])));
+    costVisible() ? el("th", {text: t.guideCost}) : null,
+  ].filter(Boolean))));
   const tb = el("tbody");
   LENSES.forEach(l => {
     const p = l.plain;
@@ -631,8 +642,8 @@ function lensGuideCard(){
       el("td", {}, meter(p.glasses, t.lvl)),
       el("td", {}, meter(p.glare, t.lvl)),
       el("td", {}, meter(p.contrast, t.lvlContrast)),
-      el("td", {cls:"gcost"}, el("b", {cls:"mono", text: costText(l.id)})),
-    ]));
+      costVisible() ? el("td", {cls:"gcost"}, el("b", {cls:"mono", text: costText(l.id)})) : null,
+    ].filter(Boolean)));
   });
   tbl.appendChild(tb);
   const body = el("div", {}, [
@@ -693,6 +704,12 @@ function costRangeMan(id, opts){
   const mult  = (opts && opts.bothEyes) ? 2 : 1;
   return { min:(Number(c.min) + add) * mult, max:(Number(c.max) + add) * mult };
 }
+/* 금액을 화면에 낼 수 있는가.
+   환자 화면과 환자에게 건네는 A5 결과지에는 금액을 싣지 않는다. 상담 자리에서
+   사람이 직접 설명할 몫이지, 문진 화면이 먼저 꺼낼 정보가 아니다.
+   금액은 점수 계산에는 그대로 쓰인다 — 감추는 것은 표시뿐이다. */
+function costVisible(){ return state.role !== "patient"; }
+
 /* 만원 값 하나를 언어에 맞게 적는다 */
 function costManText(man){
   return state.lang === "ko" ? numFmt(man) + L().manWon
@@ -979,10 +996,10 @@ function buildA5(res){
   ]));
   root.appendChild(pick);
 
-  /* 비용 — 토릭이 붙을 것 같으면 포함해서, 양안 수술이면 합계도 */
+  /* 비용 — 환자에게 건네는 종이에는 싣지 않는다 (금액은 상담 자리에서 직접) */
   const withToric = res.toricLikely || state.toric;
   const both = res.d.bilateral === "yes";
-  if (costRangeMan(lens.id)){
+  if (costVisible() && costRangeMan(lens.id)){
     pick.appendChild(el("div", {cls:"a5-cost"}, [
       el("span", {text: t.costTitle + (withToric ? " (" + t.costWithToric + ")" : "")}),
       el("b", {cls:"mono"}, [

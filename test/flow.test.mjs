@@ -161,6 +161,48 @@ export default async function run(){
   ok("환자용 결과지가 A5 한 장에 들어간다", pageCount === 1, `${pageCount} 장`);
   await page3.evaluate(() => document.body.classList.remove("print-a5"));
 
+  /* ---- 환자에게 금액이 새지 않는가 ----
+     화면 안에 '만원' 이라는 글자가 보이면 어딘가에서 금액이 새고 있다는 뜻이다. */
+  const page4 = await ctx.newPage();
+  page4.on("pageerror", e => errors.push(e.message));
+  await page4.goto(pageURL, { waitUntil:"load" });
+  await wait(page4, 300);
+  await page4.fill("#f_age", "68");
+  await page4.click('label[for="f_specIndep_2"]');
+  await page4.click('label[for="f_costSensitivity_2"]');
+  await page4.selectOption("#f_astigKnown", "lots");
+  await page4.click("#runBtn");
+  await wait(page4, 700);
+  const patientText = await page4.evaluate(() => document.querySelector("main").innerText);
+  ok("환자 화면에 금액이 나오지 않는다", !/만원|₩/.test(patientText),
+     (patientText.match(/[^\n]*만원[^\n]*/) || [""])[0].slice(0, 60));
+  ok("환자 화면에도 예산 안내 문구 자체는 남는다", /비용에 대한 답/.test(patientText));
+
+  await page4.evaluate(() => {
+    const h = document.getElementById("a5sheet");
+    h.textContent = ""; h.appendChild(buildA5(state.last));
+  });
+  const a5Text = await page4.evaluate(() => document.querySelector("#a5sheet").innerText);
+  ok("환자 배부용 A5 결과지에도 금액이 없다", !/만원|₩/.test(a5Text),
+     (a5Text.match(/[^\n]*만원[^\n]*/) || [""])[0].slice(0, 60));
+
+  await page4.click("#role_counselor");
+  await wait(page4, 300);
+  await page4.click("#runBtn");
+  await wait(page4, 600);
+  const counselorText = await page4.evaluate(() => document.querySelector("main").innerText);
+  ok("상담 화면에는 금액이 그대로 보인다", /만원/.test(counselorText));
+
+  /* ?patient 로 열면 역할을 바꿀 수 없어야 한다 */
+  const page5 = await ctx.newPage();
+  page5.on("pageerror", e => errors.push(e.message));
+  await page5.goto(pageURL + "?patient", { waitUntil:"load" });
+  await wait(page5, 400);
+  ok("?patient 로 열면 역할 버튼이 감춰진다",
+     await page5.evaluate(() => document.querySelector("#roleSeg").hidden));
+  ok("?patient 로 열면 역할을 바꿔도 환자 화면에 머문다",
+     await page5.evaluate(() => { setRole("counselor"); return state.role === "patient"; }));
+
   if (errors.length){ fail += errors.length; console.log("  FAIL  자바스크립트 오류\n    " + errors.join("\n    ")); }
   else console.log("  PASS  자바스크립트 오류 없음");
 
