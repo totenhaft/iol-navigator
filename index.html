@@ -459,6 +459,17 @@ table.guide th:last-child{text-align:right}
 .loadrow{display:flex;gap:8px}
 .loadrow input{flex:1;min-width:0;height:44px;font-family:var(--mono);letter-spacing:.04em}
 
+/* ── 설정 화면 ─────────────────────────────────────────────── */
+.ovl-card.ovl-wide{width:min(760px,100%)}
+.setsec{border-top:1px solid var(--line);padding-top:13px}
+.setsec:first-of-type{border-top:0;padding-top:0}
+.setsec h4{font-size:12px;letter-spacing:.06em;color:var(--accent-ink);margin-bottom:9px;text-transform:uppercase}
+.setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.setitem{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-2)}
+.setitem input{height:40px;min-height:40px;text-align:right}
+#setBody textarea{width:100%;font-family:var(--mono);font-size:11.5px;padding:9px 11px;
+  border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--surface);resize:vertical}
+
 [hidden]{display:none !important}
 #testout{font-family:var(--mono);font-size:11.5px;white-space:pre-wrap;padding:16px;line-height:1.6}
 .pass{color:var(--ok)} .fail{color:var(--stop);font-weight:600}
@@ -557,6 +568,9 @@ table.guide th:last-child{text-align:right}
       <button type="button" id="langKo" aria-pressed="true">한국어</button>
       <button type="button" id="langEn" aria-pressed="false">EN</button>
     </div>
+    <button type="button" class="iconbtn" id="setBtn" aria-label="설정" title="설정">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+    </button>
     <button type="button" class="iconbtn" id="themeBtn" aria-label="테마 전환" title="테마 전환">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
     </button>
@@ -620,6 +634,30 @@ table.guide th:last-child{text-align:right}
   <div id="testout"></div>
 </section>
 
+<!-- 비밀번호 -->
+<div class="ovl" id="pwOvl" hidden>
+  <div class="ovl-bd" id="pwBackdrop"></div>
+  <section class="card ovl-card" role="dialog" aria-modal="true" aria-labelledby="pwH">
+    <div class="card-h">
+      <h3 id="pwH" data-i18n="pwTitle">직원용 화면 잠금 해제</h3>
+      <button type="button" class="iconbtn" id="pwClose" style="margin-left:auto" aria-label="닫기"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="card-b" id="pwBody"></div>
+  </section>
+</div>
+
+<!-- 설정 -->
+<div class="ovl" id="setOvl" hidden>
+  <div class="ovl-bd" id="setBackdrop"></div>
+  <section class="card ovl-card ovl-wide" role="dialog" aria-modal="true" aria-labelledby="setH">
+    <div class="card-h">
+      <h3 id="setH" data-i18n="setTitle">설정</h3>
+      <button type="button" class="iconbtn" id="setClose" style="margin-left:auto" aria-label="닫기"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="card-b" id="setBody"></div>
+  </section>
+</div>
+
 <!-- 환자 배부용 A5 결과지 (평소에는 숨김, 인쇄할 때만 나타납니다) -->
 <div id="a5sheet" aria-hidden="true"></div>
 
@@ -644,6 +682,102 @@ table.guide th:last-child{text-align:right}
   </div>
 </footer>
 <script>
+/* ==================================================================
+   조정 가능한 값들 (설정 화면에서 고칩니다)
+
+   이 파일의 목적은 하나입니다 — **코드 곳곳에 흩어져 있던 숫자를 한곳에
+   모으는 것.** 규칙과 엔진은 이제 리터럴 대신 TU("이름") 을 씁니다.
+   여기 없는 숫자를 새로 쓰기 시작하면 설정 화면에서 손댈 수 없게 되므로,
+   임상적으로 의미 있는 수치는 반드시 여기에 등록하세요.
+
+   ⚠ 여기 값을 바꾸면 임상 판정이 바뀝니다. 문헌 근거가 붙어 있는 수치
+   (HOA 0.3/0.5 µm, chord 0.5–0.6 mm, 난시 1.0 D 등)를 바꿀 때는 화면의
+   '근거 문헌' 항목도 함께 확인하세요. 도구는 바꾼 값을 그대로 따르며,
+   근거와 어긋나는지 스스로 알지 못합니다.
+   ================================================================== */
+
+const TUNING_DEFAULT = {
+  /* 설문 답의 가중치 */
+  wNear:2.2, wInter:1.7, wSpec:2.6, wNight:2.4, wGlare:2.0,
+  affordFree:2.4, affordSlight:1.2, affordMinSpec:2,
+
+  /* 빛번짐 감내 4단계가 만드는 압력 (전혀 못 견딤 → 충분히) */
+  glare0:2, glare1:0.5, glare2:0, glare3:0,
+
+  /* 예산대 */
+  budgetMid:125, budgetLow:25, bandMid:4.0, bandLow:6.5, toricAddMan:75,
+
+  /* 검사 수치 임계값 */
+  cutCyl:0.75, cutToric:1.0, cutComa:0.3, cutHoa4:0.3, cutHoa6:0.5,
+  cutChordHigh:0.6, cutChordBorder:0.5,
+  cutPupilMeso:6.0, cutPupilPhoto:2.5,
+  cutAlLong:26.0, cutAlShort:22.0, cutSaAspheric:0.1, cutAgeYoung:55,
+
+  /* 점수 산식:  기본신뢰도 + scoreBase + 선호×scorePref − 감점×scorePenalty + 가산×scoreBoost */
+  scoreBase:30, scorePref:3.5, scorePenalty:7, scoreBoost:5,
+};
+
+/* 설정 화면을 만들 때 쓰는 표. 항목을 여기 등록하면 화면에 자동으로 나옵니다. */
+const TUNING_SPEC = [
+  {g:"survey", k:"wNear",  ko:"근거리 요구 가중치", en:"Near demand weight", step:0.1, min:0, max:6},
+  {g:"survey", k:"wInter", ko:"중간거리 요구 가중치", en:"Intermediate demand weight", step:0.1, min:0, max:6},
+  {g:"survey", k:"wSpec",  ko:"탈안경 요구 가중치", en:"Spectacle-independence weight", step:0.1, min:0, max:6},
+  {g:"survey", k:"wNight", ko:"야간 요구 감점 가중치", en:"Night-demand penalty weight", step:0.1, min:0, max:6},
+  {g:"survey", k:"wGlare", ko:"빛번짐 감점 가중치", en:"Glare penalty weight", step:0.1, min:0, max:6},
+  {g:"survey", k:"affordFree",   ko:"비용 ‘상관없다’ 가산", en:"Bonus when cost is no object", step:0.1, min:0, max:6},
+  {g:"survey", k:"affordSlight", ko:"비용 ‘조금’ 가산", en:"Bonus when cost matters slightly", step:0.1, min:0, max:6},
+  {g:"survey", k:"affordMinSpec", ko:"가산이 붙는 최소 탈안경 요구 (0~3)", en:"Minimum spectacle-independence for the bonus", step:1, min:0, max:3,
+   hint:"이 값보다 탈안경 요구가 낮으면 비용이 여유로워도 비싼 유형을 밀어 올리지 않습니다."},
+
+  {g:"glare", k:"glare0", ko:"‘전혀 못 견딘다’", en:"“Not at all”", step:0.1, min:0, max:4},
+  {g:"glare", k:"glare1", ko:"‘조금은 견딘다’", en:"“A little”", step:0.1, min:0, max:4},
+  {g:"glare", k:"glare2", ko:"‘웬만큼 견딘다’", en:"“Reasonably”", step:0.1, min:0, max:4},
+  {g:"glare", k:"glare3", ko:"‘충분히 견딘다’", en:"“Easily”", step:0.1, min:0, max:4},
+
+  {g:"budget", k:"budgetMid", ko:"‘꽤’의 예산대 (만원, 단안)", en:"Budget for “considerable” (×10k KRW, per eye)", step:5, min:0, max:1000},
+  {g:"budget", k:"budgetLow", ko:"‘매우 크다’의 예산대 (만원, 단안)", en:"Budget for “a lot” (×10k KRW, per eye)", step:5, min:0, max:1000},
+  {g:"budget", k:"bandMid", ko:"‘꽤’ 초과분 감점 강도", en:"Over-budget penalty, “considerable”", step:0.5, min:0, max:15},
+  {g:"budget", k:"bandLow", ko:"‘매우 크다’ 초과분 감점 강도", en:"Over-budget penalty, “a lot”", step:0.5, min:0, max:15},
+  {g:"budget", k:"toricAddMan", ko:"난시교정(토릭) 추가금 (만원)", en:"Toric surcharge (×10k KRW)", step:5, min:0, max:500},
+
+  {g:"cut", k:"cutCyl",   ko:"난시교정 계획 확인 기준 (D)", en:"Astigmatism prompting a toric plan (D)", step:0.05, min:0, max:6},
+  {g:"cut", k:"cutToric", ko:"토릭 적응증 기준 (D)", en:"Toric indication threshold (D)", step:0.05, min:0, max:6},
+  {g:"cut", k:"cutComa",  ko:"각막 코마 기준 (µm)", en:"Corneal coma threshold (µm)", step:0.01, min:0, max:3},
+  {g:"cut", k:"cutHoa4",  ko:"각막 HOA 기준 · 4 mm (µm)", en:"Corneal HOA at 4 mm (µm)", step:0.01, min:0, max:3},
+  {g:"cut", k:"cutHoa6",  ko:"각막 HOA 기준 · 6 mm (µm)", en:"Corneal HOA at 6 mm (µm)", step:0.01, min:0, max:3},
+  {g:"cut", k:"cutChordHigh",   ko:"Chord mu/alpha 높음 (mm)", en:"Chord mu/alpha, high (mm)", step:0.01, min:0, max:2},
+  {g:"cut", k:"cutChordBorder", ko:"Chord mu/alpha 경계 (mm)", en:"Chord mu/alpha, borderline (mm)", step:0.01, min:0, max:2},
+  {g:"cut", k:"cutPupilMeso",  ko:"암소시 동공 큼 (mm)", en:"Large mesopic pupil (mm)", step:0.1, min:0, max:9},
+  {g:"cut", k:"cutPupilPhoto", ko:"명소시 동공 작음 (mm)", en:"Small photopic pupil (mm)", step:0.1, min:0, max:9},
+  {g:"cut", k:"cutAlLong",  ko:"긴 안축장 (mm)", en:"Long axial length (mm)", step:0.1, min:18, max:38},
+  {g:"cut", k:"cutAlShort", ko:"짧은 안축장 (mm)", en:"Short axial length (mm)", step:0.1, min:18, max:38},
+  {g:"cut", k:"cutSaAspheric", ko:"비구면 IOL 매칭 기준 SA (µm)", en:"Corneal SA for an aspheric IOL (µm)", step:0.01, min:-1, max:2},
+  {g:"cut", k:"cutAgeYoung", ko:"‘젊은 연령’ 기준 (세)", en:"“Younger patient” threshold (yr)", step:1, min:18, max:90},
+
+  {g:"score", k:"scoreBase",    ko:"기본 점수", en:"Base offset", step:1, min:0, max:80},
+  {g:"score", k:"scorePref",    ko:"선호 점수 배율", en:"Preference multiplier", step:0.1, min:0, max:10},
+  {g:"score", k:"scorePenalty", ko:"주의 1단위당 감점", en:"Points per caution unit", step:0.5, min:0, max:20},
+  {g:"score", k:"scoreBoost",   ko:"가산 1단위당 점수", en:"Points per boost unit", step:0.5, min:0, max:20},
+];
+const TUNING_GROUPS = [
+  {g:"survey", ko:"설문 답의 가중치", en:"Survey answer weights"},
+  {g:"glare",  ko:"빛번짐 감내 4단계", en:"Halo-tolerance scale"},
+  {g:"budget", ko:"비용 · 예산대", en:"Cost and budget bands"},
+  {g:"cut",    ko:"검사 수치 임계값", en:"Measurement thresholds"},
+  {g:"score",  ko:"점수 산식", en:"Score formula"},
+];
+
+let TUNING = Object.assign({}, TUNING_DEFAULT);
+function setTuning(o){
+  TUNING = Object.assign({}, TUNING_DEFAULT);
+  if (o) Object.keys(TUNING_DEFAULT).forEach(k => {
+    const v = Number(o[k]);
+    if (o[k] !== undefined && o[k] !== null && o[k] !== "" && Number.isFinite(v)) TUNING[k] = v;
+  });
+}
+/* 규칙과 엔진은 숫자를 직접 쓰지 않고 이 함수로 읽습니다 */
+function TU(k){ return TUNING[k]; }
+
 /* =====================================================================
    IOL 내비게이터 — 근거 기반 인공수정체 선택 보조 엔진
    Evidence-based intraocular lens selection support engine
@@ -846,7 +980,8 @@ const COST_DEFAULT_MAN = {
   lentis:    {min:250, max:300},
   trifocal:  {min:350, max:400},
 };
-const TORIC_ADD_MAN = 75;
+/* 기본값. 실제로 쓰이는 값은 TU("toricAddMan") — 설정 화면에서 바꿉니다. */
+const TORIC_ADD_MAN_DEFAULT = 75;
 
 /* 실제로 쓰이는 금액표. 병원이 값을 바꾸면 UI 가 이 객체를 갈아끼운다. */
 let COST_MAN = JSON.parse(JSON.stringify(COST_DEFAULT_MAN));
@@ -1355,7 +1490,7 @@ const RULES = [
 {
   id:"chord_high", layer:"caution",
   targets:{trifocal:2, lentis:1.5, edof:0.5},
-  when:d => (num(d.chordAlpha) !== null && d.chordAlpha >= 0.6) || (num(d.chordMu) !== null && d.chordMu >= 0.6),
+  when:d => (num(d.chordAlpha) !== null && d.chordAlpha >= TU("cutChordHigh")) || (num(d.chordMu) !== null && d.chordMu >= TU("cutChordHigh")),
   ko:{t:"Chord mu / alpha ≥ 0.6 mm", why:"동공 중심과 시축이 크게 어긋나면 회절 링에 대해 렌즈가 상대적으로 편심된 것처럼 작동해 광학현상이 늘 수 있습니다. 다만 근거는 상충합니다 — 26,470안 자료에서는 술전 angle kappa와 술후 결과 사이에 임상적으로 유의한 관계가 없었고, 장비 간 값 차이도 큽니다(동일 안에서 0.27 vs 0.43 mm).", act:"이 값 하나로 결정하지 마세요. 각막지형도상 동공 중심 대비 시축 위치를 직접 보고, 다른 위험인자와 합쳐서 판단하세요."},
   en:{t:"Chord mu / alpha ≥ 0.6 mm", why:"A large offset between pupil centre and visual axis makes the lens behave as if decentred relative to its diffractive rings, potentially increasing dysphotopsia. The evidence conflicts: in 26,470 eyes preoperative angle kappa showed no clinically meaningful relationship to outcomes, and devices disagree markedly (0.27 vs 0.43 mm in the same eye).", act:"Do not decide on this value alone. Inspect the visual-axis position on topography and weigh it alongside other risk factors."},
   refs:["R6"], grade:"C", tests:[T.KAPPA, T.TOPO]
@@ -1365,9 +1500,9 @@ const RULES = [
   targets:{trifocal:1, lentis:0.7},
   when:d => {
     const a = num(d.chordAlpha), m = num(d.chordMu);
-    const hi = (a !== null && a >= 0.6) || (m !== null && m >= 0.6);
+    const hi = (a !== null && a >= TU("cutChordHigh")) || (m !== null && m >= TU("cutChordHigh"));
     if (hi) return false;
-    return (a !== null && a >= 0.5) || (m !== null && m >= 0.5);
+    return (a !== null && a >= TU("cutChordBorder")) || (m !== null && m >= TU("cutChordBorder"));
   },
   ko:{t:"Chord mu / alpha 0.5–0.6 mm (경계 구간)", why:"관행적으로 인용되는 회피 기준(0.5–0.6 mm)의 경계에 있습니다. 이 구간의 근거는 약하며 기기 의존적입니다.", act:"측정 기기를 기록하고 가능하면 다른 장비로 교차 확인하세요. 단독 배제 근거로는 부족합니다."},
   en:{t:"Chord mu / alpha 0.5–0.6 mm (borderline)", why:"This sits at the boundary of the conventionally cited 0.5–0.6 mm avoid-threshold. The evidence for this band is weak and device-dependent.", act:"Record the device and cross-check on a second platform if possible. Not sufficient grounds for exclusion on its own."},
@@ -1378,7 +1513,7 @@ const RULES = [
   targets:{trifocal:2.5, edof:1}, boost:{lentis:0.8},
   when:d => {
     const v = num(d.hoaRMS); if (v === null) return false;
-    return d.hoaZone === "6" ? v > 0.5 : v > 0.3;
+    return d.hoaZone === "6" ? v > TU("cutHoa6") : v > TU("cutHoa4");
   },
   ko:{t:"각막 고위수차가 통상 기준을 초과", why:"HOA 0.3 µm @4 mm는 약 0.5 D 탈초점에 해당하는 흐림을 만듭니다. 각막이 이미 상당한 수차를 가지면 회절형 렌즈가 만드는 이미지 질을 예측하기 어렵습니다. 다만 이 cut-off의 근거는 제한적입니다 — 원 저자도 “실질적 가이드라인은 없다”고 명시했고, 378명 분석에서 HOA와 만족도의 상관은 없었습니다.", act:"수치 하나로 배제하지 말고 지형도 패턴, 나안 시력, 다른 위험인자와 함께 종합하세요. 기준: 4 mm에서 0.3 µm, 6 mm에서 0.5 µm."},
   en:{t:"Corneal higher-order aberrations above the conventional threshold", why:"HOA of 0.3 µm at 4 mm produces blur equivalent to about 0.5 D of defocus. When the cornea already carries substantial aberration, diffractive image quality becomes hard to predict. But this cut-off is weakly supported — the originating author states there are 'no real guidelines', and in 378 patients HOA did not correlate with satisfaction.", act:"Do not exclude on the number alone; combine it with the topographic pattern, uncorrected acuity and other risk factors. Thresholds: 0.3 µm at 4 mm, 0.5 µm at 6 mm."},
@@ -1387,7 +1522,7 @@ const RULES = [
 {
   id:"coma_high", layer:"caution",
   targets:{trifocal:2.5, edof:0.8}, boost:{lentis:1.2},
-  when:d => num(d.cornealComa) !== null && d.cornealComa > 0.3,
+  when:d => num(d.cornealComa) !== null && d.cornealComa > TU("cutComa"),
   ko:{t:"각막 코마 > 0.3 µm @6 mm", why:"코마는 비대칭 수차로, 회절형 렌즈의 초점 분리와 겹치면 잔상·꼬리끌림 형태의 광학현상으로 나타나기 쉽습니다. 원추각막·편심 절제·이식 후 각막에서 흔합니다.", act:"원인(확장증·편심 절제·이식)을 먼저 규명하세요. 노안교정을 원하는 환자라면, 회절 링이 없는 굴절형 분절 이중초점(렌티스)이 회절형보다 코마를 덜 증폭한다고 보아 이 진료에서는 그쪽을 씁니다 — 비교 임상시험이 아니라 임상 관행에 따른 선택입니다."},
   en:{t:"Corneal coma > 0.3 µm at 6 mm", why:"Coma is an asymmetric aberration; combined with the focal separation of a diffractive optic it tends to produce comet-tail smearing. It is common in keratoconus, decentred ablations and grafts.", act:"Identify the cause (ectasia, decentred ablation, graft) first. For a patient who still wants presbyopia correction, this practice uses a segmented refractive bifocal (LENTIS), on the view that without diffractive rings it amplifies coma less — a practice-based choice rather than one from a comparative trial."},
   refs:["R8","R18"], grade:"C", tests:[T.ABERRO, T.TOPO]
@@ -1395,7 +1530,7 @@ const RULES = [
 {
   id:"pupil_meso_large", layer:"caution",
   targets:{trifocal:2, lentis:1.5, edof:0.5},
-  when:d => num(d.pupMesopic) !== null && d.pupMesopic >= 6.0,
+  when:d => num(d.pupMesopic) !== null && d.pupMesopic >= TU("cutPupilMeso"),
   ko:{t:"암소시 동공 ≥ 6.0 mm", why:"야간에 동공이 크게 열리면 회절 구조의 바깥 영역과 각막 주변부 수차까지 동원되어 헤일로·글레어·스타버스트가 커집니다. 야간 운전 요구가 함께 높으면 위험이 곱해집니다.", act:"야간 광학현상 가능성을 구체적으로 설명하고, 야간 요구가 높다면 비회절 설계로 무게를 옮기세요."},
   en:{t:"Mesopic pupil ≥ 6.0 mm", why:"A widely dilated pupil at night recruits the outer diffractive zones and peripheral corneal aberrations, enlarging halo, glare and starburst. Risk multiplies when night-driving demand is also high.", act:"Counsel concretely about night-time phenomena and shift toward non-diffractive designs if night demand is high."},
   refs:["R8","R1"], grade:"C", tests:[T.PUPIL]
@@ -1403,7 +1538,7 @@ const RULES = [
 {
   id:"pupil_photo_small", layer:"caution",
   targets:{trifocal:1.5, lentis:1.5, edof:0.3},
-  when:d => num(d.pupPhotopic) !== null && d.pupPhotopic < 2.5,
+  when:d => num(d.pupPhotopic) !== null && d.pupPhotopic < TU("cutPupilPhoto"),
   ko:{t:"명소시 동공 < 2.5 mm", why:"동공이 작으면 바깥쪽 근거리 영역이 가려져 설계된 근거리 성능이 나오지 않을 수 있습니다. 회절형은 바깥 링이, 굴절형 분절 렌즈(렌티스)는 아래쪽 근거리 섹터가 가려지는 형태로 나타납니다.", act:"해당 렌즈의 동공 의존성을 확인하고, 동공 비의존 설계를 우선 고려하세요."},
   en:{t:"Photopic pupil < 2.5 mm", why:"A small pupil masks the outer near-addition zones, so the designed near performance may not be realised — the outer rings in a diffractive optic, or the inferior near sector in a segmented refractive lens (LENTIS).", act:"Check the pupil dependence of the specific lens and favour pupil-independent designs."},
   refs:["R8","R18"], grade:"C", tests:[T.PUPIL]
@@ -1411,7 +1546,7 @@ const RULES = [
 {
   id:"astig_uncorrected", layer:"caution",
   targets:{trifocal:3, lentis:2.5, edof:2, enhMono:1.5, monoBlend:1},
-  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && d.toricPlanned !== true && d.toricPlanKnown,
+  when:d => num(d.cylD) !== null && d.cylD >= TU("cutCyl") && d.toricPlanned !== true && d.toricPlanKnown,
   ko:{t:"각막난시 ≥ 0.75 D인데 난시교정 계획이 없음 (집도의가 계획을 세우는 화면에서만 표시)", why:"잔여 난시는 초점분할 렌즈의 이미 얇은 이미지 질 여유를 그대로 잠식합니다. 프리미엄 렌즈 술후 불만의 가장 흔하고 가장 교정 가능한 원인입니다. 각막난시 ≥1.0 D에서는 토릭이 보편적으로 권고되며, 술후 정규난시는 1.0 D 미만으로 유지하는 것이 목표입니다.", act:"토릭 IOL 또는 각막이완절개를 함께 계획하세요. 난시를 교정하지 않을 것이라면 프리미엄 렌즈 자체를 재고해야 합니다."},
   en:{t:"Corneal astigmatism ≥ 0.75 D with no astigmatic correction planned", why:"Residual cylinder consumes the already-thin image-quality margin of a focus-splitting lens. It is the most common and most correctable cause of premium-IOL dissatisfaction. Toric IOLs are universally recommended at ≥1.0 D, and postoperative regular astigmatism should stay below 1.0 D.", act:"Plan a toric IOL or limbal relaxing incisions. If astigmatism will not be corrected, reconsider the premium lens itself."},
   refs:["R13","R8","R12"], grade:"C", tests:[T.TCA, T.TOPO]
@@ -1419,7 +1554,7 @@ const RULES = [
 {
   id:"al_long", layer:"caution",
   targets:{trifocal:1.5, lentis:1.2, edof:0.8},
-  when:d => num(d.al) !== null && d.al >= 26.0,
+  when:d => num(d.al) !== null && d.al >= TU("cutAlLong"),
   ko:{t:"긴 안축장 (고도근시)", why:"안축장 26 mm 초과에서 술후 망막박리 위험이 0.9–3.8%, 33.6–35.5 mm에서는 11%까지 보고됩니다. 근시성 망막변성이 최종시력을 제한하는 독립 인자이며, 도수 예측 오차도 큽니다. 향후 유리체망막 수술 시 안저 관찰이 필요합니다.", act:"주변부 망막을 산동 후 반드시 확인하고, 황반 OCT로 근시성 변화를 평가하세요. 망막박리 위험을 명시적으로 상담하세요."},
   en:{t:"Long axial length (high myopia)", why:"Retinal detachment risk after surgery is 0.9–3.8% above 26 mm and up to 11% at 33.6–35.5 mm. Myopic degeneration independently limits final acuity, and power prediction error is larger. Future vitreoretinal surgery would require a clear fundus view.", act:"Examine the peripheral retina dilated and assess myopic macular change on OCT. Counsel explicitly about detachment risk."},
   refs:["R14"], grade:"C", tests:[T.OCT, T.BIOM, T.MACSTAB]
@@ -1427,7 +1562,7 @@ const RULES = [
 {
   id:"al_short", layer:"caution",
   targets:{trifocal:1.5, lentis:1.2, edof:1},
-  when:d => num(d.al) !== null && d.al < 22.0,
+  when:d => num(d.al) !== null && d.al < TU("cutAlShort"),
   ko:{t:"짧은 안축장", why:"짧은 눈에서는 유효렌즈위치(ELP) 예측 오차가 커져 목표 굴절값에서 벗어날 확률이 높습니다. 초점이 정확히 놓여야 성능이 나오는 회절형 렌즈에서는 이 오차가 바로 불만족으로 이어집니다.", act:"짧은 눈에 최적화된 최신 계산식을 사용하고, 필요 시 술후 굴절 이상 교정 계획을 미리 합의하세요."},
   en:{t:"Short axial length", why:"Effective lens position is harder to predict in short eyes, so refractive outcomes scatter more. A diffractive optic depends on accurate focal placement, so that scatter translates directly into dissatisfaction.", act:"Use a formula optimised for short eyes and agree a plan for residual refractive error."},
   refs:["R14","R16"], grade:"C", tests:[T.BIOM]
@@ -1483,7 +1618,7 @@ const RULES = [
 {
   id:"young_age", layer:"caution",
   targets:{trifocal:0.8, lentis:0.6},
-  when:d => num(d.age) !== null && d.age < 55,
+  when:d => num(d.age) !== null && d.age < TU("cutAgeYoung"),
   ko:{t:"비교적 젊은 연령 (< 55세)", why:"남은 기대여명이 길어 향후 황반·녹내장 질환이 발생할 확률이 높고, 그때 렌즈를 되돌리기 어렵습니다. 동공도 더 크고 시각 요구도 까다로운 경향이 있습니다.", act:"장기 시나리오를 상담에 포함하고, 백내장이 아닌 굴절 목적 수술이라면 각막 굴절수술 등 다른 선택지도 비교하세요."},
   en:{t:"Younger patient (< 55 years)", why:"A long remaining lifespan raises the chance of later macular or glaucomatous disease, at which point the lens is hard to undo. Pupils are also larger and visual demands more exacting.", act:"Include the long-term scenario in counselling; if this is refractive rather than cataract surgery, compare corneal refractive options too."},
   refs:["R19","R16"], grade:"D", tests:[]
@@ -1492,36 +1627,36 @@ const RULES = [
 /* ============ NOTE (감점 없음) ============ */
 {
   id:"sa_match_aspheric", layer:"note", targets:[],
-  when:d => num(d.cornealSA) !== null && d.cornealSA >= 0.1,
+  when:d => num(d.cornealSA) !== null && d.cornealSA >= TU("cutSaAspheric"),
   ko:{t:"비구면 IOL 매칭 권고", why:"측정된 각막 구면수차가 0.1 µm 이상이므로 음의 구면수차를 가진 비구면 IOL로 상쇄하는 것이 대비감도에 유리합니다. 모집단 평균은 +0.27 µm @6 mm입니다.", act:"각막 SA 값에 맞춰 IOL 비구면도(−0.20 / −0.27 µm 등)를 선택하세요. 렌즈 종류 선택과는 별개의 축입니다."},
   en:{t:"Match the aspheric IOL to the measured corneal SA", why:"Measured corneal spherical aberration is ≥0.1 µm, so a negative-SA aspheric IOL should be used to offset it. Population mean is +0.27 µm at 6 mm.", act:"Choose IOL asphericity (−0.20 / −0.27 µm) to match. This is a separate axis from the lens category."},
   refs:["R8"], grade:"D", tests:[]
 },
 {
   id:"sa_match_neutral", layer:"note", targets:[],
-  when:d => num(d.cornealSA) !== null && d.cornealSA < 0.1,
+  when:d => num(d.cornealSA) !== null && d.cornealSA < TU("cutSaAspheric"),
   ko:{t:"무수차(aberration-neutral) IOL 권고", why:"각막 구면수차가 0.1 µm 미만입니다. 음의 구면수차 비구면 IOL을 넣으면 과보정되어 오히려 이미지 질이 나빠질 수 있습니다.", act:"구면수차 0에 가까운 무수차 IOL을 선택하세요. 근시 라식 후에는 양의 SA가 증가하고 원시 교정 후에는 음으로 이동하므로 반드시 실측값을 쓰세요."},
   en:{t:"Use an aberration-neutral IOL", why:"Corneal spherical aberration is below 0.1 µm. A negative-SA aspheric IOL would overcorrect and could worsen image quality.", act:"Select an aberration-neutral (SA ≈ 0) IOL. Myopic LVC raises positive SA and hyperopic LVC shifts it negative, so always use the measured value."},
   refs:["R8"], grade:"D", tests:[]
 },
 {
   id:"lentis_plan", layer:"note", targets:[],
-  when:d => d.specIndep >= 2 && ((num(d.cornealComa) !== null && d.cornealComa > 0.3) ||
-            (num(d.hoaRMS) !== null && (d.hoaZone === "6" ? d.hoaRMS > 0.5 : d.hoaRMS > 0.3))),
+  when:d => d.specIndep >= 2 && ((num(d.cornealComa) !== null && d.cornealComa > TU("cutComa")) ||
+            (num(d.hoaRMS) !== null && (d.hoaZone === "6" ? d.hoaRMS > TU("cutHoa6") : d.hoaRMS > TU("cutHoa4")))),
   ko:{t:"굴절형 분절 이중초점을 쓴다면 양안 가입도와 주시안을 먼저 정하세요", why:"이 진료에서는 각막 고위수차가 큰 노안교정 희망 환자에게 굴절형 분절 이중초점(렌티스)을 쓰고, 가입도 +2.0 D와 +3.0 D를 눈에 따라 나누어 배정합니다. 두 눈의 가입도가 다르면 근거리 거리와 양안 융합이 달라지므로, 어느 눈에 어느 가입도를 넣을지는 수술 전에 정해져 있어야 합니다.", act:"주시안을 확인하고 환자의 주된 근업 거리(책·휴대폰·악보·컴퓨터)를 물어 가입도 배정을 먼저 결정하세요. 이 조합은 비교 임상시험이 아니라 임상 경험에 근거한 운용 방식임을 환자에게도 설명하세요."},
   en:{t:"If using a segmented refractive bifocal, decide the add powers and dominant eye first", why:"This practice uses a segmented refractive bifocal (LENTIS) for presbyopia-correction candidates with high corneal higher-order aberration, splitting +2.0 D and +3.0 D adds between the eyes. Different adds change the working distance and binocular fusion, so the assignment must be decided before surgery.", act:"Establish ocular dominance and the patient's main near working distance, then assign the adds. Explain that this arrangement rests on clinical experience rather than a comparative trial."},
   refs:["R19"], grade:"D", tests:[T.COUNSEL]
 },
 {
   id:"astig_toric_axis", layer:"note", targets:[],
-  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && !d.toricPlanKnown,
+  when:d => num(d.cylD) !== null && d.cylD >= TU("cutCyl") && !d.toricPlanKnown,
   ko:{t:"난시가 있으므로 토릭 병용을 전제로 봅니다", why:"토릭은 렌즈 종류와 별개의 축입니다. 단초점·프리미엄 단초점·연속초점·다초점 어느 쪽에도 함께 쓸 수 있으므로, 난시가 있다는 사실만으로 렌즈 종류의 순위가 바뀌지는 않습니다. 다만 난시를 교정하지 않은 채로는 어떤 렌즈를 넣어도 기대한 시력이 나오지 않으며, 초점을 나누는 렌즈일수록 잔여 난시의 타격이 큽니다.", act:"이 화면에서는 토릭 병용 여부를 정할 수 없으므로 '함께 쓴다'고 보고 순위를 매겼습니다. 실제 계획은 총 각막난시(후면 포함) 측정값을 보고 집도의가 정합니다. 토릭을 쓰지 않기로 하면 그때 프리미엄 선택지를 다시 검토해야 합니다."},
   en:{t:"Astigmatism present — a toric option is assumed", why:"Toric is an axis separate from the lens category: it combines with a monofocal, an enhanced monofocal, an EDOF or a multifocal alike. So the presence of astigmatism alone does not reorder the lens categories. Left uncorrected, however, no lens will deliver the expected result, and focus-splitting designs suffer most from residual cylinder.", act:"This screen cannot set the toric plan, so the ranking assumes toric will be used. The surgeon decides from the measured total corneal astigmatism. If toric is not used, the premium options must be revisited."},
   refs:["R13","R8"], grade:"C", tests:[T.TCA, T.TOPO]
 },
 {
   id:"toric_indicated", layer:"note", targets:[],
-  when:d => num(d.cylD) !== null && d.cylD >= 1.0,
+  when:d => num(d.cylD) !== null && d.cylD >= TU("cutToric"),
   ko:{t:"토릭 IOL 적응증", why:"각막난시 1.0 D 이상에서 토릭 IOL이 보편적으로 권고됩니다. 축이 3° 어긋날 때마다 교정효과가 약 10% 줄고 약 30°에서 완전히 소실되므로 축 표시와 정렬 정확도가 중요합니다.", act:"후면각막난시를 포함한 총 각막난시(TCA)로 계산하고, 술중 축 정렬 방법(디지털 마킹 등)을 계획하세요."},
   en:{t:"Toric IOL indicated", why:"Toric IOLs are universally recommended at ≥1.0 D of corneal astigmatism. Correction falls ~10% per 3° of misalignment and is lost near 30°, so marking and alignment accuracy matter.", act:"Calculate from total corneal astigmatism including the posterior surface, and plan intraoperative axis alignment (e.g. digital marking)."},
   refs:["R13","R8"], grade:"C", tests:[T.TCA]
@@ -1620,7 +1755,7 @@ function normalize(raw, mode){
 
   /* 토릭이 붙을 가능성이 높은가. 금액 표시와 예산대 계산에 함께 쓴다.
      렌즈 종류의 순위를 바꾸지는 않는다 — 토릭은 모든 유형에 같은 금액이 더해진다. */
-  d.toricLikely = d.toricPlanned === true || (num(d.cylD) !== null && d.cylD >= 1.0);
+  d.toricLikely = d.toricPlanned === true || (num(d.cylD) !== null && d.cylD >= TU("cutToric"));
 
   // 'unknown' 은 규칙을 발동시키지 않음 (null 취급) — 대신 추가검사로 표시
   const unknowns = [];
@@ -1650,7 +1785,7 @@ function normalize(raw, mode){
    3 매우 크다      → 가장 저렴한 대(25만원, 논토릭 단초점)
    난시가 있으면 모든 유형에 토릭 금액이 똑같이 더해지므로, 그때는 토릭 단초점
    (25+75=100)이 '꽤'의 목표대에 자연스럽게 들어온다. */
-const BUDGET_TARGET_MAN = [null, null, 125, 25];
+const budgetTargets = () => [null, null, TU("budgetMid"), TU("budgetLow")];
 
 function prefBreakdown(d, lens, cost){
   const cap = lens.cap;
@@ -1659,7 +1794,7 @@ function prefBreakdown(d, lens, cost){
      '조금은'이나 '웬만큼'을 고르는데, 예전 계산('조금은'=1, 최대의 절반)에서는
      그 한 칸이 회절형에서만 7점을 깎아 결과가 뒤집혔다. '전혀 못 견딘다'는
      여전히 강한 신호로 두되, '조금은'은 가벼운 유보로만 반영한다. */
-  const GLARE = [2, 0.5, 0, 0];
+  const GLARE = [TU("glare0"), TU("glare1"), TU("glare2"), TU("glare3")];
   const glarePressure = GLARE[Math.max(0, Math.min(3, Math.round(d.dysphTolerance)))];
   const nightWeak = Math.max(0, 2.6 - cap.night) / 1.6;             // 0(야간 안정) .. 1(취약)
 
@@ -1674,9 +1809,9 @@ function prefBreakdown(d, lens, cost){
      토릭은 모든 후보에 같은 금액이 더해져 서로의 거리를 바꾸지 않지만,
      목표대와의 거리는 바꾸므로 여기서는 더해서 계산한다. */
   const lv = Math.max(0, Math.min(3, Math.round(d.costSensitivity)));
-  const target = BUDGET_TARGET_MAN[lv];
+  const target = budgetTargets()[lv];
   const priceBase = costMid(lens.id);
-  const price = priceBase === null ? null : priceBase + (d.toricLikely ? TORIC_ADD_MAN : 0);
+  const price = priceBase === null ? null : priceBase + (d.toricLikely ? TU("toricAddMan") : 0);
   const span = (cost && cost.span > 0) ? cost.span : 0;
 
   /* 예산대를 '넘는' 만큼만 감점한다. 한쪽으로만 작동하는 것이 중요하다 —
@@ -1684,25 +1819,25 @@ function prefBreakdown(d, lens, cost){
      고 답한 환자에게 25만원 단초점 대신 125만원 프리미엄 단초점이 올라온다.
      '매우 크다'는 '꽤'보다 훨씬 세게 작동한다 — 상한이 빡빡할수록 예산이 임상
      선호를 이길 수 있어야 하기 때문이다. */
-  const BAND_W = [0, 0, 4.0, 6.5];
+  const BAND_W = [0, 0, TU("bandMid"), TU("bandLow")];
   let costTerm = 0;
   if (price !== null && span > 0 && target !== null){
-    const aim = target + (d.toricLikely ? TORIC_ADD_MAN : 0);
+    const aim = target + (d.toricLikely ? TU("toricAddMan") : 0);
     costTerm = -(Math.min(1, Math.max(0, price - aim) / span)) * BAND_W[lv];
   }
 
   /* 예산 상한이 없을 때의 가산. 비용을 답하지 않은 것은 '상관없다'가 아니라
      '아직 모름'이므로 제외한다. */
   const noCeiling = (target === null) && !(d._prefUnanswered || []).includes("costSensitivity");
-  const affordW = lv === 0 ? 2.4 : 1.2;
-  const afford = (noCeiling && d.specIndep >= 2) ? ((cap.near + cap.inter) / 6) * affordW : 0;
+  const affordW = lv === 0 ? TU("affordFree") : TU("affordSlight");
+  const afford = (noCeiling && d.specIndep >= TU("affordMinSpec")) ? ((cap.near + cap.inter) / 6) * affordW : 0;
 
   const items = [
-    {k:"near",  v:  d.nearPriority  * (cap.near  / 3) * 2.2},
-    {k:"inter", v:  d.interPriority * (cap.inter / 3) * 1.7},
-    {k:"spec",  v:  d.specIndep     * ((cap.near + cap.inter) / 6) * 2.6},
-    {k:"night", v: -nightPressure * nightWeak * 2.4},
-    {k:"dysph", v: -glarePressure * nightWeak * 2.0},
+    {k:"near",  v:  d.nearPriority  * (cap.near  / 3) * TU("wNear")},
+    {k:"inter", v:  d.interPriority * (cap.inter / 3) * TU("wInter")},
+    {k:"spec",  v:  d.specIndep     * ((cap.near + cap.inter) / 6) * TU("wSpec")},
+    {k:"night", v: -nightPressure * nightWeak * TU("wNight")},
+    {k:"dysph", v: -glarePressure * nightWeak * TU("wGlare")},
     {k:"cost",  v: costTerm},
     {k:"afford", v: afford},
   ];
@@ -1777,7 +1912,7 @@ function evaluate(raw, mode){
     const blocked = st.stops.length > 0;
     /* 자르기 전 원점수를 함께 들고 다닌다. 100 에서 잘린 뒤에 정렬하면 서로 다른
        점수가 동점이 되고, 그때 순서가 렌즈 배열 순서(=싼 것부터)로 갈려 버린다. */
-    const raw = l.base + 30 + pb.total * 3.5 - st.penalty * 7 + st.boost * 5;
+    const raw = l.base + TU("scoreBase") + pb.total * TU("scorePref") - st.penalty * TU("scorePenalty") + st.boost * TU("scoreBoost");
     const score = blocked ? 0 : clamp(Math.round(raw), 3, 100);
     return {
       id:l.id, lens:l, score, raw, blocked, price:pb.price,
@@ -1808,8 +1943,8 @@ function evaluate(raw, mode){
     toricLikely: d.toricLikely,
     /* 비용 답이 가리키는 예산대(만원, 토릭 포함). null 이면 상한 없음 — 화면 설명에 쓴다. */
     budgetAim: (() => {
-      const t = BUDGET_TARGET_MAN[Math.max(0, Math.min(3, Math.round(d.costSensitivity)))];
-      return t === null ? null : t + (d.toricLikely ? TORIC_ADD_MAN : 0);
+      const t = budgetTargets()[Math.max(0, Math.min(3, Math.round(d.costSensitivity)))];
+      return t === null ? null : t + (d.toricLikely ? TU("toricAddMan") : 0);
     })(),
     allStopRules: Array.from(new Set([].concat(...scored.map(s => s.stops)))),
     allCautionRules: (() => {
@@ -1863,6 +1998,25 @@ const STR = {
   taxCols:["분류","ESCRS / ISO 위치","정의 기준","핵심 절충"],
   footer1:"이 도구는 공개된 동료심사 문헌·국제 표준·학회 종설을 근거로 규칙을 구성했습니다. 각 규칙에는 근거 문헌과 근거 수준을 표시했으며, 문헌 간 수치가 상충하는 항목(angle kappa, 각막 고위수차 등)에서는 단일 cut-off로 결론짓지 않고 범위와 반대 근거를 함께 제시합니다.",
   footer2:"입력한 정보는 브라우저 안에서만 처리되며 어디로도 전송되지 않습니다. 이 도구는 진단하지 않고, 처방하지 않으며, 의료진의 판단을 대체하지 않습니다.",
+
+
+  /* 잠금 · 설정 */
+  pwTitle:"직원용 화면 잠금 해제",
+  pwHint:"상담·의사 화면과 설정은 병원 직원용입니다. 비밀번호를 입력하세요.",
+  pwFirstHint:"이 기기에서 처음 여는 화면입니다. 쓸 비밀번호를 정해 주세요.",
+  pwEnter:"비밀번호", pwNew:"새 비밀번호", pwAgain:"한 번 더",
+  pwSet:"정하기", pwUnlock:"열기", pwChange:"비밀번호 변경", pwChanged:"비밀번호를 바꿨습니다",
+  pwEmpty:"비밀번호를 입력하세요.", pwShort:"4자 이상으로 정해 주세요.",
+  pwMismatch:"두 번 입력한 값이 다릅니다.", pwWrong:"비밀번호가 맞지 않습니다.",
+  pwCaveat:"이 잠금은 화면에서 눌러 들어가는 것을 막는 장치입니다. 브라우저의 소스 보기로는 여전히 내용을 볼 수 있으므로, 반드시 가려야 하는 정보는 담지 마세요. 비밀번호는 이 브라우저에만 저장됩니다.",
+  setTitle:"설정",
+  setCaveat:"여기서 바꾼 값은 <b>이 브라우저에만</b> 저장되고 판정에 곧바로 반영됩니다. 다른 기기에도 같은 값을 쓰려면 아래 ‘설정 옮기기’를 이용하세요.",
+  setPwTitle:"비밀번호", setCostTitle:"렌즈 비급여 금액 (단안, 만원)",
+  setSaved:"저장했습니다. 결과에 반영됩니다.", setResetAll:"모두 기본값으로",
+  setReset:"기본값으로 되돌렸습니다 (비밀번호는 유지).",
+  setMoveTitle:"설정 옮기기",
+  setMoveHint:"아래 글상자의 내용을 복사해 다른 기기의 같은 자리에 붙여넣고 ‘불러오기’를 누르면 금액과 조정값이 그대로 옮겨집니다. 비밀번호는 옮겨지지 않습니다.",
+  setImport:"불러오기", setImported:"불러왔습니다.", setImportBad:"형식을 읽을 수 없습니다. 복사한 내용을 다시 확인해 주세요.",
 
   /* 역할 */
   rolePatient:"환자", roleCounselor:"상담", roleDoctor:"의사",
@@ -1961,6 +2115,25 @@ const STR = {
   taxCols:["Category","ESCRS / ISO position","Defining criterion","Core trade-off"],
   footer1:"Rules are built from peer-reviewed literature, international standards and society reviews. Every rule carries its sources and an evidence grade, and where the literature conflicts (angle kappa, corneal higher-order aberrations) the range and the contradicting evidence are shown rather than a single cut-off.",
   footer2:"Everything you enter stays in your browser and is never transmitted. This tool does not diagnose, does not prescribe, and does not replace clinical judgement.",
+
+
+  /* lock and settings */
+  pwTitle:"Unlock staff screens",
+  pwHint:"The counsellor, doctor and settings screens are for clinic staff. Enter the password.",
+  pwFirstHint:"This is the first time these screens are opened on this device. Choose a password.",
+  pwEnter:"Password", pwNew:"New password", pwAgain:"Repeat",
+  pwSet:"Set", pwUnlock:"Unlock", pwChange:"Change password", pwChanged:"Password changed",
+  pwEmpty:"Enter a password.", pwShort:"Use at least 4 characters.",
+  pwMismatch:"The two entries do not match.", pwWrong:"That password is not correct.",
+  pwCaveat:"This lock only stops someone clicking through on screen. Anyone can still read the content via the browser's view-source, so do not put anything here that must stay hidden. The password is stored in this browser only.",
+  setTitle:"Settings",
+  setCaveat:"Changes are saved <b>in this browser only</b> and take effect immediately. Use “Move settings” below to copy them to another device.",
+  setPwTitle:"Password", setCostTitle:"Out-of-pocket cost per lens (per eye, ×10k KRW)",
+  setSaved:"Saved — the result now reflects these values.", setResetAll:"Restore all defaults",
+  setReset:"Defaults restored (password kept).",
+  setMoveTitle:"Move settings",
+  setMoveHint:"Copy the text below, paste it into the same box on another device and press Load. Costs and tuning values transfer; the password does not.",
+  setImport:"Load", setImported:"Loaded.", setImportBad:"Could not read that. Check what you pasted.",
 
   /* roles */
   rolePatient:"Patient", roleCounselor:"Counsellor", roleDoctor:"Doctor",
@@ -3096,7 +3269,7 @@ function setLang(l){
 }
 
 function boot(){
-  initCostTable();
+  wireSettings();
   applyI18n();
   renderForm();
   renderTaxonomy();
@@ -3109,7 +3282,11 @@ function boot(){
     state.role = "patient";
     $("#roleSeg").hidden = true;
   }
-  ROLES.forEach(r => $("#role_" + r).addEventListener("click", () => setRole(r)));
+  /* 상담·의사 화면은 직원용이라 비밀번호로 잠근다. 환자 화면은 그대로 열린다. */
+  ROLES.forEach(r => $("#role_" + r).addEventListener("click", () => {
+    if (r === "patient" || isUnlocked()) { setRole(r); return; }
+    requireUnlock(() => setRole(r));
+  }));
   syncRoleLabels();
   setRole(state.role);
   wireHandoff();
@@ -3216,20 +3393,6 @@ function patientAskCard(res){
    ================================================================== */
 /* 비용은 만원 단위 {min,max} 로 다룬다. v1 은 원 단위 단일값이라 형식이 달라
    키를 v2 로 올렸다 — 예전 값을 잘못 읽느니 기본값에서 다시 시작하는 편이 낫다. */
-const COST_KEY = "iolnav-cost-v2";
-function loadCostTable(){
-  try {
-    const o = JSON.parse(localStorage.getItem(COST_KEY) || "{}");
-    return (o && typeof o === "object") ? o : {};
-  } catch(e){ return {}; }
-}
-function saveCostTable(o){
-  try { localStorage.setItem(COST_KEY, JSON.stringify(o)); } catch(e){}
-  setCostTable(o);
-}
-/* 저장된 값이 있으면 엔진이 쓰는 금액표에 반영한다 (점수에도 그대로 들어간다) */
-function initCostTable(){ setCostTable(loadCostTable()); }
-
 const numFmt = n => Number(n).toLocaleString(state.lang === "ko" ? "ko-KR" : "en-US");
 
 /* 만원 단위 범위를 언어에 맞게 적는다. 한국어는 "350–400만원",
@@ -3237,7 +3400,7 @@ const numFmt = n => Number(n).toLocaleString(state.lang === "ko" ? "ko-KR" : "en
 function costRangeMan(id, opts){
   const c = COST_MAN[id];
   if (!c) return null;
-  const add   = (opts && opts.toric) ? TORIC_ADD_MAN : 0;
+  const add   = (opts && opts.toric) ? TU("toricAddMan") : 0;
   const mult  = (opts && opts.bothEyes) ? 2 : 1;
   return { min:(Number(c.min) + add) * mult, max:(Number(c.max) + add) * mult };
 }
@@ -3310,55 +3473,20 @@ function decisionCard(res){
       ]));
       if (withToric) lines.appendChild(el("div", {cls:"costline sub"}, [
         el("span", {text:t.costToricAdd}),
-        el("span", {cls:"mono", text: "+" + (ko ? numFmt(TORIC_ADD_MAN) + t.manWon : "₩" + (TORIC_ADD_MAN/100).toFixed(2) + "M") + (both ? " ×2" : "")}),
+        el("span", {cls:"mono", text: "+" + costManText(TU("toricAddMan")) + (both ? " ×2" : "")}),
       ]));
       body.appendChild(el("div", {}, [ el("span", {cls:"eyebrow", text:t.costTitle + " · " + t.costPerEye}), lines ]));
     }
   }
   sel.addEventListener("change", () => { state.decision = sel.value || null; run({scroll:false}); });
 
-  /* 금액 설정 — 만원 단위 최소/최대. 여기 값이 점수(비용 민감도)에도 그대로 쓰인다. */
-  const saved = loadCostTable();
-  const editor = el("div", {cls:"costgrid", hidden:true});
-  LENSES.forEach(l => {
-    const cur = COST_MAN[l.id] || {min:"", max:""};
-    const mk = which => {
-      const inp = el("input", {type:"number", min:0, step:5, id:"cost_"+which+"_"+l.id,
-                               "aria-label": tx(l) + " " + (which === "min" ? t.costMinLabel : t.costMaxLabel)});
-      inp.value = cur[which];
-      return inp;
-    };
-    editor.appendChild(el("label", {cls:"costitem"}, [
-      el("span", {text: tx(l)}),
-      el("div", {cls:"costpair"}, [ mk("min"), el("span", {cls:"unit", text:"–"}), mk("max"),
-                                    el("span", {cls:"unit", text: ko ? t.manWon : "×10k"}) ]),
-    ]));
-  });
-  const saveBtn = el("button", {type:"button", cls:"btn primary", text:t.costSave, onclick:() => {
-    const o = {};
-    LENSES.forEach(l => {
-      const lo = $("#cost_min_" + l.id).value, hi = $("#cost_max_" + l.id).value;
-      if (lo !== "" || hi !== ""){
-        const a = lo === "" ? Number(hi) : Number(lo);
-        const b = hi === "" ? a : Number(hi);
-        o[l.id] = {min: Math.min(a,b), max: Math.max(a,b)};
-      }
-    });
-    saveCostTable(o); run({scroll:false});
-  }});
-  const resetBtn = el("button", {type:"button", cls:"btn", text:t.costReset, onclick:() => {
-    try { localStorage.removeItem(COST_KEY); } catch(e){}
-    setCostTable({}); run({scroll:false});
-  }});
-  const toggle = el("button", {type:"button", cls:"btn ghost", text:t.costEdit, onclick:() => {
-    const open = editor.hidden;
-    editor.hidden = !open; saveBtn.hidden = !open; resetBtn.hidden = !open;
-  }});
-  saveBtn.hidden = true; resetBtn.hidden = true;
+  /* 금액을 고치는 자리는 설정 화면 한 곳뿐이다. 여기서는 그리로 보내기만 한다 —
+     같은 값을 두 군데서 고칠 수 있게 두면 반드시 어긋난다. */
   body.appendChild(el("p", {cls:"hint", text:t.costHint}));
-  body.appendChild(el("p", {cls:"hint", text:t.costStale + (Object.keys(saved).length ? "" : "")}));
-  body.appendChild(el("div", {cls:"btnrow"}, [toggle, saveBtn, resetBtn]));
-  body.appendChild(editor);
+  body.appendChild(el("div", {cls:"btnrow"}, [
+    el("button", {type:"button", cls:"btn ghost", text:t.costEdit,
+                  onclick:() => requireUnlock(openSettings)}),
+  ]));
 
   return card(t.decisionTitle, null, null, body);
 }
@@ -3630,6 +3758,260 @@ function printA5(){
   };
   window.addEventListener("afterprint", restore);
   setTimeout(() => { window.print(); setTimeout(restore, 1500); }, 30);
+}
+
+/* ==================================================================
+   설정 · 잠금
+
+   ⚠ 여기의 비밀번호는 **보안이 아니라 오조작 방지 장치**입니다.
+   이 앱은 서버 없이 브라우저에서만 도는 정적 페이지이므로, 판정 로직도
+   금액도 모두 페이지 소스에 들어 있습니다. 소스 보기나 개발자도구를 열면
+   비밀번호와 무관하게 볼 수 있습니다. 이 잠금이 막아 주는 것은 '환자가
+   화면에서 상담·의사 화면을 눌러 들어가는 일'까지입니다.
+   진짜로 가려야 하는 정보라면 서버가 필요합니다.
+
+   저장은 브라우저별(localStorage)입니다. 기기를 바꾸면 설정이 따라가지
+   않으므로, 아래 '설정 옮기기'로 옮깁니다.
+   ================================================================== */
+
+const SETTINGS_KEY = "iolnav-settings-v1";
+const UNLOCK_KEY   = "iolnav-unlocked";
+
+function loadSettings(){
+  try {
+    const o = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    return (o && typeof o === "object") ? o : {};
+  } catch(e){ return {}; }
+}
+function saveSettings(o){
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(o)); } catch(e){}
+  applySettings();
+}
+/* 저장된 값을 엔진에 반영한다. 금액과 조정값 모두 여기를 지난다. */
+function applySettings(){
+  const s = loadSettings();
+  setCostTable(s.costs || {});
+  setTuning(s.tuning || {});
+}
+
+/* ---------- 비밀번호 ----------
+   해시는 가능하면 SHA-256(Web Crypto)으로, 안 되는 환경(file:// 등)에서는
+   약한 대체 해시로 만듭니다. 어느 쪽이든 위의 한계는 그대로입니다. */
+async function hashPw(pw, salt){
+  const text = salt + " " + pw;
+  if (typeof crypto !== "undefined" && crypto.subtle && crypto.subtle.digest){
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return "s256:" + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+  let h1 = 0x811c9dc5, h2 = 0x01000193;
+  for (let i = 0; i < text.length; i++){
+    h1 = Math.imul(h1 ^ text.charCodeAt(i), 0x01000193) >>> 0;
+    h2 = Math.imul(h2 + text.charCodeAt(i) * (i + 1), 0x85ebca6b) >>> 0;
+  }
+  return "weak:" + h1.toString(16).padStart(8, "0") + h2.toString(16).padStart(8, "0");
+}
+const pwIsSet = () => { const p = loadSettings().pw; return !!(p && p.hash); };
+async function verifyPw(input){
+  const pw = loadSettings().pw;
+  if (!pw || !pw.hash) return false;
+  return (await hashPw(input, pw.salt)) === pw.hash;
+}
+async function storePw(input){
+  const salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const s = loadSettings();
+  s.pw = { salt: salt, hash: await hashPw(input, salt) };
+  saveSettings(s);
+}
+
+function isUnlocked(){
+  try { return sessionStorage.getItem(UNLOCK_KEY) === "1"; } catch(e){ return !!state._unlocked; }
+}
+function markUnlocked(v){
+  state._unlocked = v;
+  try {
+    if (v) sessionStorage.setItem(UNLOCK_KEY, "1"); else sessionStorage.removeItem(UNLOCK_KEY);
+  } catch(e){}
+}
+
+const openOvl  = sel => { $(sel).hidden = false; document.body.style.overflow = "hidden"; };
+const closeOvl = sel => { $(sel).hidden = true;  document.body.style.overflow = ""; };
+
+/* ---------- 비밀번호 입력 ----------
+   비밀번호가 아직 없으면 '정하기'로, 있으면 '확인'으로 동작합니다. */
+function requireUnlock(onOk){
+  if (state.roleLocked) return;              // 환자에게 건넨 화면에서는 아예 열지 않는다
+  if (isUnlocked()){ onOk(); return; }
+  const t = L(), first = !pwIsSet();
+  const host = $("#pwBody");
+  host.textContent = "";
+  host.appendChild(el("p", {cls:"hint", text: first ? t.pwFirstHint : t.pwHint}));
+
+  const inp  = el("input", {type:"password", id:"pwIn",  autocomplete:"current-password"});
+  const inp2 = el("input", {type:"password", id:"pwIn2", autocomplete:"new-password"});
+  const msg  = el("p", {cls:"hint", id:"pwMsg"});
+  host.appendChild(el("div", {cls:"field"}, [ el("label", {for:"pwIn", text: first ? t.pwNew : t.pwEnter}), inp ]));
+  if (first) host.appendChild(el("div", {cls:"field"}, [ el("label", {for:"pwIn2", text:t.pwAgain}), inp2 ]));
+
+  const fail = txt => { msg.textContent = txt; msg.style.color = "var(--stop)"; };
+  const go = async () => {
+    const v = inp.value;
+    if (!v){ fail(t.pwEmpty); return; }
+    if (first){
+      if (v.length < 4){ fail(t.pwShort); return; }
+      if (v !== inp2.value){ fail(t.pwMismatch); return; }
+      await storePw(v);
+    } else if (!(await verifyPw(v))){ fail(t.pwWrong); return; }
+    markUnlocked(true);
+    closeOvl("#pwOvl");
+    onOk();
+  };
+  [inp, inp2].forEach(n => n.addEventListener("keydown", e => {
+    if (e.key === "Enter"){ e.preventDefault(); go(); }
+  }));
+  host.appendChild(el("div", {cls:"btnrow"}, [
+    el("button", {type:"button", cls:"btn primary", text: first ? t.pwSet : t.pwUnlock, onclick:go}),
+  ]));
+  host.appendChild(msg);
+  host.appendChild(el("p", {cls:"hint", text:t.pwCaveat}));
+  openOvl("#pwOvl");
+  inp.focus();
+}
+
+/* ---------- 설정 화면 ---------- */
+function numField(id, label, val, opt){
+  const inp = el("input", Object.assign({type:"number", id:id}, opt || {}));
+  inp.value = (val === undefined || val === null) ? "" : val;
+  return el("label", {cls:"setitem", for:id}, [ el("span", {text:label}), inp ]);
+}
+
+function collectSettingsForm(){
+  const costs = {};
+  LENSES.forEach(l => {
+    const lo = $("#set_cmin_" + l.id).value, hi = $("#set_cmax_" + l.id).value;
+    if (lo !== "" || hi !== ""){
+      const a = lo === "" ? Number(hi) : Number(lo);
+      const b = hi === "" ? a : Number(hi);
+      costs[l.id] = {min: Math.min(a, b), max: Math.max(a, b)};
+    }
+  });
+  const tuning = {};
+  TUNING_SPEC.forEach(x => {
+    const v = $("#set_t_" + x.k).value;
+    if (v !== "" && Number.isFinite(Number(v))) tuning[x.k] = Number(v);
+  });
+  return {costs: costs, tuning: tuning};
+}
+
+function openSettings(){
+  const t = L(), ko = state.lang === "ko";
+  const host = $("#setBody");
+  host.textContent = "";
+  host.appendChild(el("p", {cls:"hint", html:t.setCaveat}));
+
+  /* 1) 비밀번호 */
+  const npw  = el("input", {type:"password", id:"setPw1", autocomplete:"new-password"});
+  const npw2 = el("input", {type:"password", id:"setPw2", autocomplete:"new-password"});
+  const pwMsg = el("p", {cls:"hint"});
+  const pwBtn = el("button", {type:"button", cls:"btn", id:"setPwBtn", text:t.pwChange, onclick: async () => {
+    if (npw.value.length < 4){ pwMsg.textContent = t.pwShort; pwMsg.style.color = "var(--stop)"; return; }
+    if (npw.value !== npw2.value){ pwMsg.textContent = t.pwMismatch; pwMsg.style.color = "var(--stop)"; return; }
+    await storePw(npw.value);
+    npw.value = ""; npw2.value = "";
+    pwMsg.textContent = t.pwChanged; pwMsg.style.color = "var(--ok)";
+  }});
+  host.appendChild(el("section", {cls:"setsec"}, [
+    el("h4", {text:t.setPwTitle}),
+    el("div", {cls:"setgrid"}, [
+      el("label", {cls:"setitem", for:"setPw1"}, [el("span", {text:t.pwNew}), npw]),
+      el("label", {cls:"setitem", for:"setPw2"}, [el("span", {text:t.pwAgain}), npw2]),
+    ]),
+    el("div", {cls:"btnrow"}, [pwBtn]), pwMsg,
+  ]));
+
+  /* 2) 렌즈 비급여 금액 */
+  const costGrid = el("div", {cls:"setgrid"});
+  LENSES.forEach(l => {
+    const cur = COST_MAN[l.id] || {min:"", max:""};
+    costGrid.appendChild(el("div", {cls:"setitem"}, [
+      el("span", {text: tx(l)}),
+      el("div", {cls:"costpair"}, [
+        el("input", {type:"number", id:"set_cmin_" + l.id, min:0, step:5, value:cur.min,
+                     "aria-label": tx(l) + " " + t.costMinLabel}),
+        el("span", {cls:"unit", text:"–"}),
+        el("input", {type:"number", id:"set_cmax_" + l.id, min:0, step:5, value:cur.max,
+                     "aria-label": tx(l) + " " + t.costMaxLabel}),
+        el("span", {cls:"unit", text: ko ? t.manWon : "×10k"}),
+      ]),
+    ]));
+  });
+  host.appendChild(el("section", {cls:"setsec"}, [
+    el("h4", {text:t.setCostTitle}), el("p", {cls:"hint", text:t.costStale}), costGrid,
+  ]));
+
+  /* 3) 조정값 — TUNING_SPEC 을 그대로 화면으로 */
+  TUNING_GROUPS.forEach(g => {
+    const grid = el("div", {cls:"setgrid"});
+    TUNING_SPEC.filter(x => x.g === g.g).forEach(x => {
+      grid.appendChild(numField("set_t_" + x.k, ko ? x.ko : x.en, TUNING[x.k],
+        {step:x.step, min:x.min, max:x.max}));
+      if (x.hint && ko) grid.appendChild(el("p", {cls:"hint", style:"grid-column:1/-1;margin-top:-4px", text:x.hint}));
+    });
+    host.appendChild(el("section", {cls:"setsec"}, [ el("h4", {text: ko ? g.ko : g.en}), grid ]));
+  });
+
+  /* 4) 저장 · 되돌리기 · 옮기기 */
+  const msg = el("p", {cls:"hint"});
+  const save = el("button", {type:"button", cls:"btn primary", id:"setSaveBtn", text:t.costSave, onclick:() => {
+    const cur = loadSettings();
+    saveSettings(Object.assign({}, cur, collectSettingsForm()));
+    msg.textContent = t.setSaved; msg.style.color = "var(--ok)";
+    if (state.last) run({scroll:false});
+  }});
+  const reset = el("button", {type:"button", cls:"btn", id:"setResetBtn", text:t.setResetAll, onclick:() => {
+    const cur = loadSettings();
+    saveSettings({pw: cur.pw});          // 비밀번호는 남긴다
+    if (state.last) run({scroll:false});
+    openSettings();
+    $("#setBody").appendChild(el("p", {cls:"hint", style:"color:var(--ok)", text:t.setReset}));
+  }});
+  host.appendChild(el("div", {cls:"btnrow"}, [save, reset]));
+  host.appendChild(msg);
+
+  const ta = el("textarea", {id:"setJson", rows:4, spellcheck:"false", "aria-label":t.setMoveTitle});
+  ta.value = JSON.stringify(collectSettingsForm());
+  const impMsg = el("p", {cls:"hint"});
+  const imp = el("button", {type:"button", cls:"btn", id:"setImportBtn", text:t.setImport, onclick:() => {
+    try {
+      const o = JSON.parse(ta.value);
+      if (!o || typeof o !== "object") throw new Error("bad");
+      const cur = loadSettings();
+      saveSettings({pw: cur.pw, costs: o.costs || {}, tuning: o.tuning || {}});
+      if (state.last) run({scroll:false});
+      openSettings();
+      $("#setBody").appendChild(el("p", {cls:"hint", style:"color:var(--ok)", text:t.setImported}));
+    } catch(e){ impMsg.textContent = t.setImportBad; impMsg.style.color = "var(--stop)"; }
+  }});
+  host.appendChild(el("section", {cls:"setsec"}, [
+    el("h4", {text:t.setMoveTitle}), el("p", {cls:"hint", text:t.setMoveHint}), ta,
+    el("div", {cls:"btnrow"}, [imp]), impMsg,
+  ]));
+
+  openOvl("#setOvl");
+  $("#setOvl").querySelector(".ovl-card").scrollTop = 0;
+}
+
+function wireSettings(){
+  applySettings();
+  $("#setClose").addEventListener("click", () => closeOvl("#setOvl"));
+  $("#setBackdrop").addEventListener("click", () => closeOvl("#setOvl"));
+  $("#pwClose").addEventListener("click", () => closeOvl("#pwOvl"));
+  $("#pwBackdrop").addEventListener("click", () => closeOvl("#pwOvl"));
+  $("#setBtn").addEventListener("click", () => requireUnlock(openSettings));
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!$("#setOvl").hidden) closeOvl("#setOvl");
+    else if (!$("#pwOvl").hidden) closeOvl("#pwOvl");
+  });
 }
 
 /* ------------------------------------------------------------------
@@ -3962,9 +4344,9 @@ function runSelfTests(){
   const byCost = c => G(Object.assign({}, wantSpecs, {costSensitivity:c}));
   const c0 = byCost("0"), c1 = byCost("1"), c2 = byCost("2"), c3 = byCost("3");
   ok("비용 상관없음·조금 → 예산 상한이 없다", c0.budgetAim === null && c1.budgetAim === null);
-  ok("비용 꽤 → 프리미엄 단초점 대(125만원)가 기준", c2.budgetAim === 125 + TORIC_ADD_MAN,
+  ok("비용 꽤 → 프리미엄 단초점 대(125만원)가 기준", c2.budgetAim === TU("budgetMid") + TU("toricAddMan"),
      String(c2.budgetAim));
-  ok("비용 매우 큼 → 가장 저렴한 대(25만원)가 기준", c3.budgetAim === 25 + TORIC_ADD_MAN,
+  ok("비용 매우 큼 → 가장 저렴한 대(25만원)가 기준", c3.budgetAim === TU("budgetLow") + TU("toricAddMan"),
      String(c3.budgetAim));
   ok("상관없음·조금에서는 탈안경 요구가 강하면 가장 비싼 유형이 1순위",
      c0.top.id === "trifocal" && c1.top.id === "trifocal", c0.top.id + "/" + c1.top.id);

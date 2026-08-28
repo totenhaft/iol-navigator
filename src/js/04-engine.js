@@ -83,7 +83,7 @@ function normalize(raw, mode){
 
   /* 토릭이 붙을 가능성이 높은가. 금액 표시와 예산대 계산에 함께 쓴다.
      렌즈 종류의 순위를 바꾸지는 않는다 — 토릭은 모든 유형에 같은 금액이 더해진다. */
-  d.toricLikely = d.toricPlanned === true || (num(d.cylD) !== null && d.cylD >= 1.0);
+  d.toricLikely = d.toricPlanned === true || (num(d.cylD) !== null && d.cylD >= TU("cutToric"));
 
   // 'unknown' 은 규칙을 발동시키지 않음 (null 취급) — 대신 추가검사로 표시
   const unknowns = [];
@@ -113,7 +113,7 @@ function normalize(raw, mode){
    3 매우 크다      → 가장 저렴한 대(25만원, 논토릭 단초점)
    난시가 있으면 모든 유형에 토릭 금액이 똑같이 더해지므로, 그때는 토릭 단초점
    (25+75=100)이 '꽤'의 목표대에 자연스럽게 들어온다. */
-const BUDGET_TARGET_MAN = [null, null, 125, 25];
+const budgetTargets = () => [null, null, TU("budgetMid"), TU("budgetLow")];
 
 function prefBreakdown(d, lens, cost){
   const cap = lens.cap;
@@ -122,7 +122,7 @@ function prefBreakdown(d, lens, cost){
      '조금은'이나 '웬만큼'을 고르는데, 예전 계산('조금은'=1, 최대의 절반)에서는
      그 한 칸이 회절형에서만 7점을 깎아 결과가 뒤집혔다. '전혀 못 견딘다'는
      여전히 강한 신호로 두되, '조금은'은 가벼운 유보로만 반영한다. */
-  const GLARE = [2, 0.5, 0, 0];
+  const GLARE = [TU("glare0"), TU("glare1"), TU("glare2"), TU("glare3")];
   const glarePressure = GLARE[Math.max(0, Math.min(3, Math.round(d.dysphTolerance)))];
   const nightWeak = Math.max(0, 2.6 - cap.night) / 1.6;             // 0(야간 안정) .. 1(취약)
 
@@ -137,9 +137,9 @@ function prefBreakdown(d, lens, cost){
      토릭은 모든 후보에 같은 금액이 더해져 서로의 거리를 바꾸지 않지만,
      목표대와의 거리는 바꾸므로 여기서는 더해서 계산한다. */
   const lv = Math.max(0, Math.min(3, Math.round(d.costSensitivity)));
-  const target = BUDGET_TARGET_MAN[lv];
+  const target = budgetTargets()[lv];
   const priceBase = costMid(lens.id);
-  const price = priceBase === null ? null : priceBase + (d.toricLikely ? TORIC_ADD_MAN : 0);
+  const price = priceBase === null ? null : priceBase + (d.toricLikely ? TU("toricAddMan") : 0);
   const span = (cost && cost.span > 0) ? cost.span : 0;
 
   /* 예산대를 '넘는' 만큼만 감점한다. 한쪽으로만 작동하는 것이 중요하다 —
@@ -147,25 +147,25 @@ function prefBreakdown(d, lens, cost){
      고 답한 환자에게 25만원 단초점 대신 125만원 프리미엄 단초점이 올라온다.
      '매우 크다'는 '꽤'보다 훨씬 세게 작동한다 — 상한이 빡빡할수록 예산이 임상
      선호를 이길 수 있어야 하기 때문이다. */
-  const BAND_W = [0, 0, 4.0, 6.5];
+  const BAND_W = [0, 0, TU("bandMid"), TU("bandLow")];
   let costTerm = 0;
   if (price !== null && span > 0 && target !== null){
-    const aim = target + (d.toricLikely ? TORIC_ADD_MAN : 0);
+    const aim = target + (d.toricLikely ? TU("toricAddMan") : 0);
     costTerm = -(Math.min(1, Math.max(0, price - aim) / span)) * BAND_W[lv];
   }
 
   /* 예산 상한이 없을 때의 가산. 비용을 답하지 않은 것은 '상관없다'가 아니라
      '아직 모름'이므로 제외한다. */
   const noCeiling = (target === null) && !(d._prefUnanswered || []).includes("costSensitivity");
-  const affordW = lv === 0 ? 2.4 : 1.2;
-  const afford = (noCeiling && d.specIndep >= 2) ? ((cap.near + cap.inter) / 6) * affordW : 0;
+  const affordW = lv === 0 ? TU("affordFree") : TU("affordSlight");
+  const afford = (noCeiling && d.specIndep >= TU("affordMinSpec")) ? ((cap.near + cap.inter) / 6) * affordW : 0;
 
   const items = [
-    {k:"near",  v:  d.nearPriority  * (cap.near  / 3) * 2.2},
-    {k:"inter", v:  d.interPriority * (cap.inter / 3) * 1.7},
-    {k:"spec",  v:  d.specIndep     * ((cap.near + cap.inter) / 6) * 2.6},
-    {k:"night", v: -nightPressure * nightWeak * 2.4},
-    {k:"dysph", v: -glarePressure * nightWeak * 2.0},
+    {k:"near",  v:  d.nearPriority  * (cap.near  / 3) * TU("wNear")},
+    {k:"inter", v:  d.interPriority * (cap.inter / 3) * TU("wInter")},
+    {k:"spec",  v:  d.specIndep     * ((cap.near + cap.inter) / 6) * TU("wSpec")},
+    {k:"night", v: -nightPressure * nightWeak * TU("wNight")},
+    {k:"dysph", v: -glarePressure * nightWeak * TU("wGlare")},
     {k:"cost",  v: costTerm},
     {k:"afford", v: afford},
   ];
@@ -240,7 +240,7 @@ function evaluate(raw, mode){
     const blocked = st.stops.length > 0;
     /* 자르기 전 원점수를 함께 들고 다닌다. 100 에서 잘린 뒤에 정렬하면 서로 다른
        점수가 동점이 되고, 그때 순서가 렌즈 배열 순서(=싼 것부터)로 갈려 버린다. */
-    const raw = l.base + 30 + pb.total * 3.5 - st.penalty * 7 + st.boost * 5;
+    const raw = l.base + TU("scoreBase") + pb.total * TU("scorePref") - st.penalty * TU("scorePenalty") + st.boost * TU("scoreBoost");
     const score = blocked ? 0 : clamp(Math.round(raw), 3, 100);
     return {
       id:l.id, lens:l, score, raw, blocked, price:pb.price,
@@ -271,8 +271,8 @@ function evaluate(raw, mode){
     toricLikely: d.toricLikely,
     /* 비용 답이 가리키는 예산대(만원, 토릭 포함). null 이면 상한 없음 — 화면 설명에 쓴다. */
     budgetAim: (() => {
-      const t = BUDGET_TARGET_MAN[Math.max(0, Math.min(3, Math.round(d.costSensitivity)))];
-      return t === null ? null : t + (d.toricLikely ? TORIC_ADD_MAN : 0);
+      const t = budgetTargets()[Math.max(0, Math.min(3, Math.round(d.costSensitivity)))];
+      return t === null ? null : t + (d.toricLikely ? TU("toricAddMan") : 0);
     })(),
     allStopRules: Array.from(new Set([].concat(...scored.map(s => s.stops)))),
     allCautionRules: (() => {

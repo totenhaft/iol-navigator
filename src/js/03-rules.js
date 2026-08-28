@@ -209,7 +209,7 @@ const RULES = [
 {
   id:"chord_high", layer:"caution",
   targets:{trifocal:2, lentis:1.5, edof:0.5},
-  when:d => (num(d.chordAlpha) !== null && d.chordAlpha >= 0.6) || (num(d.chordMu) !== null && d.chordMu >= 0.6),
+  when:d => (num(d.chordAlpha) !== null && d.chordAlpha >= TU("cutChordHigh")) || (num(d.chordMu) !== null && d.chordMu >= TU("cutChordHigh")),
   ko:{t:"Chord mu / alpha ≥ 0.6 mm", why:"동공 중심과 시축이 크게 어긋나면 회절 링에 대해 렌즈가 상대적으로 편심된 것처럼 작동해 광학현상이 늘 수 있습니다. 다만 근거는 상충합니다 — 26,470안 자료에서는 술전 angle kappa와 술후 결과 사이에 임상적으로 유의한 관계가 없었고, 장비 간 값 차이도 큽니다(동일 안에서 0.27 vs 0.43 mm).", act:"이 값 하나로 결정하지 마세요. 각막지형도상 동공 중심 대비 시축 위치를 직접 보고, 다른 위험인자와 합쳐서 판단하세요."},
   en:{t:"Chord mu / alpha ≥ 0.6 mm", why:"A large offset between pupil centre and visual axis makes the lens behave as if decentred relative to its diffractive rings, potentially increasing dysphotopsia. The evidence conflicts: in 26,470 eyes preoperative angle kappa showed no clinically meaningful relationship to outcomes, and devices disagree markedly (0.27 vs 0.43 mm in the same eye).", act:"Do not decide on this value alone. Inspect the visual-axis position on topography and weigh it alongside other risk factors."},
   refs:["R6"], grade:"C", tests:[T.KAPPA, T.TOPO]
@@ -219,9 +219,9 @@ const RULES = [
   targets:{trifocal:1, lentis:0.7},
   when:d => {
     const a = num(d.chordAlpha), m = num(d.chordMu);
-    const hi = (a !== null && a >= 0.6) || (m !== null && m >= 0.6);
+    const hi = (a !== null && a >= TU("cutChordHigh")) || (m !== null && m >= TU("cutChordHigh"));
     if (hi) return false;
-    return (a !== null && a >= 0.5) || (m !== null && m >= 0.5);
+    return (a !== null && a >= TU("cutChordBorder")) || (m !== null && m >= TU("cutChordBorder"));
   },
   ko:{t:"Chord mu / alpha 0.5–0.6 mm (경계 구간)", why:"관행적으로 인용되는 회피 기준(0.5–0.6 mm)의 경계에 있습니다. 이 구간의 근거는 약하며 기기 의존적입니다.", act:"측정 기기를 기록하고 가능하면 다른 장비로 교차 확인하세요. 단독 배제 근거로는 부족합니다."},
   en:{t:"Chord mu / alpha 0.5–0.6 mm (borderline)", why:"This sits at the boundary of the conventionally cited 0.5–0.6 mm avoid-threshold. The evidence for this band is weak and device-dependent.", act:"Record the device and cross-check on a second platform if possible. Not sufficient grounds for exclusion on its own."},
@@ -232,7 +232,7 @@ const RULES = [
   targets:{trifocal:2.5, edof:1}, boost:{lentis:0.8},
   when:d => {
     const v = num(d.hoaRMS); if (v === null) return false;
-    return d.hoaZone === "6" ? v > 0.5 : v > 0.3;
+    return d.hoaZone === "6" ? v > TU("cutHoa6") : v > TU("cutHoa4");
   },
   ko:{t:"각막 고위수차가 통상 기준을 초과", why:"HOA 0.3 µm @4 mm는 약 0.5 D 탈초점에 해당하는 흐림을 만듭니다. 각막이 이미 상당한 수차를 가지면 회절형 렌즈가 만드는 이미지 질을 예측하기 어렵습니다. 다만 이 cut-off의 근거는 제한적입니다 — 원 저자도 “실질적 가이드라인은 없다”고 명시했고, 378명 분석에서 HOA와 만족도의 상관은 없었습니다.", act:"수치 하나로 배제하지 말고 지형도 패턴, 나안 시력, 다른 위험인자와 함께 종합하세요. 기준: 4 mm에서 0.3 µm, 6 mm에서 0.5 µm."},
   en:{t:"Corneal higher-order aberrations above the conventional threshold", why:"HOA of 0.3 µm at 4 mm produces blur equivalent to about 0.5 D of defocus. When the cornea already carries substantial aberration, diffractive image quality becomes hard to predict. But this cut-off is weakly supported — the originating author states there are 'no real guidelines', and in 378 patients HOA did not correlate with satisfaction.", act:"Do not exclude on the number alone; combine it with the topographic pattern, uncorrected acuity and other risk factors. Thresholds: 0.3 µm at 4 mm, 0.5 µm at 6 mm."},
@@ -241,7 +241,7 @@ const RULES = [
 {
   id:"coma_high", layer:"caution",
   targets:{trifocal:2.5, edof:0.8}, boost:{lentis:1.2},
-  when:d => num(d.cornealComa) !== null && d.cornealComa > 0.3,
+  when:d => num(d.cornealComa) !== null && d.cornealComa > TU("cutComa"),
   ko:{t:"각막 코마 > 0.3 µm @6 mm", why:"코마는 비대칭 수차로, 회절형 렌즈의 초점 분리와 겹치면 잔상·꼬리끌림 형태의 광학현상으로 나타나기 쉽습니다. 원추각막·편심 절제·이식 후 각막에서 흔합니다.", act:"원인(확장증·편심 절제·이식)을 먼저 규명하세요. 노안교정을 원하는 환자라면, 회절 링이 없는 굴절형 분절 이중초점(렌티스)이 회절형보다 코마를 덜 증폭한다고 보아 이 진료에서는 그쪽을 씁니다 — 비교 임상시험이 아니라 임상 관행에 따른 선택입니다."},
   en:{t:"Corneal coma > 0.3 µm at 6 mm", why:"Coma is an asymmetric aberration; combined with the focal separation of a diffractive optic it tends to produce comet-tail smearing. It is common in keratoconus, decentred ablations and grafts.", act:"Identify the cause (ectasia, decentred ablation, graft) first. For a patient who still wants presbyopia correction, this practice uses a segmented refractive bifocal (LENTIS), on the view that without diffractive rings it amplifies coma less — a practice-based choice rather than one from a comparative trial."},
   refs:["R8","R18"], grade:"C", tests:[T.ABERRO, T.TOPO]
@@ -249,7 +249,7 @@ const RULES = [
 {
   id:"pupil_meso_large", layer:"caution",
   targets:{trifocal:2, lentis:1.5, edof:0.5},
-  when:d => num(d.pupMesopic) !== null && d.pupMesopic >= 6.0,
+  when:d => num(d.pupMesopic) !== null && d.pupMesopic >= TU("cutPupilMeso"),
   ko:{t:"암소시 동공 ≥ 6.0 mm", why:"야간에 동공이 크게 열리면 회절 구조의 바깥 영역과 각막 주변부 수차까지 동원되어 헤일로·글레어·스타버스트가 커집니다. 야간 운전 요구가 함께 높으면 위험이 곱해집니다.", act:"야간 광학현상 가능성을 구체적으로 설명하고, 야간 요구가 높다면 비회절 설계로 무게를 옮기세요."},
   en:{t:"Mesopic pupil ≥ 6.0 mm", why:"A widely dilated pupil at night recruits the outer diffractive zones and peripheral corneal aberrations, enlarging halo, glare and starburst. Risk multiplies when night-driving demand is also high.", act:"Counsel concretely about night-time phenomena and shift toward non-diffractive designs if night demand is high."},
   refs:["R8","R1"], grade:"C", tests:[T.PUPIL]
@@ -257,7 +257,7 @@ const RULES = [
 {
   id:"pupil_photo_small", layer:"caution",
   targets:{trifocal:1.5, lentis:1.5, edof:0.3},
-  when:d => num(d.pupPhotopic) !== null && d.pupPhotopic < 2.5,
+  when:d => num(d.pupPhotopic) !== null && d.pupPhotopic < TU("cutPupilPhoto"),
   ko:{t:"명소시 동공 < 2.5 mm", why:"동공이 작으면 바깥쪽 근거리 영역이 가려져 설계된 근거리 성능이 나오지 않을 수 있습니다. 회절형은 바깥 링이, 굴절형 분절 렌즈(렌티스)는 아래쪽 근거리 섹터가 가려지는 형태로 나타납니다.", act:"해당 렌즈의 동공 의존성을 확인하고, 동공 비의존 설계를 우선 고려하세요."},
   en:{t:"Photopic pupil < 2.5 mm", why:"A small pupil masks the outer near-addition zones, so the designed near performance may not be realised — the outer rings in a diffractive optic, or the inferior near sector in a segmented refractive lens (LENTIS).", act:"Check the pupil dependence of the specific lens and favour pupil-independent designs."},
   refs:["R8","R18"], grade:"C", tests:[T.PUPIL]
@@ -265,7 +265,7 @@ const RULES = [
 {
   id:"astig_uncorrected", layer:"caution",
   targets:{trifocal:3, lentis:2.5, edof:2, enhMono:1.5, monoBlend:1},
-  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && d.toricPlanned !== true && d.toricPlanKnown,
+  when:d => num(d.cylD) !== null && d.cylD >= TU("cutCyl") && d.toricPlanned !== true && d.toricPlanKnown,
   ko:{t:"각막난시 ≥ 0.75 D인데 난시교정 계획이 없음 (집도의가 계획을 세우는 화면에서만 표시)", why:"잔여 난시는 초점분할 렌즈의 이미 얇은 이미지 질 여유를 그대로 잠식합니다. 프리미엄 렌즈 술후 불만의 가장 흔하고 가장 교정 가능한 원인입니다. 각막난시 ≥1.0 D에서는 토릭이 보편적으로 권고되며, 술후 정규난시는 1.0 D 미만으로 유지하는 것이 목표입니다.", act:"토릭 IOL 또는 각막이완절개를 함께 계획하세요. 난시를 교정하지 않을 것이라면 프리미엄 렌즈 자체를 재고해야 합니다."},
   en:{t:"Corneal astigmatism ≥ 0.75 D with no astigmatic correction planned", why:"Residual cylinder consumes the already-thin image-quality margin of a focus-splitting lens. It is the most common and most correctable cause of premium-IOL dissatisfaction. Toric IOLs are universally recommended at ≥1.0 D, and postoperative regular astigmatism should stay below 1.0 D.", act:"Plan a toric IOL or limbal relaxing incisions. If astigmatism will not be corrected, reconsider the premium lens itself."},
   refs:["R13","R8","R12"], grade:"C", tests:[T.TCA, T.TOPO]
@@ -273,7 +273,7 @@ const RULES = [
 {
   id:"al_long", layer:"caution",
   targets:{trifocal:1.5, lentis:1.2, edof:0.8},
-  when:d => num(d.al) !== null && d.al >= 26.0,
+  when:d => num(d.al) !== null && d.al >= TU("cutAlLong"),
   ko:{t:"긴 안축장 (고도근시)", why:"안축장 26 mm 초과에서 술후 망막박리 위험이 0.9–3.8%, 33.6–35.5 mm에서는 11%까지 보고됩니다. 근시성 망막변성이 최종시력을 제한하는 독립 인자이며, 도수 예측 오차도 큽니다. 향후 유리체망막 수술 시 안저 관찰이 필요합니다.", act:"주변부 망막을 산동 후 반드시 확인하고, 황반 OCT로 근시성 변화를 평가하세요. 망막박리 위험을 명시적으로 상담하세요."},
   en:{t:"Long axial length (high myopia)", why:"Retinal detachment risk after surgery is 0.9–3.8% above 26 mm and up to 11% at 33.6–35.5 mm. Myopic degeneration independently limits final acuity, and power prediction error is larger. Future vitreoretinal surgery would require a clear fundus view.", act:"Examine the peripheral retina dilated and assess myopic macular change on OCT. Counsel explicitly about detachment risk."},
   refs:["R14"], grade:"C", tests:[T.OCT, T.BIOM, T.MACSTAB]
@@ -281,7 +281,7 @@ const RULES = [
 {
   id:"al_short", layer:"caution",
   targets:{trifocal:1.5, lentis:1.2, edof:1},
-  when:d => num(d.al) !== null && d.al < 22.0,
+  when:d => num(d.al) !== null && d.al < TU("cutAlShort"),
   ko:{t:"짧은 안축장", why:"짧은 눈에서는 유효렌즈위치(ELP) 예측 오차가 커져 목표 굴절값에서 벗어날 확률이 높습니다. 초점이 정확히 놓여야 성능이 나오는 회절형 렌즈에서는 이 오차가 바로 불만족으로 이어집니다.", act:"짧은 눈에 최적화된 최신 계산식을 사용하고, 필요 시 술후 굴절 이상 교정 계획을 미리 합의하세요."},
   en:{t:"Short axial length", why:"Effective lens position is harder to predict in short eyes, so refractive outcomes scatter more. A diffractive optic depends on accurate focal placement, so that scatter translates directly into dissatisfaction.", act:"Use a formula optimised for short eyes and agree a plan for residual refractive error."},
   refs:["R14","R16"], grade:"C", tests:[T.BIOM]
@@ -337,7 +337,7 @@ const RULES = [
 {
   id:"young_age", layer:"caution",
   targets:{trifocal:0.8, lentis:0.6},
-  when:d => num(d.age) !== null && d.age < 55,
+  when:d => num(d.age) !== null && d.age < TU("cutAgeYoung"),
   ko:{t:"비교적 젊은 연령 (< 55세)", why:"남은 기대여명이 길어 향후 황반·녹내장 질환이 발생할 확률이 높고, 그때 렌즈를 되돌리기 어렵습니다. 동공도 더 크고 시각 요구도 까다로운 경향이 있습니다.", act:"장기 시나리오를 상담에 포함하고, 백내장이 아닌 굴절 목적 수술이라면 각막 굴절수술 등 다른 선택지도 비교하세요."},
   en:{t:"Younger patient (< 55 years)", why:"A long remaining lifespan raises the chance of later macular or glaucomatous disease, at which point the lens is hard to undo. Pupils are also larger and visual demands more exacting.", act:"Include the long-term scenario in counselling; if this is refractive rather than cataract surgery, compare corneal refractive options too."},
   refs:["R19","R16"], grade:"D", tests:[]
@@ -346,36 +346,36 @@ const RULES = [
 /* ============ NOTE (감점 없음) ============ */
 {
   id:"sa_match_aspheric", layer:"note", targets:[],
-  when:d => num(d.cornealSA) !== null && d.cornealSA >= 0.1,
+  when:d => num(d.cornealSA) !== null && d.cornealSA >= TU("cutSaAspheric"),
   ko:{t:"비구면 IOL 매칭 권고", why:"측정된 각막 구면수차가 0.1 µm 이상이므로 음의 구면수차를 가진 비구면 IOL로 상쇄하는 것이 대비감도에 유리합니다. 모집단 평균은 +0.27 µm @6 mm입니다.", act:"각막 SA 값에 맞춰 IOL 비구면도(−0.20 / −0.27 µm 등)를 선택하세요. 렌즈 종류 선택과는 별개의 축입니다."},
   en:{t:"Match the aspheric IOL to the measured corneal SA", why:"Measured corneal spherical aberration is ≥0.1 µm, so a negative-SA aspheric IOL should be used to offset it. Population mean is +0.27 µm at 6 mm.", act:"Choose IOL asphericity (−0.20 / −0.27 µm) to match. This is a separate axis from the lens category."},
   refs:["R8"], grade:"D", tests:[]
 },
 {
   id:"sa_match_neutral", layer:"note", targets:[],
-  when:d => num(d.cornealSA) !== null && d.cornealSA < 0.1,
+  when:d => num(d.cornealSA) !== null && d.cornealSA < TU("cutSaAspheric"),
   ko:{t:"무수차(aberration-neutral) IOL 권고", why:"각막 구면수차가 0.1 µm 미만입니다. 음의 구면수차 비구면 IOL을 넣으면 과보정되어 오히려 이미지 질이 나빠질 수 있습니다.", act:"구면수차 0에 가까운 무수차 IOL을 선택하세요. 근시 라식 후에는 양의 SA가 증가하고 원시 교정 후에는 음으로 이동하므로 반드시 실측값을 쓰세요."},
   en:{t:"Use an aberration-neutral IOL", why:"Corneal spherical aberration is below 0.1 µm. A negative-SA aspheric IOL would overcorrect and could worsen image quality.", act:"Select an aberration-neutral (SA ≈ 0) IOL. Myopic LVC raises positive SA and hyperopic LVC shifts it negative, so always use the measured value."},
   refs:["R8"], grade:"D", tests:[]
 },
 {
   id:"lentis_plan", layer:"note", targets:[],
-  when:d => d.specIndep >= 2 && ((num(d.cornealComa) !== null && d.cornealComa > 0.3) ||
-            (num(d.hoaRMS) !== null && (d.hoaZone === "6" ? d.hoaRMS > 0.5 : d.hoaRMS > 0.3))),
+  when:d => d.specIndep >= 2 && ((num(d.cornealComa) !== null && d.cornealComa > TU("cutComa")) ||
+            (num(d.hoaRMS) !== null && (d.hoaZone === "6" ? d.hoaRMS > TU("cutHoa6") : d.hoaRMS > TU("cutHoa4")))),
   ko:{t:"굴절형 분절 이중초점을 쓴다면 양안 가입도와 주시안을 먼저 정하세요", why:"이 진료에서는 각막 고위수차가 큰 노안교정 희망 환자에게 굴절형 분절 이중초점(렌티스)을 쓰고, 가입도 +2.0 D와 +3.0 D를 눈에 따라 나누어 배정합니다. 두 눈의 가입도가 다르면 근거리 거리와 양안 융합이 달라지므로, 어느 눈에 어느 가입도를 넣을지는 수술 전에 정해져 있어야 합니다.", act:"주시안을 확인하고 환자의 주된 근업 거리(책·휴대폰·악보·컴퓨터)를 물어 가입도 배정을 먼저 결정하세요. 이 조합은 비교 임상시험이 아니라 임상 경험에 근거한 운용 방식임을 환자에게도 설명하세요."},
   en:{t:"If using a segmented refractive bifocal, decide the add powers and dominant eye first", why:"This practice uses a segmented refractive bifocal (LENTIS) for presbyopia-correction candidates with high corneal higher-order aberration, splitting +2.0 D and +3.0 D adds between the eyes. Different adds change the working distance and binocular fusion, so the assignment must be decided before surgery.", act:"Establish ocular dominance and the patient's main near working distance, then assign the adds. Explain that this arrangement rests on clinical experience rather than a comparative trial."},
   refs:["R19"], grade:"D", tests:[T.COUNSEL]
 },
 {
   id:"astig_toric_axis", layer:"note", targets:[],
-  when:d => num(d.cylD) !== null && d.cylD >= 0.75 && !d.toricPlanKnown,
+  when:d => num(d.cylD) !== null && d.cylD >= TU("cutCyl") && !d.toricPlanKnown,
   ko:{t:"난시가 있으므로 토릭 병용을 전제로 봅니다", why:"토릭은 렌즈 종류와 별개의 축입니다. 단초점·프리미엄 단초점·연속초점·다초점 어느 쪽에도 함께 쓸 수 있으므로, 난시가 있다는 사실만으로 렌즈 종류의 순위가 바뀌지는 않습니다. 다만 난시를 교정하지 않은 채로는 어떤 렌즈를 넣어도 기대한 시력이 나오지 않으며, 초점을 나누는 렌즈일수록 잔여 난시의 타격이 큽니다.", act:"이 화면에서는 토릭 병용 여부를 정할 수 없으므로 '함께 쓴다'고 보고 순위를 매겼습니다. 실제 계획은 총 각막난시(후면 포함) 측정값을 보고 집도의가 정합니다. 토릭을 쓰지 않기로 하면 그때 프리미엄 선택지를 다시 검토해야 합니다."},
   en:{t:"Astigmatism present — a toric option is assumed", why:"Toric is an axis separate from the lens category: it combines with a monofocal, an enhanced monofocal, an EDOF or a multifocal alike. So the presence of astigmatism alone does not reorder the lens categories. Left uncorrected, however, no lens will deliver the expected result, and focus-splitting designs suffer most from residual cylinder.", act:"This screen cannot set the toric plan, so the ranking assumes toric will be used. The surgeon decides from the measured total corneal astigmatism. If toric is not used, the premium options must be revisited."},
   refs:["R13","R8"], grade:"C", tests:[T.TCA, T.TOPO]
 },
 {
   id:"toric_indicated", layer:"note", targets:[],
-  when:d => num(d.cylD) !== null && d.cylD >= 1.0,
+  when:d => num(d.cylD) !== null && d.cylD >= TU("cutToric"),
   ko:{t:"토릭 IOL 적응증", why:"각막난시 1.0 D 이상에서 토릭 IOL이 보편적으로 권고됩니다. 축이 3° 어긋날 때마다 교정효과가 약 10% 줄고 약 30°에서 완전히 소실되므로 축 표시와 정렬 정확도가 중요합니다.", act:"후면각막난시를 포함한 총 각막난시(TCA)로 계산하고, 술중 축 정렬 방법(디지털 마킹 등)을 계획하세요."},
   en:{t:"Toric IOL indicated", why:"Toric IOLs are universally recommended at ≥1.0 D of corneal astigmatism. Correction falls ~10% per 3° of misalignment and is lost near 30°, so marking and alignment accuracy matter.", act:"Calculate from total corneal astigmatism including the posterior surface, and plan intraoperative axis alignment (e.g. digital marking)."},
   refs:["R13","R8"], grade:"C", tests:[T.TCA]

@@ -64,8 +64,17 @@ export default async function run(){
   page2.on("pageerror", e => errors.push(e.message));
   await page2.goto(pageURL, { waitUntil:"load" });
   await wait(page2, 300);
+  /* 상담 화면은 잠겨 있다 — 처음 열 때 비밀번호를 정하게 한다 */
   await page2.click("#role_counselor");
-  await wait(page2, 250);
+  await wait(page2, 300);
+  ok("상담 화면을 누르면 잠금 화면이 뜬다",
+     await page2.evaluate(() => !document.querySelector("#pwOvl").hidden && state.role === "patient"));
+  await page2.fill("#pwIn", "clinic1234");
+  await page2.fill("#pwIn2", "clinic1234");
+  await page2.click("#pwOvl .btn.primary");
+  await wait(page2, 400);
+  ok("비밀번호를 정하면 상담 화면으로 들어간다",
+     await page2.evaluate(() => document.querySelector("#pwOvl").hidden && state.role === "counselor"));
   await page2.click("#handoffBtn");
   await wait(page2, 200);
   await page2.fill("#handoffIn", code.toLowerCase());          // 소문자로 넣어도 읽혀야 함
@@ -113,6 +122,7 @@ export default async function run(){
      await page3.evaluate(() => String(state.values.age) === "71" && state.values.macula === "amd_intermediate"));
 
   /* ---- 의사 화면 ---- */
+  await page3.evaluate(() => markUnlocked(true));   // 잠금은 앞에서 따로 검증한다
   await page3.click("#role_doctor");
   await wait(page3, 300);
   await page3.click("#runBtn");
@@ -186,6 +196,7 @@ export default async function run(){
   ok("환자 배부용 A5 결과지에도 금액이 없다", !/만원|₩/.test(a5Text),
      (a5Text.match(/[^\n]*만원[^\n]*/) || [""])[0].slice(0, 60));
 
+  await page4.evaluate(() => { markUnlocked(true); });
   await page4.click("#role_counselor");
   await wait(page4, 300);
   await page4.click("#runBtn");
@@ -202,6 +213,73 @@ export default async function run(){
      await page5.evaluate(() => document.querySelector("#roleSeg").hidden));
   ok("?patient 로 열면 역할을 바꿔도 환자 화면에 머문다",
      await page5.evaluate(() => { setRole("counselor"); return state.role === "patient"; }));
+
+  /* ---- 설정 화면 ---- */
+  /* 저장소가 깨끗한 새 브라우저에서 — 앞 탭들과 localStorage 를 공유하면
+     비밀번호가 이미 설정된 상태가 되어 '처음 설정' 흐름을 볼 수 없다. */
+  const ctx2 = await browser.newContext({ viewport:{width:1440, height:1000} });
+  const page6 = await ctx2.newPage();
+  page6.on("pageerror", e => errors.push(e.message));
+  await page6.goto(pageURL, { waitUntil:"load" });
+  await wait(page6, 300);
+  await page6.click("#setBtn");
+  await wait(page6, 300);
+  ok("설정도 비밀번호를 요구한다",
+     await page6.evaluate(() => !document.querySelector("#pwOvl").hidden && document.querySelector("#setOvl").hidden));
+  await page6.fill("#pwIn", "abcd1234");
+  await page6.fill("#pwIn2", "abcd1234");
+  await page6.click("#pwOvl .btn.primary");
+  await wait(page6, 500);
+  ok("비밀번호를 정하면 설정 화면이 열린다",
+     await page6.evaluate(() => !document.querySelector("#setOvl").hidden));
+  ok("비밀번호는 평문으로 저장되지 않는다",
+     await page6.evaluate(() => {
+       const raw = localStorage.getItem("iolnav-settings-v1") || "";
+       return raw.indexOf("abcd1234") === -1 && /"hash":"/.test(raw);
+     }));
+
+  /* 금액과 조정값을 고치면 판정이 따라 바뀐다 */
+  const beforeTri = await page6.evaluate(() => {
+    state.role = "doctor";
+    return evaluate({age:68, bilateral:"yes", macula:"normal", glaucoma:"none", dr:"none",
+      cornea:"normal", osd:"none", zonule:"stable", priorRefSx:"none", hoaZone:"4",
+      specIndep:"3", nearPriority:"2", interPriority:"2", costSensitivity:"3", toricPlanned:true},
+      "doctor").scored.find(x => x.id === "trifocal").score;
+  });
+  await page6.fill("#set_cmin_trifocal", "25");
+  await page6.fill("#set_cmax_trifocal", "25");
+  await page6.fill("#set_t_cutComa", "0.99");
+  await page6.click("#setSaveBtn");
+  await wait(page6, 400);
+  const afterTri = await page6.evaluate(() => evaluate({age:68, bilateral:"yes", macula:"normal",
+      glaucoma:"none", dr:"none", cornea:"normal", osd:"none", zonule:"stable", priorRefSx:"none",
+      hoaZone:"4", specIndep:"3", nearPriority:"2", interPriority:"2", costSensitivity:"3",
+      toricPlanned:true}, "doctor").scored.find(x => x.id === "trifocal").score);
+  ok("설정에서 금액을 바꾸면 점수가 따라 바뀐다", afterTri > beforeTri, beforeTri + " → " + afterTri);
+  ok("설정에서 검사 임계값을 바꾸면 규칙 발동이 바뀐다",
+     await page6.evaluate(() => {
+       const base = {age:68, bilateral:"yes", macula:"normal", glaucoma:"none", dr:"none",
+         cornea:"normal", osd:"none", zonule:"stable", priorRefSx:"none", hoaZone:"4",
+         cornealComa:0.45, specIndep:"3"};
+       return evaluate(base, "doctor").fired.indexOf("coma_high") === -1;   // 기준을 0.99 로 올렸으므로 미발동
+     }));
+
+  /* 기본값 되돌리기 */
+  await page6.click("#setResetBtn");
+  await wait(page6, 400);
+  ok("기본값으로 되돌리면 조정값이 복원된다",
+     await page6.evaluate(() => TU("cutComa") === TUNING_DEFAULT.cutComa));
+  ok("되돌려도 비밀번호는 남는다", await page6.evaluate(() => pwIsSet()));
+
+  /* ?patient 화면에서는 설정을 열 수 없다 */
+  const page7 = await ctx2.newPage();
+  page7.on("pageerror", e => errors.push(e.message));
+  await page7.goto(pageURL + "?patient", { waitUntil:"load" });
+  await wait(page7, 400);
+  await page7.click("#setBtn");
+  await wait(page7, 300);
+  ok("?patient 화면에서는 설정이 열리지 않는다",
+     await page7.evaluate(() => document.querySelector("#pwOvl").hidden && document.querySelector("#setOvl").hidden));
 
   if (errors.length){ fail += errors.length; console.log("  FAIL  자바스크립트 오류\n    " + errors.join("\n    ")); }
   else console.log("  PASS  자바스크립트 오류 없음");

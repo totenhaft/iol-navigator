@@ -559,7 +559,7 @@ function setLang(l){
 }
 
 function boot(){
-  initCostTable();
+  wireSettings();
   applyI18n();
   renderForm();
   renderTaxonomy();
@@ -572,7 +572,11 @@ function boot(){
     state.role = "patient";
     $("#roleSeg").hidden = true;
   }
-  ROLES.forEach(r => $("#role_" + r).addEventListener("click", () => setRole(r)));
+  /* 상담·의사 화면은 직원용이라 비밀번호로 잠근다. 환자 화면은 그대로 열린다. */
+  ROLES.forEach(r => $("#role_" + r).addEventListener("click", () => {
+    if (r === "patient" || isUnlocked()) { setRole(r); return; }
+    requireUnlock(() => setRole(r));
+  }));
   syncRoleLabels();
   setRole(state.role);
   wireHandoff();
@@ -679,20 +683,6 @@ function patientAskCard(res){
    ================================================================== */
 /* 비용은 만원 단위 {min,max} 로 다룬다. v1 은 원 단위 단일값이라 형식이 달라
    키를 v2 로 올렸다 — 예전 값을 잘못 읽느니 기본값에서 다시 시작하는 편이 낫다. */
-const COST_KEY = "iolnav-cost-v2";
-function loadCostTable(){
-  try {
-    const o = JSON.parse(localStorage.getItem(COST_KEY) || "{}");
-    return (o && typeof o === "object") ? o : {};
-  } catch(e){ return {}; }
-}
-function saveCostTable(o){
-  try { localStorage.setItem(COST_KEY, JSON.stringify(o)); } catch(e){}
-  setCostTable(o);
-}
-/* 저장된 값이 있으면 엔진이 쓰는 금액표에 반영한다 (점수에도 그대로 들어간다) */
-function initCostTable(){ setCostTable(loadCostTable()); }
-
 const numFmt = n => Number(n).toLocaleString(state.lang === "ko" ? "ko-KR" : "en-US");
 
 /* 만원 단위 범위를 언어에 맞게 적는다. 한국어는 "350–400만원",
@@ -700,7 +690,7 @@ const numFmt = n => Number(n).toLocaleString(state.lang === "ko" ? "ko-KR" : "en
 function costRangeMan(id, opts){
   const c = COST_MAN[id];
   if (!c) return null;
-  const add   = (opts && opts.toric) ? TORIC_ADD_MAN : 0;
+  const add   = (opts && opts.toric) ? TU("toricAddMan") : 0;
   const mult  = (opts && opts.bothEyes) ? 2 : 1;
   return { min:(Number(c.min) + add) * mult, max:(Number(c.max) + add) * mult };
 }
@@ -773,55 +763,20 @@ function decisionCard(res){
       ]));
       if (withToric) lines.appendChild(el("div", {cls:"costline sub"}, [
         el("span", {text:t.costToricAdd}),
-        el("span", {cls:"mono", text: "+" + (ko ? numFmt(TORIC_ADD_MAN) + t.manWon : "₩" + (TORIC_ADD_MAN/100).toFixed(2) + "M") + (both ? " ×2" : "")}),
+        el("span", {cls:"mono", text: "+" + costManText(TU("toricAddMan")) + (both ? " ×2" : "")}),
       ]));
       body.appendChild(el("div", {}, [ el("span", {cls:"eyebrow", text:t.costTitle + " · " + t.costPerEye}), lines ]));
     }
   }
   sel.addEventListener("change", () => { state.decision = sel.value || null; run({scroll:false}); });
 
-  /* 금액 설정 — 만원 단위 최소/최대. 여기 값이 점수(비용 민감도)에도 그대로 쓰인다. */
-  const saved = loadCostTable();
-  const editor = el("div", {cls:"costgrid", hidden:true});
-  LENSES.forEach(l => {
-    const cur = COST_MAN[l.id] || {min:"", max:""};
-    const mk = which => {
-      const inp = el("input", {type:"number", min:0, step:5, id:"cost_"+which+"_"+l.id,
-                               "aria-label": tx(l) + " " + (which === "min" ? t.costMinLabel : t.costMaxLabel)});
-      inp.value = cur[which];
-      return inp;
-    };
-    editor.appendChild(el("label", {cls:"costitem"}, [
-      el("span", {text: tx(l)}),
-      el("div", {cls:"costpair"}, [ mk("min"), el("span", {cls:"unit", text:"–"}), mk("max"),
-                                    el("span", {cls:"unit", text: ko ? t.manWon : "×10k"}) ]),
-    ]));
-  });
-  const saveBtn = el("button", {type:"button", cls:"btn primary", text:t.costSave, onclick:() => {
-    const o = {};
-    LENSES.forEach(l => {
-      const lo = $("#cost_min_" + l.id).value, hi = $("#cost_max_" + l.id).value;
-      if (lo !== "" || hi !== ""){
-        const a = lo === "" ? Number(hi) : Number(lo);
-        const b = hi === "" ? a : Number(hi);
-        o[l.id] = {min: Math.min(a,b), max: Math.max(a,b)};
-      }
-    });
-    saveCostTable(o); run({scroll:false});
-  }});
-  const resetBtn = el("button", {type:"button", cls:"btn", text:t.costReset, onclick:() => {
-    try { localStorage.removeItem(COST_KEY); } catch(e){}
-    setCostTable({}); run({scroll:false});
-  }});
-  const toggle = el("button", {type:"button", cls:"btn ghost", text:t.costEdit, onclick:() => {
-    const open = editor.hidden;
-    editor.hidden = !open; saveBtn.hidden = !open; resetBtn.hidden = !open;
-  }});
-  saveBtn.hidden = true; resetBtn.hidden = true;
+  /* 금액을 고치는 자리는 설정 화면 한 곳뿐이다. 여기서는 그리로 보내기만 한다 —
+     같은 값을 두 군데서 고칠 수 있게 두면 반드시 어긋난다. */
   body.appendChild(el("p", {cls:"hint", text:t.costHint}));
-  body.appendChild(el("p", {cls:"hint", text:t.costStale + (Object.keys(saved).length ? "" : "")}));
-  body.appendChild(el("div", {cls:"btnrow"}, [toggle, saveBtn, resetBtn]));
-  body.appendChild(editor);
+  body.appendChild(el("div", {cls:"btnrow"}, [
+    el("button", {type:"button", cls:"btn ghost", text:t.costEdit,
+                  onclick:() => requireUnlock(openSettings)}),
+  ]));
 
   return card(t.decisionTitle, null, null, body);
 }

@@ -328,9 +328,9 @@ function runSelfTests(){
   const byCost = c => G(Object.assign({}, wantSpecs, {costSensitivity:c}));
   const c0 = byCost("0"), c1 = byCost("1"), c2 = byCost("2"), c3 = byCost("3");
   ok("비용 상관없음·조금 → 예산 상한이 없다", c0.budgetAim === null && c1.budgetAim === null);
-  ok("비용 꽤 → 프리미엄 단초점 대(125만원)가 기준", c2.budgetAim === 125 + TORIC_ADD_MAN,
+  ok("비용 꽤 → 프리미엄 단초점 대(125만원)가 기준", c2.budgetAim === TU("budgetMid") + TU("toricAddMan"),
      String(c2.budgetAim));
-  ok("비용 매우 큼 → 가장 저렴한 대(25만원)가 기준", c3.budgetAim === 25 + TORIC_ADD_MAN,
+  ok("비용 매우 큼 → 가장 저렴한 대(25만원)가 기준", c3.budgetAim === TU("budgetLow") + TU("toricAddMan"),
      String(c3.budgetAim));
   ok("상관없음·조금에서는 탈안경 요구가 강하면 가장 비싼 유형이 1순위",
      c0.top.id === "trifocal" && c1.top.id === "trifocal", c0.top.id + "/" + c1.top.id);

@@ -25,6 +25,9 @@
       <button type="button" id="langKo" aria-pressed="true">한국어</button>
       <button type="button" id="langEn" aria-pressed="false">EN</button>
     </div>
+    <button type="button" class="iconbtn" id="setBtn" aria-label="설정" title="설정">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+    </button>
     <button type="button" class="iconbtn" id="themeBtn" aria-label="테마 전환" title="테마 전환">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
     </button>
@@ -87,6 +90,30 @@
   <div class="card-h"><h3>Self-test</h3></div>
   <div id="testout"></div>
 </section>
+
+<!-- 비밀번호 -->
+<div class="ovl" id="pwOvl" hidden>
+  <div class="ovl-bd" id="pwBackdrop"></div>
+  <section class="card ovl-card" role="dialog" aria-modal="true" aria-labelledby="pwH">
+    <div class="card-h">
+      <h3 id="pwH" data-i18n="pwTitle">직원용 화면 잠금 해제</h3>
+      <button type="button" class="iconbtn" id="pwClose" style="margin-left:auto" aria-label="닫기"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="card-b" id="pwBody"></div>
+  </section>
+</div>
+
+<!-- 설정 -->
+<div class="ovl" id="setOvl" hidden>
+  <div class="ovl-bd" id="setBackdrop"></div>
+  <section class="card ovl-card ovl-wide" role="dialog" aria-modal="true" aria-labelledby="setH">
+    <div class="card-h">
+      <h3 id="setH" data-i18n="setTitle">설정</h3>
+      <button type="button" class="iconbtn" id="setClose" style="margin-left:auto" aria-label="닫기"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="card-b" id="setBody"></div>
+  </section>
+</div>
 
 <!-- 환자 배부용 A5 결과지 (평소에는 숨김, 인쇄할 때만 나타납니다) -->
 <div id="a5sheet" aria-hidden="true"></div>

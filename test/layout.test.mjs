@@ -96,7 +96,12 @@ export default async function run() {
 
       await page.goto(pageURL, { waitUntil: "load" });
       await page.waitForTimeout(300);
-      if (role !== "patient") { await page.click("#role_" + role); await page.waitForTimeout(250); }
+      if (role !== "patient") {
+        // 상담·의사 화면은 비밀번호로 잠겨 있다. 화면 배치를 보는 테스트이므로 잠금만 풀고 들어간다.
+        await page.evaluate(() => markUnlocked(true));
+        await page.click("#role_" + role);
+        await page.waitForTimeout(250);
+      }
 
       const bad = [];
       for (const spot of SPOTS) {

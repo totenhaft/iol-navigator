@@ -200,7 +200,8 @@ const COST_DEFAULT_MAN = {
   lentis:    {min:250, max:300},
   trifocal:  {min:350, max:400},
 };
-const TORIC_ADD_MAN = 75;
+/* 기본값. 실제로 쓰이는 값은 TU("toricAddMan") — 설정 화면에서 바꿉니다. */
+const TORIC_ADD_MAN_DEFAULT = 75;
 
 /* 실제로 쓰이는 금액표. 병원이 값을 바꾸면 UI 가 이 객체를 갈아끼운다. */
 let COST_MAN = JSON.parse(JSON.stringify(COST_DEFAULT_MAN));

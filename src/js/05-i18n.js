@@ -38,6 +38,25 @@ const STR = {
   footer1:"이 도구는 공개된 동료심사 문헌·국제 표준·학회 종설을 근거로 규칙을 구성했습니다. 각 규칙에는 근거 문헌과 근거 수준을 표시했으며, 문헌 간 수치가 상충하는 항목(angle kappa, 각막 고위수차 등)에서는 단일 cut-off로 결론짓지 않고 범위와 반대 근거를 함께 제시합니다.",
   footer2:"입력한 정보는 브라우저 안에서만 처리되며 어디로도 전송되지 않습니다. 이 도구는 진단하지 않고, 처방하지 않으며, 의료진의 판단을 대체하지 않습니다.",
 
+
+  /* 잠금 · 설정 */
+  pwTitle:"직원용 화면 잠금 해제",
+  pwHint:"상담·의사 화면과 설정은 병원 직원용입니다. 비밀번호를 입력하세요.",
+  pwFirstHint:"이 기기에서 처음 여는 화면입니다. 쓸 비밀번호를 정해 주세요.",
+  pwEnter:"비밀번호", pwNew:"새 비밀번호", pwAgain:"한 번 더",
+  pwSet:"정하기", pwUnlock:"열기", pwChange:"비밀번호 변경", pwChanged:"비밀번호를 바꿨습니다",
+  pwEmpty:"비밀번호를 입력하세요.", pwShort:"4자 이상으로 정해 주세요.",
+  pwMismatch:"두 번 입력한 값이 다릅니다.", pwWrong:"비밀번호가 맞지 않습니다.",
+  pwCaveat:"이 잠금은 화면에서 눌러 들어가는 것을 막는 장치입니다. 브라우저의 소스 보기로는 여전히 내용을 볼 수 있으므로, 반드시 가려야 하는 정보는 담지 마세요. 비밀번호는 이 브라우저에만 저장됩니다.",
+  setTitle:"설정",
+  setCaveat:"여기서 바꾼 값은 <b>이 브라우저에만</b> 저장되고 판정에 곧바로 반영됩니다. 다른 기기에도 같은 값을 쓰려면 아래 ‘설정 옮기기’를 이용하세요.",
+  setPwTitle:"비밀번호", setCostTitle:"렌즈 비급여 금액 (단안, 만원)",
+  setSaved:"저장했습니다. 결과에 반영됩니다.", setResetAll:"모두 기본값으로",
+  setReset:"기본값으로 되돌렸습니다 (비밀번호는 유지).",
+  setMoveTitle:"설정 옮기기",
+  setMoveHint:"아래 글상자의 내용을 복사해 다른 기기의 같은 자리에 붙여넣고 ‘불러오기’를 누르면 금액과 조정값이 그대로 옮겨집니다. 비밀번호는 옮겨지지 않습니다.",
+  setImport:"불러오기", setImported:"불러왔습니다.", setImportBad:"형식을 읽을 수 없습니다. 복사한 내용을 다시 확인해 주세요.",
+
   /* 역할 */
   rolePatient:"환자", roleCounselor:"상담", roleDoctor:"의사",
   roleHint:{
@@ -135,6 +154,25 @@ const STR = {
   taxCols:["Category","ESCRS / ISO position","Defining criterion","Core trade-off"],
   footer1:"Rules are built from peer-reviewed literature, international standards and society reviews. Every rule carries its sources and an evidence grade, and where the literature conflicts (angle kappa, corneal higher-order aberrations) the range and the contradicting evidence are shown rather than a single cut-off.",
   footer2:"Everything you enter stays in your browser and is never transmitted. This tool does not diagnose, does not prescribe, and does not replace clinical judgement.",
+
+
+  /* lock and settings */
+  pwTitle:"Unlock staff screens",
+  pwHint:"The counsellor, doctor and settings screens are for clinic staff. Enter the password.",
+  pwFirstHint:"This is the first time these screens are opened on this device. Choose a password.",
+  pwEnter:"Password", pwNew:"New password", pwAgain:"Repeat",
+  pwSet:"Set", pwUnlock:"Unlock", pwChange:"Change password", pwChanged:"Password changed",
+  pwEmpty:"Enter a password.", pwShort:"Use at least 4 characters.",
+  pwMismatch:"The two entries do not match.", pwWrong:"That password is not correct.",
+  pwCaveat:"This lock only stops someone clicking through on screen. Anyone can still read the content via the browser's view-source, so do not put anything here that must stay hidden. The password is stored in this browser only.",
+  setTitle:"Settings",
+  setCaveat:"Changes are saved <b>in this browser only</b> and take effect immediately. Use “Move settings” below to copy them to another device.",
+  setPwTitle:"Password", setCostTitle:"Out-of-pocket cost per lens (per eye, ×10k KRW)",
+  setSaved:"Saved — the result now reflects these values.", setResetAll:"Restore all defaults",
+  setReset:"Defaults restored (password kept).",
+  setMoveTitle:"Move settings",
+  setMoveHint:"Copy the text below, paste it into the same box on another device and press Load. Costs and tuning values transfer; the password does not.",
+  setImport:"Load", setImported:"Loaded.", setImportBad:"Could not read that. Check what you pasted.",
 
   /* roles */
   rolePatient:"Patient", roleCounselor:"Counsellor", roleDoctor:"Doctor",
