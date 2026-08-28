@@ -332,6 +332,19 @@ input::placeholder{color:var(--faint)}
 .test svg{flex:none;margin-top:3px;color:var(--accent)}
 .test small{display:block;color:var(--muted);font-size:12px;margin-top:2px;line-height:1.45}
 
+/* 접히는 카드 (근거 문헌) — 기본은 접힌 상태, 열면 높이를 끌어서 늘릴 수 있습니다. */
+details.fold{overflow:hidden}
+details.fold>summary{list-style:none;cursor:pointer}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary:hover{background:var(--surface-2)}
+details.fold:not([open])>summary{border-bottom:0}
+.foldbody{
+  max-height:min(360px,60vh);overflow:auto;resize:vertical;
+  border-bottom:1px solid var(--line);
+}
+.foldbody.full{max-height:none;resize:none;overflow:visible}
+.foldfoot{padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+
 /* references */
 .reflist{display:flex;flex-direction:column}
 .ref{padding:13px 18px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.55;display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px}

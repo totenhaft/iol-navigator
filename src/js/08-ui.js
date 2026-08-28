@@ -187,7 +187,8 @@ function refChips(rule){
   box.appendChild(el("span", {cls:"grade", "data-g":rule.grade, text:"Grade " + rule.grade}));
   (rule.refs || []).forEach(r => {
     box.appendChild(el("a", {cls:"refbtn", href:"#ref-"+r, text:r,
-      onclick:() => { const t = document.getElementById("ref-"+r); if (t) t.scrollIntoView({block:"center", behavior:"smooth"}); }}));
+      onclick:() => { openRefCard(); const t = document.getElementById("ref-"+r);
+                      if (t) setTimeout(() => t.scrollIntoView({block:"center", behavior:"smooth"}), 30); }}));
   });
   return box;
 }
@@ -502,8 +503,17 @@ function renderTaxonomy(){
   tb.appendChild(thead); tb.appendChild(tbody);
 }
 
+/* 근거 문헌 카드는 기본적으로 접혀 있습니다. 문헌 번호(R1 …)를 눌렀을 때는
+   해당 항목이 보이도록 카드를 열어 줍니다. */
+function openRefCard(){
+  const card = $("#refCard");
+  if (card && !card.hidden) card.open = true;
+}
+
 function renderRefs(){
   const host = $("#refList"); host.textContent = "";
+  const n = Object.keys(REFS).length;
+  const cnt = $("#refCount"); if (cnt) cnt.textContent = (L().refCount || "{n}").replace("{n}", n);
   Object.entries(REFS).forEach(([id, r]) => {
     host.appendChild(el("div", {cls:"ref", id:"ref-"+id}, [
       el("div", {cls:"ref-id"}, [ el("div",{text:id}), el("span",{cls:"grade","data-g":r.grade,text:r.grade}) ]),
@@ -517,12 +527,26 @@ function renderRefs(){
   });
 }
 
+/* '전체 펼치기' — 스크롤 상자를 없애고 문헌 전체를 한 번에 보여 줍니다. */
+function wireRefCard(){
+  const btn = $("#refExpandBtn"), box = $("#refBox");
+  if (!btn || !box) return;
+  btn.addEventListener("click", () => {
+    const full = box.classList.toggle("full");
+    if (!full) box.style.height = "";
+    btn.textContent = full ? L().refCollapse : L().refExpand;
+  });
+}
+
 function applyI18n(){
   document.querySelectorAll("[data-i18n]").forEach(n => {
     const v = L()[n.getAttribute("data-i18n")];
     if (v !== undefined) n.innerHTML = v;
   });
   document.documentElement.lang = state.lang;
+  /* '전체 펼치기' 버튼은 상태에 따라 글자가 달라지므로 data-i18n 기본값을 덮어씁니다. */
+  const rb = $("#refExpandBtn"), rx = $("#refBox");
+  if (rb && rx) rb.textContent = rx.classList.contains("full") ? L().refCollapse : L().refExpand;
 }
 
 /* ---------- 실행 ---------- */
@@ -560,6 +584,7 @@ function setLang(l){
 
 function boot(){
   wireSettings();
+  wireRefCard();
   applyI18n();
   renderForm();
   renderTaxonomy();

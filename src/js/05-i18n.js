@@ -11,6 +11,8 @@ const STR = {
   emptyBody:"왼쪽에서 항목을 채운 뒤 <b>결과 보기</b>를 누르세요. 값을 비워 두면 그 항목은 판정에서 제외되고, 대신 ‘확인할 추가 검사’에 표시됩니다.",
   taxTitle:"용어 체계", taxTag:"ISO 11979-7 · ESCRS",
   refTitle:"근거 문헌",
+  refCount:"{n}편", refExpand:"전체 펼치기", refCollapse:"상자 안에서 보기",
+  refDrag:"기본은 접힌 상태입니다. 제목을 눌러 펼친 뒤, 상자의 오른쪽 아래 모서리를 아래로 끌면 더 넓게 볼 수 있습니다.",
   gradeLegend:"근거 수준 — <b>A</b> 체계적 문헌고찰·메타분석·RCT · <b>B</b> 국제 표준 또는 대규모 관찰연구 · <b>C</b> 소규모·후향적 연구(수치 기준의 재현성 제한) · <b>D</b> 전문가 합의·종설·임상 관행. 이 도구의 수치 cut-off 중 상당수는 C 또는 D 수준이며, 그런 항목에는 문헌 간 불일치를 함께 표시했습니다.",
 
   recTitle:"추천 1순위", altTitle:"대안", avoidTitle:"피해야 할 유형",
@@ -128,6 +130,8 @@ const STR = {
   emptyBody:"Fill in the fields on the left and press <b>Show result</b>. Fields left blank are excluded from the logic and appear instead under 'further tests to obtain'.",
   taxTitle:"Terminology", taxTag:"ISO 11979-7 · ESCRS",
   refTitle:"Evidence base",
+  refCount:"{n} refs", refExpand:"Show all", refCollapse:"Back to scroll box",
+  refDrag:"Collapsed by default. Open it from the heading, then drag the bottom-right corner of the box downward for a taller view.",
   gradeLegend:"Evidence grade — <b>A</b> systematic review, meta-analysis or RCT · <b>B</b> international standard or large observational data · <b>C</b> small or retrospective study (limited reproducibility of numeric cut-offs) · <b>D</b> expert consensus, review or common practice. Many numeric cut-offs here are grade C or D, and conflicting evidence is shown alongside them.",
 
   recTitle:"First choice", altTitle:"Alternatives", avoidTitle:"Types to avoid",

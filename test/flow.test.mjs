@@ -129,6 +129,30 @@ export default async function run(){
   await wait(page3, 400);
   ok("의사 화면에는 근거 문헌과 용어 체계가 보인다",
      await page3.evaluate(() => !document.querySelector("#refCard").hidden && !document.querySelector("#taxonomyCard").hidden));
+  /* 근거 문헌은 19편이라 화면을 길게 잡아먹습니다. 처음에는 접혀 있어야 하고,
+     문헌 번호(R1 …)를 누르면 스스로 펼쳐져 해당 항목이 보여야 합니다. */
+  ok("근거 문헌 카드는 처음에 접혀 있다",
+     await page3.evaluate(() => document.querySelector("#refCard").open === false));
+  ok("문헌 번호를 누르면 근거 문헌 카드가 펼쳐진다",
+     await page3.evaluate(() => {
+       const a = document.querySelector(".refbtn");
+       if (!a) return false;
+       a.click();
+       return document.querySelector("#refCard").open === true;
+     }));
+  ok("펼친 뒤에도 목록은 상자 안에서만 스크롤된다",
+     await page3.evaluate(() => {
+       const box = document.querySelector("#refBox");
+       return box.scrollHeight > box.clientHeight + 10 && getComputedStyle(box).resize === "vertical";
+     }));
+  ok("'전체 펼치기'를 누르면 상자 제한이 풀린다",
+     await page3.evaluate(async () => {
+       document.querySelector("#refExpandBtn").click();
+       const box = document.querySelector("#refBox");
+       return box.classList.contains("full") && getComputedStyle(box).maxHeight === "none";
+     }));
+  await page3.evaluate(() => { document.querySelector("#refExpandBtn").click(); });
+
   ok("의사 화면에는 정밀 입력 항목이 있다",
      await page3.evaluate(() => !!document.querySelector("#f_zonule") && !!document.querySelector("#c_toricPlanned")));
   ok("역할을 바꿔도 입력값이 유지된다",
